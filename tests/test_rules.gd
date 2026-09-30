@@ -6,6 +6,12 @@ var failures := 0
 
 
 func _initialize() -> void:
+	Storage.BASE_DIR = "user://devin_test/"
+	DirAccess.make_dir_recursive_absolute("user://devin_test")
+	var dd := DirAccess.open("user://devin_test")
+	if dd:
+		for fn in dd.get_files():
+			dd.remove(fn)
 	print("== rule mechanics ==")
 	_t_gravity()
 	_t_torus()

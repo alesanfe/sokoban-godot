@@ -6,6 +6,14 @@ var checks := 0
 
 
 func _initialize() -> void:
+	# los tests escriben en un user:// propio: la suite no pisa ni lee
+	# los datos reales del jugador (los flakes venían de ahí)
+	Storage.BASE_DIR = "user://devin_test/"
+	DirAccess.make_dir_recursive_absolute("user://devin_test")
+	var dd := DirAccess.open("user://devin_test")
+	if dd:
+		for fn in dd.get_files():
+			dd.remove(fn)
 	print("== Sokoban Mutante: tests ==")
 	test_basic_movement()
 	test_undo_restart()
@@ -653,19 +661,19 @@ func test_regressions() -> void:
 func test_storage_robustness() -> void:
 	# JSON válido con raíz de tipo distinto → fallback, no crash
 	var path := "user://test_corrupt.json"
-	var f := FileAccess.open(path, FileAccess.WRITE)
+	var f := FileAccess.open(Storage._p(path), FileAccess.WRITE)
 	f.store_string("[1,2,3]")
 	f.close()
-	Storage._cache.erase(path)
+	Storage._cache.erase(Storage._p(path))
 	var d: Dictionary = Storage.load_json(path, {})
 	ok(d.is_empty(), "load_json: raíz Array rechazada para dict")
-	f = FileAccess.open(path, FileAccess.WRITE)
+	f = FileAccess.open(Storage._p(path), FileAccess.WRITE)
 	f.store_string("5")
 	f.close()
-	Storage._cache.erase(path)
+	Storage._cache.erase(Storage._p(path))
 	var a: Array = Storage.load_json(path, [])
 	ok(a.is_empty(), "load_json: raíz escalar rechazada para array")
-	DirAccess.remove_absolute(path)
+	DirAccess.remove_absolute(Storage._p(path))
 	# clamps: un settings.json editado a mano no puede colar extremos
 	Storage.set_setting("repeat_rate", 0.0)
 	ok(float(Storage.get_setting("repeat_rate")) >= 0.03,

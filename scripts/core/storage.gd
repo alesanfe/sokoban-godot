@@ -24,13 +24,24 @@ const SCHEMA_V := 2
 ## JSON parseado por ruta; save_json lo mantiene coherente con el disco.
 static var _cache := {}
 
+## Prefijo de los paths user:// — los tests lo apuntan a un subdir
+## propio para no pisar (ni leer) los datos reales del jugador.
+static var BASE_DIR := "user://"
+
+
+## Resuelve un path lógico: si empieza por user:// lo reprefija con
+## BASE_DIR; cualquier otro path pasa intacto.
+static func _p(path: String) -> String:
+	return BASE_DIR + path.substr(7) if path.begins_with("user://") else path
+
 
 static func load_json(path: String, fallback) -> Variant:
-	if _cache.has(path):
-		return _cache[path]
+	var rp := _p(path)
+	if _cache.has(rp):
+		return _cache[rp]
 	var out = fallback
-	if FileAccess.file_exists(path):
-		var f := FileAccess.open(path, FileAccess.READ)
+	if FileAccess.file_exists(rp):
+		var f := FileAccess.open(rp, FileAccess.READ)
 		if f:
 			var parsed = JSON.parse_string(f.get_as_text())
 			# raíz del tipo esperado: un JSON válido pero de otro tipo
@@ -38,15 +49,16 @@ static func load_json(path: String, fallback) -> Variant:
 			# `var x: Dictionary`/`Array` de los consumidores
 			if parsed != null and typeof(parsed) == typeof(fallback):
 				out = parsed
-	_cache[path] = out
+	_cache[rp] = out
 	return out
 
 
 static func save_json(path: String, data) -> void:
 	if data is Dictionary:
 		data["v"] = SCHEMA_V
-	_cache[path] = data
-	var f := FileAccess.open(path, FileAccess.WRITE)
+	var rp := _p(path)
+	_cache[rp] = data
+	var f := FileAccess.open(rp, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data))
 

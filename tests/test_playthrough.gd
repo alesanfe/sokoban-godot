@@ -11,6 +11,13 @@ var checks := 0
 
 
 func _initialize() -> void:
+	Storage.BASE_DIR = "user://devin_test/"
+	DirAccess.make_dir_recursive_absolute("user://devin_test")
+	# wipe: un run anterior no debe contaminar este (récords, progreso…)
+	var dd := DirAccess.open("user://devin_test")
+	if dd:
+		for fn in dd.get_files():
+			dd.remove(fn)
 	_run.call_deferred()
 
 
@@ -353,7 +360,9 @@ func _ui_playthrough() -> void:
 	ok(gs.state.solved, "UI: autoplay reached solution")
 	await process_frame
 	ok(gs.win_panel.visible, "UI: win panel shown")
-	ok(Storage.best_moves(l) > 0, "UI: best score recorded")
+	# la victoria fue asistida por el solver (autoplay) → no graba récord
+	ok(Storage.best_moves(l) == 0,
+		"UI: assisted win doesn't record best")
 
 	main.show_menu()
 	await process_frame

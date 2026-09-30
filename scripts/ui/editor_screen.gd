@@ -756,6 +756,18 @@ func commit_shape(end: Vector2i) -> void:
 
 
 func _eyedrop(p: Vector2i) -> void:
+	# si hay overlay de ocupante encima, la herramienta es su caja
+	if over.has(p):
+		var os: Dictionary = over[p]
+		var oc: int = int(os.get("c", 0))
+		tool = "bcd"[oc - 1] if oc > 0 \
+			else "&" if os.get("m", false) \
+			else "q" if os.get("r", false) \
+			else "n" if os.get("h", false) else "$"
+		if _tool_buttons.has(tool):
+			_tool_buttons[tool].button_pressed = true
+		status.text = "Herramienta: %s" % tool
+		return
 	var ch: String = cells.get(p, " ")
 	ch = {"+": "@", "*": "$", "%": "&"}.get(ch, ch)
 	tool = ch
@@ -849,6 +861,7 @@ func _paste_board() -> void:
 	var lines := txt.split("\n", false)
 	_push_undo()
 	cells.clear()
+	var had_over := not over.is_empty()
 	over.clear()  # el texto XSB no puede expresar overlays — pega suelo
 	grid_h = clampi(lines.size(), 1, 100)
 	grid_w = 1
@@ -865,7 +878,9 @@ func _paste_board() -> void:
 	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
 	grid.queue_redraw()
 	_refresh_dead()
-	status.text = "✓ Tablero pegado (%dx%d)." % [grid_w, grid_h]
+	status.text = "✓ Tablero pegado (%dx%d)." % [grid_w, grid_h] \
+		+ (" ⚠ Los overlays de caja no viajan en texto plano — se han descartado."
+			if had_over else "")
 
 
 # ------------------------------------------------------ dead overlay
