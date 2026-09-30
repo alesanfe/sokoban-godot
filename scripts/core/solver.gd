@@ -11,6 +11,10 @@ extends RefCounted
 ##          "reason": String}
 
 const MAX_STATES := 60000
+## "límite de estados" no es veredicto: con `escalate` se reintenta
+## con más presupuesto antes de rendirse (editor verify, solución
+## in-game). ×15 ≈ 900k estados — varios segundos, pero off-thread.
+const ESCALATE_MULTS := [4, 15]
 const INF := 1e9
 const DIRS4 := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
@@ -30,7 +34,7 @@ static func solve_async(level: LevelData, cb: Callable, max_states: int = MAX_ST
 		# "límite de estados" no es veredicto: con `escalate` se
 		# reintenta con más presupuesto antes de rendirse (editor verify)
 		if escalate:
-			for mult in [4, 10]:
+			for mult in ESCALATE_MULTS:
 				if res.get("ok", false) \
 						or not str(res.get("reason", "")).contains("límite"):
 					break
@@ -42,14 +46,25 @@ static func solve_async(level: LevelData, cb: Callable, max_states: int = MAX_ST
 
 ## Same but mid-game: serializes the live state, solves it on a worker
 ## thread, calls `cb` on the main loop.
-static func solve_state_async(state: GameState, cb: Callable, max_states: int = MAX_STATES) -> void:
+static func solve_state_async(state: GameState, cb: Callable, max_states: int = MAX_STATES,
+		escalate := false) -> void:
 	var data: Dictionary = state.serialize()
 	# detach: the live level object must not cross the thread boundary
 	var lvl := LevelData.from_dict(state.level_data.to_dict())
 	WorkerThreadPool.add_task(func():
-		var s := GameState.deserialize_state(lvl, data)
+		# cada reintento necesita un estado fresco: solve_state lo muta
+		var fresh := func(): return GameState.deserialize_state(lvl, data)
 		var res := {"ok": false, "moves": PackedStringArray(), "states": 0,
-			"reason": "estado inválido"} if s == null else solve_state(s, max_states)
+			"reason": "estado inválido"}
+		var s = fresh.call()
+		if s != null:
+			res = solve_state(s, max_states)
+			if escalate:
+				for mult in ESCALATE_MULTS:
+					if res.get("ok", false) \
+							or not str(res.get("reason", "")).contains("límite"):
+						break
+					res = solve_state(fresh.call(), max_states * mult)
 		if cb.is_valid():
 			cb.call_deferred(res), true)
 

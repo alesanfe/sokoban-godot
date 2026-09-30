@@ -584,6 +584,8 @@ func _solve() -> void:
 	_solving = true
 	hud_status.text = "Buscando solución…"
 	var gen := _input_gen  # si el jugador mueve/deshace/reinicia, el
+	# escalate: un "límite de estados" reintenta con más presupuesto
+	# antes de rendirse — los niveles mutantes densos lo necesitan
 	SokobanSolver.solve_state_async(state, func(res: Dictionary):  # resultado es obsoleto
 		_solving = false
 		if state == null or gen != _input_gen:
@@ -594,7 +596,8 @@ func _solve() -> void:
 			replay_mode = false
 			_solver_used = true
 		else:
-			hud_status.text = "El solucionador no encuentra solución (%s)." % res.get("reason", ""))
+			hud_status.text = "El solucionador no encuentra solución (%s)." % res.get("reason", "")
+		, SokobanSolver.MAX_STATES, true)
 
 
 func _hint() -> void:
@@ -621,7 +624,8 @@ func _hint() -> void:
 				board.queue_redraw()
 				hud_status.text = "Pista: prueba esa dirección."
 		else:
-			hud_status.text = "Sin pista (%s)." % res.get("reason", ""))
+			hud_status.text = "Sin pista (%s)." % res.get("reason", "")
+		, SokobanSolver.MAX_STATES, true)
 
 
 func _replay_saved() -> void:
