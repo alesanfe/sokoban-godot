@@ -30,10 +30,24 @@ func _initialize() -> void:
 	for i in levels.size():
 		var l: LevelData = levels[i]
 		var res := SokobanSolver.solve(l)
+		# "límite de estados" no es veredicto: reintenta ×4 → ×10
+		# antes de declarar FAIL (editor verify hace lo mismo)
+		var mult := 1
+		if not res.ok and str(res.get("reason", "")).contains("límite"):
+			for m in [4, 10]:
+				res = SokobanSolver.solve(l, SokobanSolver.MAX_STATES * m)
+				if res.ok:
+					mult = m
+					break
 		if not res.ok:
 			fails += 1
 			print("FAIL %s — sin solución (%s, %d estados)" % [
 				l.title, res.reason, res.states])
+			continue
+		if mult > 1:
+			warns += 1
+			print("%-34s %4d movs  %6d estados  %s★ PRESUPUESTO×%d" % [
+				l.title, res.moves.size(), res.states, l.difficulty, mult])
 			continue
 		var n: int = res.moves.size()
 		var flags := PackedStringArray()

@@ -114,6 +114,23 @@ func _run() -> void:
 	await process_frame
 	ok(main.current is GeneratorScreen, "generator screen shown")
 
+	# async guard: generar y salir a mitad — el callback diferido no
+	# debe tocar la pantalla liberada ni saltar a una partida
+	var gs_gen: GeneratorScreen = main.current
+	gs_gen.seed_edit.text = "7"
+	gs_gen._go()
+	ok(gs_gen._b_go.disabled, "generating disables go")
+	main.show_menu()  # la swap libera la pantalla aunque el worker siga
+	await process_frame
+	var wait_frames := 0
+	while wait_frames < 600:
+		await process_frame
+		wait_frames += 1
+		if main.current is MenuScreen:
+			break
+	ok(main.current is MenuScreen,
+		"late generation callback doesn't hijack the screen")
+
 	# board skin: flat hides sprites; restore afterwards
 	Storage.set_setting("board_skin", 1)
 	BoardView.reload_skin()
