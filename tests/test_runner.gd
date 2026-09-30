@@ -29,6 +29,7 @@ func _initialize() -> void:
 	test_xsb_rle()
 	test_regressions()
 	test_storage_robustness()
+	test_occupant_overlays()
 	test_replay_determinism_fuzz()
 	test_campaign_solvable()
 	print("== %d checks, %d failures ==" % [checks, failures])
@@ -681,6 +682,40 @@ func test_storage_robustness() -> void:
 ## movimientos random. Reejecutar move_log desde cero debe reproducir
 ## exactamente el mismo canonical_key — el fantasma, el undo y el
 ## solver dependen implícitamente de esa propiedad.
+func test_occupant_overlays() -> void:
+	# una caja overlay sobre un terreno no componible llega al motor
+	var l := LevelData.create("ov", PackedStringArray(["#####", "#@ .C", "#####"]), [])
+	l.over[Vector2i(3, 1)] = {"c": 1, "m": false, "r": false, "h": false}
+	var s := GameState.from_level_data(l)
+	ok(s.boxes.size() == 1, "overlay crea la caja")
+	ok(s.box_colors[0] == 1, "overlay conserva el color")
+	ok(s.goals.has(Vector2i(3, 1)), "la meta C sigue debajo")
+	# roundtrip dict → code → dict conserva overlays
+	var l2 := LevelData.from_dict(l.to_dict())
+	ok(l2.over.size() == 1 and l2.over.has(Vector2i(3, 1))
+		and int(l2.over[Vector2i(3, 1)].get("c", 0)) == 1,
+		"over sobrevive a to_dict/from_dict")
+	var l3 := LevelData.from_code(l.to_code())
+	ok(l3 != null and l3.over.has(Vector2i(3, 1)),
+		"over sobrevive al código SKM1")
+	var bare := LevelData.create("ov", l.board, [])
+	ok(l.content_code() != bare.content_code(),
+		"content_code distingue overlays")
+	# validate: la overlay cuenta como caja (1 caja / 2 metas → falta 1)
+	ok(not l.validate().is_empty(), "validate cuenta overlays")
+	# válido de verdad: overlay c sobre B y b sobre C (cuentas cruzadas)
+	var l_ok := LevelData.create("ov2",
+		PackedStringArray(["######", "#@.BC", "######"]), [])
+	l_ok.over[Vector2i(2, 1)] = {"c": 0}   # $ sobre '.'
+	l_ok.over[Vector2i(3, 1)] = {"c": 2}   # c sobre B
+	l_ok.over[Vector2i(4, 1)] = {"c": 1}   # b sobre C
+	ok(l_ok.validate().is_empty(), "overlays coloreadas cruzadas validan")
+	# compose: caja sobre meta de otro color → "" (overlay), no borra la meta
+	ok(TileSpec.compose("b", "C") == "", "compose: b sobre C → overlay")
+	ok(TileSpec.compose("b", "B") == "a", "compose: b sobre B → compuesto")
+	ok(TileSpec.compose("$", ">") == "", "compose: $ sobre cinta → overlay")
+
+
 func test_replay_determinism_fuzz() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 424242

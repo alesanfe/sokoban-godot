@@ -65,6 +65,8 @@ var host: Control
 var grid_w := 12
 var grid_h := 9
 var cells := {}          # Vector2i -> char
+var over := {}           # Vector2i -> {c,m,r,h} caja sobre terreno
+						 # no componible (LevelData.over)
 var tool := "#"
 var _tool_buttons := {}      # tool id -> palette Button (eyedrop sync)
 var rule_entries: Array = []  # [{id, controls:{key->Control}}]
@@ -273,6 +275,21 @@ class EditorGrid extends Control:
 							gpal[ci2] if ch in "aei" else Color(0.25, 0.7, 0.35))
 						draw_rect(r.grow(-3), bpal[ci2])
 						_text(font, "bcd"["aeijlm".find(ch) % 3].to_upper(), r, Color.WHITE)
+		# overlays: caja posada sobre terreno no componible — se dibuja
+		# encima del tile (misma iconografía que una caja normal)
+		for op in editor.over.keys():
+			var os: Dictionary = editor.over[op]
+			var orr := Rect2(op.x * tile, op.y * tile, tile, tile)
+			var oc := int(os.get("c", 0))
+			draw_rect(orr.grow(-3), bpal[oc] if oc > 0 else Color(0.72, 0.5, 0.24))
+			if os.get("m", false):
+				_text(font, "&", orr, Color.WHITE)
+			elif os.get("r", false):
+				_text(font, "q", orr, Color.WHITE)
+			elif os.get("h", false):
+				_text(font, "kg", orr, Color(0.9, 0.85, 0.8))
+			elif oc > 0:
+				_text(font, "BCD"[oc - 1], orr, Color.WHITE)
 		if editor.show_dead:
 			for c in editor._dead.keys():
 				draw_rect(Rect2(c.x * tile, c.y * tile, tile, tile), Color(0.6, 0.15, 0.15, 0.25))
@@ -459,7 +476,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	size_row.add_child(b_size)
 	var b_clear := Button.new()
 	b_clear.text = "Limpiar"
-	b_clear.pressed.connect(func(): _push_undo(); cells.clear(); grid.queue_redraw())
+	b_clear.pressed.connect(func(): _push_undo(); cells.clear(); over.clear(); grid.queue_redraw())
 	size_row.add_child(b_clear)
 	side.add_child(size_row)
 
@@ -535,6 +552,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 
 func _new_room() -> void:
 	cells.clear()
+	over.clear()
 	for y in grid_h:
 		for x in grid_w:
 			if x == 0 or y == 0 or x == grid_w - 1 or y == grid_h - 1:
@@ -553,6 +571,7 @@ func _load_level(l: LevelData) -> void:
 	w_spin.value = grid_w
 	h_spin.value = grid_h
 	cells.clear()
+	over = l.over.duplicate(true)
 	for y in grid_h:
 		var line: String = l.board[y]
 		for x in mini(line.length(), grid_w):
@@ -581,7 +600,7 @@ func begin_stroke() -> void:
 ## Undo entries carry the grid dimensions: resize/rotate change them,
 ## so restoring only the cells would desync board and cells.
 func _push_undo() -> void:
-	_undo_stack.append({"cells": cells.duplicate(), "w": grid_w, "h": grid_h})
+	_undo_stack.append({"cells": cells.duplicate(), "over": over.duplicate(true), "w": grid_w, "h": grid_h})
 	if _undo_stack.size() > 100:
 		_undo_stack.pop_front()
 	_redo_stack.clear()
@@ -598,6 +617,7 @@ func _invalidate_solution() -> void:
 
 func _apply_board_state(e: Dictionary) -> void:
 	cells = e["cells"]
+	over = e.get("over", {})
 	grid_w = int(e["w"])
 	grid_h = int(e["h"])
 	w_spin.value = grid_w
@@ -611,14 +631,14 @@ func _apply_board_state(e: Dictionary) -> void:
 func _editor_undo() -> void:
 	if _undo_stack.is_empty():
 		return
-	_redo_stack.append({"cells": cells.duplicate(), "w": grid_w, "h": grid_h})
+	_redo_stack.append({"cells": cells.duplicate(), "over": over.duplicate(true), "w": grid_w, "h": grid_h})
 	_apply_board_state(_undo_stack.pop_back())
 
 
 func _editor_redo() -> void:
 	if _redo_stack.is_empty():
 		return
-	_undo_stack.append({"cells": cells.duplicate(), "w": grid_w, "h": grid_h})
+	_undo_stack.append({"cells": cells.duplicate(), "over": over.duplicate(true), "w": grid_w, "h": grid_h})
 	_apply_board_state(_redo_stack.pop_back())
 
 
@@ -647,7 +667,10 @@ func _stamp(p: Vector2i, erase: bool) -> void:
 		if not _cell_ok(q):
 			continue
 		if erase or tool == " ":
-			# un compuesto pierde solo el ocupante: la meta queda
+			# primero cae el overlay de ocupante, luego el compuesto
+			# pierde solo el ocupante (la meta queda)
+			if over.erase(q):
+				continue
 			var rest := _strip_top(cells.get(q, ""))
 			if rest == "":
 				cells.erase(q)
@@ -658,7 +681,15 @@ func _stamp(p: Vector2i, erase: bool) -> void:
 				for k in cells.keys():
 					if cells[k] == "@" or cells[k] == "+":
 						cells.erase(k)
-			cells[q] = _compose_tile(tool, cells.get(q, " "))
+			var res := _compose_tile(tool, cells.get(q, " "))
+			if res == "":
+				# terreno pisable no componible → caja como overlay
+				over[q] = TileSpec.box_spec(tool)
+			else:
+				# el nuevo char posee la celda entera (terreno u
+				# ocupante): sucede a cualquier overlay viejo
+				cells[q] = res
+				over.erase(q)
 
 
 ## Compuestos viven en TileSpec (fuente única): componer al sellar,
@@ -743,6 +774,10 @@ func _flip_h() -> void:
 	for p in cells.keys():
 		nc[Vector2i(grid_w - 1 - p.x, p.y)] = TileSpec.flip_h(cells[p])
 	cells = nc
+	var no := {}
+	for p in over.keys():
+		no[Vector2i(grid_w - 1 - p.x, p.y)] = over[p]
+	over = no
 	grid.queue_redraw()
 	_refresh_dead()
 
@@ -753,6 +788,10 @@ func _flip_v() -> void:
 	for p in cells.keys():
 		nc[Vector2i(p.x, grid_h - 1 - p.y)] = TileSpec.flip_v(cells[p])
 	cells = nc
+	var no := {}
+	for p in over.keys():
+		no[Vector2i(p.x, grid_h - 1 - p.y)] = over[p]
+	over = no
 	grid.queue_redraw()
 	_refresh_dead()
 
@@ -775,6 +814,10 @@ func _rot90() -> void:
 	for p in cells.keys():
 		nc[Vector2i(grid_h - 1 - p.y, p.x)] = TileSpec.rot90(cells[p])
 	cells = nc
+	var no := {}
+	for p in over.keys():
+		no[Vector2i(grid_h - 1 - p.y, p.x)] = over[p]
+	over = no
 	var tmp := grid_w
 	grid_w = grid_h
 	grid_h = tmp
@@ -806,6 +849,7 @@ func _paste_board() -> void:
 	var lines := txt.split("\n", false)
 	_push_undo()
 	cells.clear()
+	over.clear()  # el texto XSB no puede expresar overlays — pega suelo
 	grid_h = clampi(lines.size(), 1, 100)
 	grid_w = 1
 	for l in lines:
@@ -846,6 +890,9 @@ func _resize_grid() -> void:
 	for k in cells.keys():
 		if not _cell_ok(k):
 			cells.erase(k)
+	for k in over.keys():
+		if not _cell_ok(k):
+			over.erase(k)
 	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
 	grid.queue_redraw()
 	_refresh_dead()
@@ -936,6 +983,7 @@ func build_level() -> LevelData:
 	var t := title_edit.text.strip_edges()
 	var l := LevelData.create(t if t != "" else "Sin título", lines, rules, author_edit.text.strip_edges())
 	l.hidden_rules = hidden_check.button_pressed
+	l.over = over.duplicate(true)
 	# Keep solver metadata (par/difficulty) only if the playable content
 	# is unchanged — a stale par would lie about the level.
 	if editing != null and editing.content_code() == l.content_code():
@@ -954,6 +1002,8 @@ func _verify() -> void:
 		return
 	status.text = "Buscando solución…"
 	var expect := l.content_code()  # si el tablero cambia en medio del
+	# "límite de estados" no es veredicto → escala el presupuesto antes
+	# de declararse incapaz
 	SokobanSolver.solve_async(l, func(res: Dictionary):  # solve, el resultado es obsoleto
 		if build_level().content_code() != expect:
 			return
@@ -970,7 +1020,8 @@ func _verify() -> void:
 			if reason.contains("límite"):
 				status.text = "✗ El solucionador alcanzó el límite de búsqueda — puede que sea soluble aunque no lo haya probado."
 			else:
-				status.text = "✗ El nivel es irresoluble (%s)." % reason)
+				status.text = "✗ El nivel es irresoluble (%s)." % reason,
+		SokobanSolver.MAX_STATES, true)  # escalate: reintenta ×4 y ×10
 
 
 func _playtest() -> void:

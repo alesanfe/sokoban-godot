@@ -5,9 +5,11 @@ extends Control
 
 class LevelThumb extends Control:
 	var board: PackedStringArray
+	var over := {}  # overlays de ocupante (LevelData.over), opcional
 
-	func _init(p_board: PackedStringArray) -> void:
+	func _init(p_board: PackedStringArray, p_over: Dictionary = {}) -> void:
 		board = p_board
+		over = p_over
 		custom_minimum_size = Vector2(76, 42)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -104,6 +106,13 @@ class LevelThumb extends Control:
 							maxf(t * 0.08, 1.0), t), Color(0.55, 0.55, 0.6))
 						draw_rect(Rect2(r.get_center().x + t * 0.08, r.position.y,
 							maxf(t * 0.08, 1.0), t), Color(0.55, 0.55, 0.6))
+		# overlays de ocupante por encima del terreno
+		for op in over.keys():
+			var os: Dictionary = over[op]
+			var orr := Rect2(ox + op.x * t, oy + op.y * t, t, t)
+			var oc := int(os.get("c", 0))
+			draw_rect(orr.grow(-0.5),
+				BoardView.BOX_COLORS[oc] if oc > 0 else Color(0.72, 0.5, 0.24))
 
 
 var _list: VBoxContainer
@@ -265,7 +274,7 @@ func _level_button(host: Control, level: LevelData, deletable: bool = false) -> 
 		label += "  ·  Paredes tímidas"
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	row.add_child(LevelThumb.new(level.board))
+	row.add_child(LevelThumb.new(level.board, level.over))
 	var b := Widgets.button(label)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL

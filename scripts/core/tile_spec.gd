@@ -167,17 +167,42 @@ const _UNDER := {"*": ".", "+": ".", "%": ".",
 
 ## Sellar un ocupante sobre una meta compone en vez de sobrescribir:
 ## $→* &→% @→+ ; b/c/d sobre su meta → a/e/i, sobre neutra → j/l/m.
-## Un color cruzado (b sobre C) no es expresable → sobrescritura.
+## Un color cruzado (b sobre C) o caja sobre terreno pisable no
+## expresable (cinta, portal, interruptor…) devuelve "" → el editor
+## lo guarda como overlay de ocupante (LevelData.over).
 static func compose(tool: String, cur: String) -> String:
 	var under: String = _UNDER.get(cur, cur)
 	match tool:
-		"$": return "*" if under == "." else tool
-		"&": return "%" if under == "." else tool
-		"@": return "+" if under == "." else tool
-		"b": return "j" if under == "." else ("a" if under == "B" else tool)
-		"c": return "l" if under == "." else ("e" if under == "C" else tool)
-		"d": return "m" if under == "." else ("i" if under == "D" else tool)
+		"$": if under == ".": return "*"
+		"&": if under == ".": return "%"
+		"@": if under == ".": return "+"
+		"b": if under == ".": return "j"
+		"c": if under == ".": return "l"
+		"d": if under == ".": return "m"
+	if tool == "b" and under == "B": return "a"
+	if tool == "c" and under == "C": return "e"
+	if tool == "d" and under == "D": return "i"
+	if _is_box_tool(tool):
+		var sp := spec(under)
+		# suelo sin ocupante y sin componible → overlay
+		if sp.get("floor", true) and not sp.get("box", false) \
+				and not sp.get("player", false):
+			return ""
 	return tool
+
+
+static func _is_box_tool(t: String) -> bool:
+	return t in ["$", "&", "q", "n", "b", "c", "d"]
+
+
+## Spec de caja para un overlay, según la herramienta de la paleta.
+static func box_spec(t: String) -> Dictionary:
+	return {
+		"c": {"b": 1, "c": 2, "d": 3}.get(t, 0),
+		"m": t == "&",
+		"r": t == "q",
+		"h": t == "n",
+	}
 
 
 ## Borrar un compuesto retira solo el ocupante y conserva la meta

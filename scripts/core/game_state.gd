@@ -173,6 +173,19 @@ static func from_level_data(level) -> GameState:
 		for i in range(0, cells.size() - 1, 2):
 			s.portals[cells[i]] = cells[i + 1]
 			s.portals[cells[i + 1]] = cells[i]
+	# overlays: cajas posadas sobre terreno que el charset no compone
+	# (b sobre meta C, caja sobre cinta/portal/interruptor…). El char
+	# ya poblaba el terreno; aquí solo llega el ocupante.
+	for pos in level.over.keys():
+		if not s.in_bounds(pos):
+			continue
+		var os: Dictionary = level.over[pos]
+		# una celda que ya trae ocupante en su char (caja/jugador)
+		# no admite segundo ocupante — el char gana
+		if s.box_at(pos) != -1 or pos == s.player or s.twins.has(pos):
+			continue
+		s._add_box(pos, int(os.get("c", 0)), bool(os.get("m", false)),
+			bool(os.get("r", false)), bool(os.get("h", false)))
 	s.player_start = s.player
 	for rdef in level.rules:
 		var rid := str(rdef.get("id", ""))

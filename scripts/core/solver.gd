@@ -22,12 +22,22 @@ static func solve(level: LevelData, max_states: int = MAX_STATES) -> Dictionary:
 
 ## Background solve (WorkerThreadPool) — the UI stays responsive while
 ## the solver runs; `cb` receives the result dict on the main loop.
-static func solve_async(level: LevelData, cb: Callable, max_states: int = MAX_STATES) -> void:
+static func solve_async(level: LevelData, cb: Callable, max_states: int = MAX_STATES,
+		escalate := false) -> void:
 	var lvl := LevelData.from_dict(level.to_dict())  # detached copy
 	WorkerThreadPool.add_task(func():
+		var res := solve(lvl, max_states)
+		# "límite de estados" no es veredicto: con `escalate` se
+		# reintenta con más presupuesto antes de rendirse (editor verify)
+		if escalate:
+			for mult in [4, 10]:
+				if res.get("ok", false) \
+						or not str(res.get("reason", "")).contains("límite"):
+					break
+				res = solve(lvl, max_states * mult)
 		# the screen that requested the solve may be gone by now
 		if cb.is_valid():
-			cb.call_deferred(solve(lvl, max_states)), true)
+			cb.call_deferred(res), true)
 
 
 ## Same but mid-game: serializes the live state, solves it on a worker

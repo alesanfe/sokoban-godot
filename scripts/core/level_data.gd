@@ -30,6 +30,11 @@ var rules: Array = []  # [{id: String, params: Dictionary}]
 var difficulty: int = 0  # 0 = unrated, 1-5 stars
 var par: int = 0         # solver's move count (0 = unknown)
 var hidden_rules: bool = false  # player must discover the rules
+## Ocupantes que el charset no puede componer con su terreno: caja
+## (de cualquier tipo) posada sobre casilla pisable distinta de una
+## meta compatible — p.ej. caja «b» sobre meta «C», caja sobre una
+## cinta o un interruptor. {Vector2i → {"c":0-3,"m","r","h"}}
+var over := {}
 
 
 func set_meta_difficulty(d: int) -> void:
@@ -58,6 +63,7 @@ func to_dict() -> Dictionary:
 		"diff": difficulty,
 		"par": par,
 		"hidden": hidden_rules,
+		"over": _over_to_json(),
 	}
 
 
@@ -79,7 +85,34 @@ static func from_dict(d: Dictionary) -> LevelData:
 	l.difficulty = int(d.get("diff", 0))
 	l.par = int(d.get("par", 0))
 	l.hidden_rules = bool(d.get("hidden", false))
+	# overlays de ocupante: {"x,y" → {c,m,r,h}} — tolera claves
+	# malformadas y specs sin los flags (se asume caja normal)
+	var raw_over = d.get("over", {})
+	if typeof(raw_over) == TYPE_DICTIONARY:
+		for k in raw_over.keys():
+			var parts := str(k).split(",")
+			if parts.size() != 2 or not parts[0].is_valid_int() \
+					or not parts[1].is_valid_int():
+				continue
+			var spec_v = raw_over[k]
+			var spec: Dictionary = spec_v if typeof(spec_v) == TYPE_DICTIONARY else {}
+			l.over[Vector2i(int(parts[0]), int(parts[1]))] = {
+				"c": int(spec.get("c", 0)),
+				"m": bool(spec.get("m", false)),
+				"r": bool(spec.get("r", false)),
+				"h": bool(spec.get("h", false)),
+			}
 	return l
+
+
+func _over_to_json() -> Dictionary:
+	# orden estable: el orden de estampado no debe cambiar content_code
+	var out := {}
+	var ks := over.keys()
+	ks.sort()
+	for p in ks:
+		out["%d,%d" % [p.x, p.y]] = over[p]
+	return out
 
 
 func to_code() -> String:
@@ -100,7 +133,8 @@ func content_code() -> String:
 	# metadatos (título, par, dificultad) no afectan al contenido jugable.
 	if _ccache == "":
 		var d := to_dict()
-		_ccache = JSON.stringify({"board": d["board"], "rules": d["rules"]})
+		_ccache = JSON.stringify({"board": d["board"], "rules": d["rules"],
+			"over": d["over"]})
 	return _ccache
 
 
@@ -218,6 +252,14 @@ func validate() -> PackedStringArray:
 				twins += 1
 			if sp.has("filter"):
 				filters["bcd"[int(sp["filter"]) - 1]] = true
+	# overlays: cajas sobre terreno no componible cuentan igual
+	for p in over.keys():
+		var os: Dictionary = over[p]
+		box_count += 1
+		var oc := int(os.get("c", 0))
+		if oc > 0:
+			var cb2: String = "bcd"[oc - 1]
+			cboxes[cb2] = int(cboxes.get(cb2, 0)) + 1
 	if players == 0:
 		problems.append("Falta el jugador (@)")
 	if players > 1:
@@ -334,6 +376,18 @@ func _connectivity_problems() -> PackedStringArray:
 			if TileSpec.is_goal(ch) and not TileSpec.is_box(ch) \
 					and not seen.has(Vector2i(x, y)):
 				isolated_goals += 1
+	# overlays: igual — una caja overlay satisfecha (color sobre su
+	# meta / neutra sobre cualquier meta) es válida aunque esté sellada
+	for p in over.keys():
+		if p.y < 0 or p.y >= board.size() or p.x < 0:
+			continue
+		var line: String = board[p.y]
+		var ch: String = line[p.x] if p.x < line.length() else " "
+		var oc := int(over[p].get("c", 0))
+		var satisfied := TileSpec.is_goal(ch) \
+			and (oc == 0 or oc == TileSpec.goal_color(ch))
+		if not satisfied and not seen.has(p):
+			isolated_boxes += 1
 	if isolated_boxes > 0:
 		problems.append("%d caja(s) en zonas inaccesibles" % isolated_boxes)
 	if isolated_goals > 0:

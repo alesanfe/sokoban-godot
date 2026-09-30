@@ -15,6 +15,7 @@ var host: Control
 var _sort := "recent"
 var _tabs: Array = []
 var _list: VBoxContainer
+var _search: LineEdit
 
 
 func _init(p_host: Control) -> void:
@@ -59,6 +60,17 @@ func _init(p_host: Control) -> void:
 	_tabs[0].button_pressed = true
 	v.add_child(tabs)
 
+	# búsqueda por título o autor dentro del feed
+	var search := HBoxContainer.new()
+	search.add_child(Widgets.label("🔍", 14))
+	_search = LineEdit.new()
+	_search.placeholder_text = "Buscar por título o autor…"
+	_search.custom_minimum_size.x = 260
+	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search.text_changed.connect(func(_t): _populate())
+	search.add_child(_search)
+	v.add_child(search)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(scroll)
@@ -78,8 +90,16 @@ func _populate() -> void:
 	for c in _list.get_children():
 		c.queue_free()
 	var es := CommunityService.entries(_sort)
+	var q := _search.text.strip_edges().to_lower()
+	if q != "":
+		es = es.filter(func(e):
+			return str(e.get("title", "")).to_lower().contains(q) \
+				or str(e.get("author", "")).to_lower().contains(q))
 	if es.is_empty():
-		_list.add_child(Widgets.label("Aún no hay niveles publicados.", 15, Color(0.6, 0.6, 0.65)))
+		_list.add_child(Widgets.label(
+			"Sin resultados para «%s»." % q if q != ""
+				else "Aún no hay niveles publicados.",
+			15, Color(0.6, 0.6, 0.65)))
 		return
 	_append_rows(es.slice(0, PAGE))
 	if es.size() > PAGE:
