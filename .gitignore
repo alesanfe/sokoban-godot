@@ -1,0 +1,6 @@
+﻿.godot/
+export/
+user://
+*.tmp
+*.uid
+__pycache__/
