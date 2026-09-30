@@ -165,11 +165,11 @@ func _row(e: Dictionary) -> Control:
 		Storage.save_custom_level(l)
 		b_dl.text = "✓")
 	h.add_child(b_dl)
-	# compartir offline: el código SKM2 viaja pegado (chat/mensaje) —
+	# compartir offline: el código SKM1 viaja pegado (chat/mensaje) —
 	# sin backend, es el canal real de distribución de la comunidad
 	var b_share := Widgets.button("⤴")
 	b_share.custom_minimum_size = Vector2(48, 44)
-	b_share.tooltip_text = "Copiar el código del nivel (SKM2…)"
+	b_share.tooltip_text = "Copiar el código del nivel (SKM1…)"
 	b_share.pressed.connect(func():
 		DisplayServer.clipboard_set(l.to_code())
 		b_share.text = "✓")
