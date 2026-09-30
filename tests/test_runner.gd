@@ -38,6 +38,7 @@ func _initialize() -> void:
 	test_regressions()
 	test_storage_robustness()
 	test_occupant_overlays()
+	test_win_stats()
 	test_replay_determinism_fuzz()
 	test_campaign_solvable()
 	print("== %d checks, %d failures ==" % [checks, failures])
@@ -722,6 +723,28 @@ func test_occupant_overlays() -> void:
 	ok(TileSpec.compose("b", "C") == "", "compose: b sobre C → overlay")
 	ok(TileSpec.compose("b", "B") == "a", "compose: b sobre B → compuesto")
 	ok(TileSpec.compose("$", ">") == "", "compose: $ sobre cinta → overlay")
+
+
+func test_win_stats() -> void:
+	# par boundaries: ≤par ★★★ PERFECTO, ≤1.25× ORO, ≤1.5× PLATA, > BRONCE
+	ok(WinStats.medal(10, 10, false)["stars"] == 3, "par ⇒ PERFECTO")
+	ok(WinStats.medal(10, 12, false)["medal"] == "ORO", "1.25× ⇒ ORO")
+	ok(WinStats.medal(10, 15, false)["medal"] == "PLATA", "1.5× ⇒ PLATA")
+	ok(WinStats.medal(10, 16, false)["medal"] == "BRONCE", ">1.5× ⇒ BRONCE")
+	ok(WinStats.medal(0, 5, false)["medal"] == "COMPLETADO",
+		"sin par ⇒ COMPLETADO")
+	ok(WinStats.medal(10, 10, true)["stars"] == 1,
+		"asistida no medalla")
+	var s := WinStats.summary(10, 8, 4, 75.0, 0, 0, false)
+	ok(s.contains("PERFECTO") and s.contains("8 movimientos")
+		and s.contains("01:15") and s.contains("sin deshacer"),
+		"summary: medalla + tiempo + badge")
+	ok(WinStats.summary(10, 8, 4, 0.0, 1, 0, false)
+		.contains("sin deshacer") == false,
+		"summary: con undos no hay badge 'sin deshacer'")
+	ok(WinStats.summary(10, 8, 4, 0.0, 0, 0, true)
+		.contains("con solucionador"),
+		"summary: badge asistido")
 
 
 func test_replay_determinism_fuzz() -> void:

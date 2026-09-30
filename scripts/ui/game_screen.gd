@@ -695,36 +695,8 @@ func _on_win() -> void:
 
 
 func _win_refresh(moves: int, pushes: int, assisted: bool = false) -> void:
-	var stars := 1
-	var medal := "COMPLETADO"
-	if level.par > 0 and not assisted:
-		if moves <= level.par:
-			stars = 3
-			medal = "PERFECTO"
-		elif moves <= int(level.par * 1.25):
-			stars = 2
-			medal = "ORO"
-		elif moves <= int(level.par * 1.5):
-			stars = 1
-			medal = "PLATA"
-		else:
-			medal = "BRONCE"
-	var badges := PackedStringArray()
-	if assisted:
-		badges.append("con solucionador")
-	if undos_used == 0 and not assisted:
-		badges.append("sin deshacer")
-	if restarts_used == 0 and not assisted:
-		badges.append("sin reiniciar")
-	var info := PackedStringArray()
-	info.append("Medalla: %s  %s" % [medal, "★".repeat(stars)])
-	info.append("%d movimientos · %d empujes · %02d:%02d" % [
-		moves, pushes, int(state.elapsed) / 60, int(state.elapsed) % 60])
-	if level.par > 0:
-		info.append("Par: %d" % level.par)
-	if not badges.is_empty():
-		info.append("· " + " · ".join(badges))
-	win_label.text = "¡Nivel completado!\n" + "\n".join(info)
+	win_label.text = WinStats.summary(level.par, moves, pushes,
+		state.elapsed, undos_used, restarts_used, assisted)
 
 
 func _confetti() -> void:
