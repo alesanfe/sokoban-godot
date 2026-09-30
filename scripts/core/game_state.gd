@@ -441,88 +441,11 @@ func try_move(d: Vector2i) -> bool:
 		door_cells.erase(target)
 		player = target
 	elif box_idx != -1:
-		# One-way under the pushed box: it can only leave along the gate.
-		if one_way.has(boxes[box_idx]) and one_way[boxes[box_idx]] != d:
+		var pr := _try_push(target, d, box_idx)
+		if not pr["ok"]:
 			return false
-
-		if rules_enabled:
-			for rule in rules:
-				if not rule.can_push(self, box_idx, d):
-					return false
-		# Chain rule: contiguous rows of boxes are pushed together.
-		var chain: Array[int] = [box_idx]
-		var scan := target + d
-		var bi := box_at(scan)
-		while bi != -1:
-			chain.append(bi)
-			scan += d
-			bi = box_at(scan)
-		if chain.size() > 1 and not _rule_on("chain") and not _rule_on("bond"):
-			return false
-		# Rails: a box on a rail can only be pushed along the rail axis.
-		for ci in chain:
-			if rails.has(boxes[ci]):
-				var ax: Vector2i = rails[boxes[ci]]
-				if (ax.x != 0) != (d.x != 0):
-					return false
-		# Heavy boxes ('n') need a rest turn between pushes.
-		for ci in chain:
-			if ci < box_rest.size() and box_rest[ci] > 0:
-				return false
-		# One-way gates and per-box vetoes (push budgets) apply to every
-		# chain member, not just the head.
-		for ci in chain:
-			if ci != box_idx and one_way.has(boxes[ci]) \
-					and one_way[boxes[ci]] != d:
-				return false
-			if rules_enabled:
-				for rule in rules:
-					if not rule.can_move(self, ci, d):
-						return false
-		# Mid-chain members also respect filters: a wrong-color box can't
-		# even enter the filter cell — the whole push is refused.
-		for i in range(chain.size() - 2, -1, -1):
-			var mid_dest: Vector2i = boxes[chain[i]] + d
-			if filters.has(mid_dest) and chain[i] < box_colors.size() \
-					and int(box_colors[chain[i]]) != int(filters[mid_dest]):
-				return false
-		var dest := _resolve_push(chain[chain.size() - 1], d)
-		var demolish := Vector2i(-1, -1)
-		if dest == Vector2i(-1, -1):
-			# Weak wall: the push demolishes it (turn consumed, nothing moves).
-			var front: Vector2i = boxes[chain[chain.size() - 1]] + d
-			if chain.size() == 1 and weak_walls.has(front):
-				demolish = front
-			else:
-				return false
-		# the push tires every heavy box in the chain for a turn
-		for ci in chain:
-			if ci < box_heavy.size() and box_heavy[ci]:
-				box_rest[ci] = 2  # tail decrement lands it at 1 next turn
-		if demolish != Vector2i(-1, -1):
-			weak_walls.erase(demolish)
-		else:
-			for i in range(chain.size() - 1, -1, -1):
-				var bidx: int = chain[i]
-				var np2: Vector2i = dest if i == chain.size() - 1 else boxes[bidx] + d
-				# matching-color boxes glide through filter cells (they
-				# never rest on one) — same rule as box_step_dest
-				while i != chain.size() - 1 and filters.has(np2) \
-						and not has_box(np2):
-					np2 += d
-				if i != chain.size() - 1 and _rule_on("portal") and portals.has(np2):
-					var ex: Vector2i = portals[np2]
-					if is_free_for_box(ex):
-						np2 = ex
-						fx_teleport.emit(ex)
-				boxes[bidx] = np2
-				if rules_enabled:
-					for rule in rules:
-						rule.after_box_moved(self, bidx, d)
-			player = target
-			pushed = true
-			push_dest = dest
-			box_pushed_from = target
+		pushed = pr["pushed"]
+		push_dest = pr["dest"]
 	elif is_solid(target) or filters.has(target):
 		return false
 	elif twins.has(target):
@@ -531,33 +454,13 @@ func try_move(d: Vector2i) -> bool:
 		twins[ti] = player
 		player = target
 	else:
-		# Portals: stepping onto one teleports you to its pair.
-		if _rule_on("portal") and portals.has(target):
-			var ex: Vector2i = portals[target]
-			if is_solid(ex) or has_box(ex) or filters.has(ex) \
-					or (ghost_active and ex == ghost_pos):
-				return false
-			target = ex
-			fx_teleport.emit(ex)
-		# Traction zone ('z'): walking away drags the box behind you.
-		# A drag is a displacement: it respects can_push (a maxed-out
-		# push_limit box can't be dragged either) and fires after_push.
-		if pull_cells.has(player):
-			var bi2 := box_at(player - d)
-			var drag_ok := bi2 != -1
-			if drag_ok and rules_enabled:
-				for rule in rules:
-					if not rule.can_push(self, bi2, d):
-						drag_ok = false
-			if drag_ok:
-				box_pushed_from = player - d
-				boxes[bi2] = player
-				box_idx = bi2
-				pushed = true
-				push_dest = boxes[bi2]
-				if rules_enabled:
-					for rule in rules:
-						rule.after_box_moved(self, bi2, d)
+		var wr := _try_step(target, d)
+		if not wr["ok"]:
+			return false
+		target = wr["target"]
+		pushed = wr["pushed"]
+		push_dest = wr["dest"]
+		box_idx = wr["box_idx"]
 		player = target
 	# Fragile floor collapses into a hole once you step off it.
 	if prev_player != player and fragile_cells.has(prev_player):
@@ -611,6 +514,131 @@ func try_move(d: Vector2i) -> bool:
 	moved.emit(snap)
 	changed.emit()
 	return true
+
+
+## Push branch of try_move: chain build, vetoes and the actual slide.
+## {"ok": false} = turn not consumed; demolish returns ok+pushed=false
+## (turn consumed, nothing moved); success sets player/pushed/dest.
+func _try_push(target: Vector2i, d: Vector2i, box_idx: int) -> Dictionary:
+	var head: Vector2i = boxes[box_idx]
+	# One-way under the pushed box: it can only leave along the gate.
+	if one_way.has(head) and one_way[head] != d:
+		return {"ok": false}
+	if rules_enabled:
+		for rule in rules:
+			if not rule.can_push(self, box_idx, d):
+				return {"ok": false}
+	# Chain rule: contiguous rows of boxes are pushed together.
+	var chain: Array[int] = [box_idx]
+	var scan := target + d
+	var bi := box_at(scan)
+	while bi != -1:
+		chain.append(bi)
+		scan += d
+		bi = box_at(scan)
+	if chain.size() > 1 and not _rule_on("chain") and not _rule_on("bond"):
+		return {"ok": false}
+	# Rails: a box on a rail can only be pushed along the rail axis.
+	for ci in chain:
+		if rails.has(boxes[ci]):
+			var ax: Vector2i = rails[boxes[ci]]
+			if (ax.x != 0) != (d.x != 0):
+				return {"ok": false}
+	# Heavy boxes ('n') need a rest turn between pushes.
+	for ci in chain:
+		if ci < box_rest.size() and box_rest[ci] > 0:
+			return {"ok": false}
+	# One-way gates and per-box vetoes (push budgets) apply to every
+	# chain member, not just the head.
+	for ci in chain:
+		if ci != box_idx and one_way.has(boxes[ci]) \
+				and one_way[boxes[ci]] != d:
+			return {"ok": false}
+		if rules_enabled:
+			for rule in rules:
+				if not rule.can_move(self, ci, d):
+					return {"ok": false}
+	# Mid-chain members also respect filters: a wrong-color box can't
+	# even enter the filter cell — the whole push is refused.
+	for i in range(chain.size() - 2, -1, -1):
+		var mid_dest: Vector2i = boxes[chain[i]] + d
+		if filters.has(mid_dest) and chain[i] < box_colors.size() \
+				and int(box_colors[chain[i]]) != int(filters[mid_dest]):
+			return {"ok": false}
+	var dest := _resolve_push(chain[chain.size() - 1], d)
+	var demolish := Vector2i(-1, -1)
+	if dest == Vector2i(-1, -1):
+		# Weak wall: the push demolishes it (turn consumed, nothing moves).
+		var front: Vector2i = boxes[chain[chain.size() - 1]] + d
+		if chain.size() == 1 and weak_walls.has(front):
+			demolish = front
+		else:
+			return {"ok": false}
+	# the push tires every heavy box in the chain for a turn
+	for ci in chain:
+		if ci < box_heavy.size() and box_heavy[ci]:
+			box_rest[ci] = 2  # tail decrement lands it at 1 next turn
+	if demolish != Vector2i(-1, -1):
+		weak_walls.erase(demolish)
+		return {"ok": true, "pushed": false, "dest": Vector2i(-1, -1)}
+	for i in range(chain.size() - 1, -1, -1):
+		var bidx: int = chain[i]
+		var np2: Vector2i = dest if i == chain.size() - 1 else boxes[bidx] + d
+		# matching-color boxes glide through filter cells (they
+		# never rest on one) — same rule as box_step_dest
+		while i != chain.size() - 1 and filters.has(np2) \
+				and not has_box(np2):
+			np2 += d
+		if i != chain.size() - 1 and _rule_on("portal") and portals.has(np2):
+			var ex: Vector2i = portals[np2]
+			if is_free_for_box(ex):
+				np2 = ex
+				fx_teleport.emit(ex)
+		boxes[bidx] = np2
+		if rules_enabled:
+			for rule in rules:
+				rule.after_box_moved(self, bidx, d)
+	player = target
+	box_pushed_from = target
+	return {"ok": true, "pushed": true, "dest": dest}
+
+
+## Walk branch of try_move: portals, then traction-zone drag.
+## {"ok": false} = refused; else the (possibly teleported) target and
+## whether a drag displaced a box.
+func _try_step(target: Vector2i, d: Vector2i) -> Dictionary:
+	var pushed := false
+	var push_dest := Vector2i(-1, -1)
+	var box_idx := -1
+	# Portals: stepping onto one teleports you to its pair.
+	if _rule_on("portal") and portals.has(target):
+		var ex: Vector2i = portals[target]
+		if is_solid(ex) or has_box(ex) or filters.has(ex) \
+				or (ghost_active and ex == ghost_pos):
+			return {"ok": false}
+		target = ex
+		fx_teleport.emit(ex)
+	# Traction zone ('z'): walking away drags the box behind you.
+	# A drag is a displacement: it respects can_push (a maxed-out
+	# push_limit box can't be dragged either) and fires after_push.
+	if pull_cells.has(player):
+		var bi2 := box_at(player - d)
+		var drag_ok := bi2 != -1
+		if drag_ok and rules_enabled:
+			for rule in rules:
+				if not rule.can_push(self, bi2, d):
+					drag_ok = false
+		if drag_ok:
+			box_pushed_from = player - d
+			boxes[bi2] = player
+			box_idx = bi2
+			pushed = true
+			push_dest = boxes[bi2]
+			if rules_enabled:
+				for rule in rules:
+					rule.after_box_moved(self, bi2, d)
+	return {"ok": true, "target": target, "pushed": pushed,
+		"dest": push_dest, "box_idx": box_idx}
 
 
 ## Key tiles: walking over 'k' picks it up.

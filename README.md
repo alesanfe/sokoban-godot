@@ -99,9 +99,9 @@ Extras: **regla secreta** (oculta la descripción hasta resolver el nivel) y **c
 
 - **Publicar** desde el editor: como en Mario Maker, **solo se puede publicar un nivel que tú mismo has superado** en «Probar».
 - **Explorar** el catálogo con orden por Recientes / Populares / Más jugadas / Más superadas y **búsqueda** por título o autor.
-- Cada ficha lleva miniatura, autor, fecha, ♥ likes, ▶ partidas y ✓ superados (contabilizados al jugar desde la comunidad).
+- Cada ficha lleva miniatura, autor, fecha, ♥ likes, ▶ partidas y ✓ superados (contabilizados al jugar desde la comunidad: ▶ cuenta en el primer movimiento real — ver una repetición no suma; ✓ solo con victoria sin asistir).
 - **Like ♥**, **Guardar** en Mis niveles y retirar publicaciones propias.
-- Los datos viven en `user://community.json` a través de `CommunityService` — la API está pensada para poder apuntar a un backend HTTP sin tocar la UI.
+- Los datos viven en `user://community.json` a través de `CommunityService` — **modo local/offline por diseño**: la API está pensada para poder apuntar a un backend HTTP sin tocar la UI, pero no hay servidor de serie.
 - El catálogo arranca con niveles semilla del "Equipo Sokoban".
 
 ## Comodidad y pulido (estilo Parabox / Sokoban++)
