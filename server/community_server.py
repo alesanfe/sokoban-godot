@@ -21,9 +21,12 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+_lock = threading.Lock()  # read-modify-write es atómico entre workers
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE, "community_db.json")
@@ -53,8 +56,11 @@ def _save(entries: list) -> None:
 
 
 def _sanitize(e: dict) -> dict | None:
-    """Strict entry shape — anything else is rejected."""
-    if not isinstance(e.get("data"), dict) or not e["data"].get("cells"):
+    """Strict entry shape — anything else is rejected.
+    LevelData.to_dict() emits {board, over, rules, …} — 'board' is the
+    newline-joined grid string."""
+    if not (isinstance(e.get("data"), dict)
+            and isinstance(e["data"].get("board"), str)):
         return None
     if not isinstance(e.get("title"), str) or not 0 < len(e["title"]) <= MAX_TITLE:
         return None
@@ -123,41 +129,44 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"error": "bad json"})
             return
 
-        entries = _load()
-        if path == "/api/publish":
-            entry = _sanitize(body)
-            if entry is None:
-                self._json(422, {"error": "invalid entry"})
+        # lock alrededor de TODO el read-modify-write: sin él dos
+        # likes concurrentes podían perder uno de los incrementos
+        with _lock:
+            entries = _load()
+            if path == "/api/publish":
+                entry = _sanitize(body)
+                if entry is None:
+                    self._json(422, {"error": "invalid entry"})
+                    return
+                entries.insert(0, entry)
+                _save(entries[:MAX_ENTRIES])
+                self._json(201, {"id": entry["id"]})
                 return
-            entries.insert(0, entry)
-            _save(entries[:MAX_ENTRIES])
-            self._json(201, {"id": entry["id"]})
-            return
 
-        eid = str(body.get("id", ""))
-        entry = next((e for e in entries if e.get("id") == eid), None)
-        if entry is None:
-            self._json(404, {"error": "unknown id"})
-            return
-        if path == "/api/like":
-            entry["likes"] += 1
-        elif path == "/api/play":
-            entry["plays"] += 1
-        elif path == "/api/clear":
-            entry["clears"] += 1
-        elif path == "/api/remove":
-            if body.get("author") != entry["author"]:
-                self._json(403, {"error": "not the author"})
+            eid = str(body.get("id", ""))
+            entry = next((e for e in entries if e.get("id") == eid), None)
+            if entry is None:
+                self._json(404, {"error": "unknown id"})
                 return
-            entries.remove(entry)
+            if path == "/api/like":
+                entry["likes"] += 1
+            elif path == "/api/play":
+                entry["plays"] += 1
+            elif path == "/api/clear":
+                entry["clears"] += 1
+            elif path == "/api/remove":
+                if body.get("author") != entry["author"]:
+                    self._json(403, {"error": "not the author"})
+                    return
+                entries.remove(entry)
+                _save(entries)
+                self._json(200, {"removed": eid})
+                return
+            else:
+                self._json(404, {"error": "not found"})
+                return
             _save(entries)
-            self._json(200, {"removed": eid})
-            return
-        else:
-            self._json(404, {"error": "not found"})
-            return
-        _save(entries)
-        self._json(200, {"ok": True})
+            self._json(200, {"ok": True})
 
     def log_message(self, fmt, *args) -> None:
         sys.stderr.write("[%s] %s\n" % (time.strftime("%H:%M:%S"), fmt % args))
