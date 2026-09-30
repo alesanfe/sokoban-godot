@@ -16,6 +16,7 @@ var _sort := "recent"
 var _tabs: Array = []
 var _list: VBoxContainer
 var _search: LineEdit
+var _sync_label: Label
 
 
 func _init(p_host: Control) -> void:
@@ -71,6 +72,24 @@ func _init(p_host: Control) -> void:
 	search.add_child(_search)
 	v.add_child(search)
 
+	# backend opcional: URL del servidor de comunidad autoalojado
+	# (server/community_server.py). Vacío = modo local puro.
+	var srv := HBoxContainer.new()
+	srv.add_theme_constant_override("separation", 6)
+	srv.add_child(Widgets.label("Servidor:", 13, Color(0.6, 0.6, 0.65)))
+	var url_edit := LineEdit.new()
+	url_edit.placeholder_text = "vacío = offline · p. ej. http://192.168.1.10:8765"
+	url_edit.text = CommunityRemote.url()
+	url_edit.custom_minimum_size = Vector2(280, 34)
+	url_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	url_edit.text_submitted.connect(func(t):
+		Storage.set_setting("community_remote_url", t.strip_edges())
+		_sync_remote())
+	srv.add_child(url_edit)
+	_sync_label = Widgets.label("", 12, Color(0.6, 0.6, 0.65))
+	srv.add_child(_sync_label)
+	v.add_child(srv)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(scroll)
@@ -81,6 +100,23 @@ func _init(p_host: Control) -> void:
 
 	CommunityService.seed_officials()
 	_populate()
+	_sync_remote()
+
+
+## Si hay backend configurado, refresca el espejo y repinta el feed.
+func _sync_remote() -> void:
+	if not CommunityRemote.enabled():
+		if is_instance_valid(_sync_label):
+			_sync_label.text = "modo local"
+		return
+	if is_instance_valid(_sync_label):
+		_sync_label.text = "sincronizando…"
+	CommunityService.sync_remote(func(r):
+		if is_instance_valid(_sync_label):
+			_sync_label.text = ("conectado" if r.get("ok", false)
+				else "sin conexión al servidor")
+		if r.get("ok", false) and is_inside_tree():
+			_populate())
 
 
 const PAGE := 20  # cada fila construye un thumbnail (GameState+BoardView)
@@ -93,7 +129,8 @@ func _populate() -> void:
 	var q := _search.text.strip_edges().to_lower()
 	if q != "":
 		es = es.filter(func(e):
-			return str(e.get("title", "")).to_lower().contains(q) \
+			var l: LevelData = e["level"]
+			return (l != null and l.title.to_lower().contains(q)) \
 				or str(e.get("author", "")).to_lower().contains(q))
 	if es.is_empty():
 		_list.add_child(Widgets.label(

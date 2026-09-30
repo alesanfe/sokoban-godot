@@ -101,7 +101,7 @@ Extras: **regla secreta** (oculta la descripción hasta resolver el nivel) y **c
 - **Explorar** el catálogo con orden por Recientes / Populares / Más jugadas / Más superadas y **búsqueda** por título o autor.
 - Cada ficha lleva miniatura, autor, fecha, ♥ likes, ▶ partidas y ✓ superados (contabilizados al jugar desde la comunidad: ▶ cuenta en el primer movimiento real — ver una repetición no suma; ✓ solo con victoria sin asistir).
 - **Like ♥**, **Guardar** en Mis niveles, **⤴ compartir** (copia el código `SKM1.` del nivel al portapapeles — el canal de intercambio real en modo offline) y retirar publicaciones propias.
-- Los datos viven en `user://community.json` a través de `CommunityService` — **modo local/offline por diseño**: la API está pensada para poder apuntar a un backend HTTP sin tocar la UI, pero no hay servidor de serie.
+- Los datos viven en `user://community.json` a través de `CommunityService` — **modo local/offline por defecto**, con un backend autoalojable opcional: `python server/community_server.py [puerto]` (solo stdlib) y pegar su URL en el campo «Servidor» de la pantalla Comunidad. El feed remoto se sincroniza a un espejo local y likes/partidas/superados se replican al servidor; el nivel publicado se envía tras superar el gate de «Probar».
 - El catálogo arranca con niveles semilla del "Equipo Sokoban".
 
 ## Comodidad y pulido (estilo Parabox / Sokoban++)
@@ -155,3 +155,13 @@ Todo persiste en `user://settings.json` y se agrupa en **Opciones…**:
 Flechas/WASD mover (mantener pulsado repite) · Z deshacer · Y rehacer · R reiniciar · Espacio cambiar de gemelo · T migas (tu mejor ruta) · F1 solución automática · H pista (siguiente movimiento) · V repetición guardada · Esc menú.
 
 Cada nivel muestra su **par** (movimientos óptimos según el solver); al completar se puntúa con ★–★★★.
+
+## Exportar (web)
+
+Con las export templates instaladas (`%APPDATA%\Godot\export_templates\4.7.2.stable`):
+
+```powershell
+godot --headless --path . --export-release "Web" export\web\index.html
+```
+
+Genera `export/web/` (index.html + wasm + pck) servible desde cualquier host estático. El preset excluye `tests/`, `tools/` y `server/`.
