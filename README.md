@@ -98,7 +98,7 @@ Extras: **regla secreta** (oculta la descripción hasta resolver el nivel) y **c
 ## Comunidad (estilo Mario Maker)
 
 - **Publicar** desde el editor: como en Mario Maker, **solo se puede publicar un nivel que tú mismo has superado** en «Probar».
-- **Explorar** el catálogo con orden por Recientes / Populares / Más jugadas / Más superadas.
+- **Explorar** el catálogo con orden por Recientes / Populares / Más jugadas / Más superadas y **búsqueda** por título o autor.
 - Cada ficha lleva miniatura, autor, fecha, ♥ likes, ▶ partidas y ✓ superados (contabilizados al jugar desde la comunidad).
 - **Like ♥**, **Guardar** en Mis niveles y retirar publicaciones propias.
 - Los datos viven en `user://community.json` a través de `CommunityService` — la API está pensada para poder apuntar a un backend HTTP sin tocar la UI.
@@ -142,6 +142,7 @@ Todo persiste en `user://settings.json` y se agrupa en **Opciones…**:
 ## Editor de niveles
 
 - Paleta de 46 tiles (paredes, cajas, miméticas, objetivos, tímidas, interruptores, portales, cintas, llaves, puertas, bombas, unidireccionales, cajas/metas de color y sus compuestos sobre meta, agujeros, frágiles, raíles, muros débiles, intercambios, gemelo) con cuentagotas (Alt+clic o clic medio) y zoom ±.
+- **Overlays de ocupante**: una caja sellada sobre terreno pisable no expresable (meta de otro color, cinta, portal, interruptor…) no pisa el tile — se guarda como overlay (`LevelData.over`) y viaja en los códigos SKM1.
 - Herramientas de forma: **punto, línea, rectángulo y relleno** (flood), con vista previa al arrastrar.
 - **Pintura simétrica** (espejo X/Y) y transformaciones de tablero: voltear ↔/↕, rotar ⟳ (las cintas rotan su flecha).
 - **Ctrl+Z / Ctrl+Y** deshacer/rehacer (100 pasos).
