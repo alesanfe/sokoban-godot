@@ -20,6 +20,10 @@ self-hosted instances shared with strangers on a LAN.
 The heavy validation (level parse, playtest gate) stays client-side;
 the server enforces shape/size limits so a malformed payload can't
 poison the feed.
+
+CORS is `*`: the feed is PUBLIC read-only data and auth travels in the
+POST body (no cookies/credentials), so an open policy leaks nothing.
+Error payloads carry a stable "code" for clients, plus "error" text.
 """
 
 import json
@@ -33,6 +37,12 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 _lock = threading.Lock()  # read-modify-write es atómico entre workers
+_rate_lock = threading.Lock()
+_rate: dict[str, list] = {}          # ip -> timestamps de mutaciones
+
+RATE_WINDOW = 60.0                   # s
+RATE_MAX = 30                        # POST por ventana e IP — el juego
+# legítimo hace ≤ ~5/min (publish+like+clear); el límite corta floods
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE, "community_db.json")
@@ -96,7 +106,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
-    def _json(self, code: int, obj) -> None:
+    def _json(self, code: int, obj, err_code: str = "") -> None:
+        # errores = {"error": texto, "code": estable} — el cliente
+        # puede reaccionar sin parsear strings variables
+        if code >= 400 and isinstance(obj, dict):
+            obj = {"code": err_code or "error", **obj}
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
         self._cors()
@@ -119,24 +133,36 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path.rstrip("/") == "/api/health":
             self._json(200, {"ok": True})
         else:
-            self._json(404, {"error": "not found"})
+            self._json(404, {"error": "not found"}, "not_found")
 
     def do_POST(self) -> None:
         path = self.path.rstrip("/")
+        # rate-limit por IP: ventana deslizante de mutaciones — sin él
+        # un script podía inflar contadores o machacar el disco con
+        # _save() en cada request
+        with _rate_lock:
+            now = time.time()
+            ws = _rate.setdefault(self.client_address[0], [])
+            ws[:] = [t for t in ws if now - t < RATE_WINDOW]
+            if len(ws) >= RATE_MAX:
+                self._json(429, {"error": "rate limited"},
+                           "rate_limited")
+                return
+            ws.append(now)
         try:
             n = int(self.headers.get("Content-Length", 0))
         except ValueError:
             n = 0
         if not 0 < n <= MAX_ENTRY_BYTES + 4096:
-            self._json(400, {"error": "bad body"})
+            self._json(400, {"error": "bad body"}, "bad_body")
             return
         try:
             body = json.loads(self.rfile.read(n))
         except json.JSONDecodeError:
-            self._json(400, {"error": "bad json"})
+            self._json(400, {"error": "bad json"}, "bad_json")
             return
         if not isinstance(body, dict):
-            self._json(400, {"error": "bad json"})
+            self._json(400, {"error": "bad json"}, "bad_json")
             return
 
         # lock alrededor de TODO el read-modify-write: sin él dos
@@ -146,7 +172,8 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/publish":
                 entry = _sanitize(body)
                 if entry is None:
-                    self._json(422, {"error": "invalid entry"})
+                    self._json(422, {"error": "invalid entry"},
+                               "invalid_entry")
                     return
                 entries.insert(0, entry)
                 _save(entries[:MAX_ENTRIES])
@@ -156,7 +183,7 @@ class Handler(BaseHTTPRequestHandler):
             eid = str(body.get("id", ""))
             entry = next((e for e in entries if e.get("id") == eid), None)
             if entry is None:
-                self._json(404, {"error": "unknown id"})
+                self._json(404, {"error": "unknown id"}, "unknown_id")
                 return
             if path == "/api/like":
                 entry["likes"] += 1
@@ -168,14 +195,15 @@ class Handler(BaseHTTPRequestHandler):
                 if not secrets.compare_digest(
                         str(entry.get("token", "")),
                         str(body.get("token", ""))):
-                    self._json(403, {"error": "not the author"})
+                    self._json(403, {"error": "not the author"},
+                               "forbidden")
                     return
                 entries.remove(entry)
                 _save(entries)
                 self._json(200, {"removed": eid})
                 return
             else:
-                self._json(404, {"error": "not found"})
+                self._json(404, {"error": "not found"}, "not_found")
                 return
             _save(entries)
             self._json(200, {"ok": True})
