@@ -198,24 +198,38 @@ static func sync_remote(cb: Callable) -> void:
 	CommunityRemote.pull_feed(func(r):
 		if r.get("ok", false):
 			var cat := _catalog()
-			var prev: Dictionary = cat.get("remote_entries", {})
-			var re := {}
-			for e in r["entries"]:
-				if typeof(e) != TYPE_DICTIONARY or not e.get("id"):
-					continue
-				var rid := str(e["id"])
-				re[rid] = {
-					"level": e.get("data", {}),
-					"author": str(e.get("author", "")),
-					"ts": int(e.get("ts", 0)),
-					"likes": int(e.get("likes", 0)),
-					"plays": int(e.get("plays", 0)),
-					"clears": int(e.get("clears", 0)),
-					"liked": bool(prev.get(rid, {}).get("liked", false)),
-				}
-			cat["remote_entries"] = re
+			merge_remote_feed(cat, r["entries"])
 			_save(cat)
 		cb.call({"ok": r.get("ok", false)}))
+
+
+## Merge puro del feed del servidor → cat["remote_entries"]:
+## preserva `liked` y NO espeja los rid ya cubiertos por una
+## publicación local (remote_id) — sin esto el nivel propio salía
+## dos veces en el feed. Testeable sin HTTP (runner).
+static func merge_remote_feed(cat: Dictionary, remote: Array) -> void:
+	var published := {}
+	for e in cat.get("entries", {}).values():
+		if typeof(e) == TYPE_DICTIONARY and e.get("remote_id"):
+			published[str(e["remote_id"])] = true
+	var prev: Dictionary = cat.get("remote_entries", {})
+	var re := {}
+	for e in remote:
+		if typeof(e) != TYPE_DICTIONARY or not e.get("id"):
+			continue
+		var rid := str(e["id"])
+		if published.has(rid):
+			continue   # la entrada local ya representa esta publicación
+		re[rid] = {
+			"level": e.get("data", {}),
+			"author": str(e.get("author", "")),
+			"ts": int(e.get("ts", 0)),
+			"likes": int(e.get("likes", 0)),
+			"plays": int(e.get("plays", 0)),
+			"clears": int(e.get("clears", 0)),
+			"liked": bool(prev.get(rid, {}).get("liked", false)),
+		}
+	cat["remote_entries"] = re
 
 
 ## Niveles semilla "oficiales" para que la comunidad no arranque vacía.

@@ -39,6 +39,7 @@ func _initialize() -> void:
 	test_storage_robustness()
 	test_occupant_overlays()
 	test_win_stats()
+	test_community_merge_remote()
 	test_replay_determinism_fuzz()
 	test_campaign_solvable()
 	print("== %d checks, %d failures ==" % [checks, failures])
@@ -745,6 +746,28 @@ func test_win_stats() -> void:
 	ok(WinStats.summary(10, 8, 4, 0.0, 0, 0, true)
 		.contains("con solucionador"),
 		"summary: badge asistido")
+
+
+func test_community_merge_remote() -> void:
+	# N-3: el nivel publicado propio ya tiene remote_id local — el
+	# espejo no debe duplicarlo; liked se preserva entre syncs
+	var cat := {"entries": {
+		"loc1": {"remote_id": "srv-a", "author": "dev"}},
+		"remote_entries": {"srv-b": {"liked": true}}}
+	var feed := [
+		{"id": "srv-a", "data": {}, "author": "dev", "ts": 1},
+		{"id": "srv-b", "data": {}, "author": "x", "ts": 2, "likes": 5},
+		{"id": "srv-c", "data": {}, "author": "y", "ts": 3}]
+	CommunityService.merge_remote_feed(cat, feed)
+	var re: Dictionary = cat["remote_entries"]
+	ok(not re.has("srv-a"), "remote merge: no duplica la publicación propia")
+	ok(re.has("srv-b") and bool(re["srv-b"]["liked"]),
+		"remote merge: liked preservado")
+	ok(int(re["srv-b"]["likes"]) == 5, "remote merge: contadores del servidor")
+	ok(re.has("srv-c"), "remote merge: entradas nuevas entran")
+	# entry corrupta en el feed no rompe el merge
+	CommunityService.merge_remote_feed(cat, [{"id": "", "data": {}}, "x"])
+	ok(cat["remote_entries"].is_empty(), "remote merge: feed corrupto → espejo vacío")
 
 
 func test_replay_determinism_fuzz() -> void:
