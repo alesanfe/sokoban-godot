@@ -19,6 +19,10 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 
 ## Galería
 
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Partida autojugada: el jugador empuja dos cajas sobre sus metas y el panel de victoria muestra movimientos y empujes" width="640">
+</p>
+
 <table>
   <tr>
     <td><img src="docs/assets/gameplay.png" alt="Nivel con cintas, portales y cajas de color en juego"></td>
@@ -30,7 +34,9 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
   </tr>
 </table>
 
-*Las capturas se regeneran con `godot --path . -s res://tools/screenshots.gd`.*
+*Las capturas se regeneran con `godot --path . -s res://tools/screenshots.gd`
+y el GIF con `godot --path . -s res://tools/gif_demo.gd` +
+`python tools/make_gif.py`.*
 
 ## Para el jugador
 
