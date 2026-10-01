@@ -1,8 +1,16 @@
 # Sokoban Mutante
 
+![License](https://img.shields.io/badge/license-MIT-blue) ![Godot](https://img.shields.io/badge/Godot-4.7-478cbf) ![Version](https://img.shields.io/badge/version-1.1.0-green)
+
 Sokoban donde cada nivel introduce una regla absurda. Proyecto **Godot 4.7** (GDScript) · **MIT** · v1.1.0.
 
-📖 [Arquitectura](docs/ARCHITECTURE.md) · [API del backend](docs/API.md) · [ADRs](docs/decisions/) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md) · [Changelog](CHANGELOG.md)
+📖 [Arquitectura](docs/ARCHITECTURE.md) · [Requisitos](docs/REQUIREMENTS.md) · [API](docs/API.md) · [Modelo de datos](docs/DATA_MODEL.md) · [Amenazas](docs/THREAT_MODEL.md) · [Operación](docs/OPERATIONS.md) · [SLOs](docs/operations/SLO.md) · [Privacidad](docs/PRIVACY.md) · [ADRs](docs/decisions/) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md) · [Changelog](CHANGELOG.md)
+
+## Un comando lo verifica todo
+
+```powershell
+tools/test_all.ps1     # o tools/test_all.sh — todas las suites + backend
+```
 
 Contenido: **155 niveles clásicos** (pack Microban de David W. Skinner, `levels/microban.sok`, formato XSB estándar) y **81 niveles de campaña** que introducen y combinan cada regla absurda, incluyendo interruptores `!` y reglas secretas.
 

@@ -15,6 +15,9 @@ godot --editor --path .   # editor Godot
 
 ## Tests (obligatorios en cada PR)
 
+Todo de golpe: `tools/test_all.ps1` / `tools/test_all.sh`
+(GODOT=… para indicar el binario). O por suite:
+
 ```bash
 godot --headless --path . -s res://tests/test_runner.gd      # motor/core
 godot --headless --path . -s res://tests/test_ui.gd          # UI + E2E comunidad (necesita python en PATH)

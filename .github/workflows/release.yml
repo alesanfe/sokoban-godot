@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write      # attestation de procedencia
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - uses: chickensoft-games/setup-godot@v2
@@ -33,10 +35,20 @@ jobs:
           zip -r ../sokoban-mutante-web.zip .
           cd ..
           sha256sum sokoban-mutante-web.zip > sokoban-mutante-web.zip.sha256
+      - name: SBOM (CycloneDX)
+        run: |
+          pip install cyclonedx-bom==4.6.0
+          cyclonedx-py environment -o sbom.json --of JSON \
+            --mc-type application || true
+      - name: Attestación de procedencia (SLSA)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: sokoban-mutante-web.zip
       - name: Publicar release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             sokoban-mutante-web.zip
             sokoban-mutante-web.zip.sha256
+            sbom.json
           generate_release_notes: true
