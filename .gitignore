@@ -1,7 +1,8 @@
-﻿.godot/
+.godot/
 export/
 user://
 *.tmp
 *.uid
 __pycache__/
-server/community_db.json
+server/community.db*
+server/community_db.json*
