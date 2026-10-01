@@ -1,0 +1,42 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release-web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          include-prereleases: true
+          use-dotnet: false
+          # export templates descargadas por la acción
+          godot-export-templates: true
+      - name: Suites (gate de release)
+        run: |
+          godot --headless --path . --import
+          godot --headless --path . -s res://tests/test_runner.gd
+          godot --headless --path . -s res://tests/test_rules.gd
+      - name: Export web
+        run: |
+          mkdir -p dist
+          godot --headless --path . --export-release "Web" dist/index.html
+      - name: Paquete + SHA256
+        run: |
+          cd dist
+          zip -r ../sokoban-mutante-web.zip .
+          cd ..
+          sha256sum sokoban-mutante-web.zip > sokoban-mutante-web.zip.sha256
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sokoban-mutante-web.zip
+            sokoban-mutante-web.zip.sha256
+          generate_release_notes: true

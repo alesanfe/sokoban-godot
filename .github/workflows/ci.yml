@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m py_compile server/community_server.py
-      # smoke: arranca, health, register, publish, feed, remove
+      # smoke: arranca, health, register, publish, feed
       - run: |
           python server/community_server.py --port 18765 --db /tmp/skm_ci.db &
           sleep 1.5
@@ -40,5 +40,16 @@ jobs:
             -d '{"username":"ci","password":"pw1234"}' | python -c 'import json,sys;print(json.load(sys.stdin)["token"])')
           curl -sf -X POST http://127.0.0.1:18765/api/publish \
             -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-            -d '{"title":"ci","data":{"board":"#####\n#@$.#\n#####"}}' > /dev/null
+            -d '{"title":"ci","data":{"board":"#####\n#@$.#\n#####"},"moves":"r"}' | grep -q '"verified": *1'
           curl -sf "http://127.0.0.1:18765/api/feed?limit=1" | grep -q '"total": *1'
+      - name: Load test (concurrencia + consistencia de likes)
+        run: python server/test_load.py
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:8.18.4 \
+            detect --source=/repo --no-git -v

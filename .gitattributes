@@ -1,0 +1,18 @@
+# Fin de línea consistente multiplataforma (los warnings CRLF de
+# Windows desaparecen con esto)
+* text=auto eol=lf
+
+# Binarios que nunca deben tocarse
+*.png binary
+*.wasm binary
+*.pck binary
+*.db binary
+*.swf binary
+*.svg text eol=lf
+
+# Archivos de export de GitHub (zip de release): solo lo necesario
+docs/ export-ignore
+tests/ export-ignore
+tools/ export-ignore
+.github/ export-ignore
+server/ export-ignore

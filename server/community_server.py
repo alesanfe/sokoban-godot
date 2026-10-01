@@ -570,6 +570,10 @@ class Handler(BaseHTTPRequestHandler):
                     "token_expired" if expired else "auth_required")
                 return
             with _conn() as c:
+                # BEGIN IMMEDIATE serializa el toggle: check+insert no
+                # es atómico y dos likes concurrentes de la misma
+                # cuenta provocaban IntegrityError por la PK
+                c.execute("BEGIN IMMEDIATE")
                 if c.execute("SELECT 1 FROM entries WHERE id=?",
                              (eid,)).fetchone() is None:
                     self._json(404, {"error": "unknown id"},
