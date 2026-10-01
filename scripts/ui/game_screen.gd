@@ -14,9 +14,7 @@ var board_holder: Control
 var hud_rules: Label
 var hud_status: Label
 var hud_keys: Label
-var win_panel: PanelContainer
-var _win_scroll: ScrollContainer
-var win_label: Label
+var win_panel: WinPanel
 
 var autoplay: PackedStringArray = []
 var autoplay_i := 0        # cursor into autoplay (avoids per-step slice)
@@ -98,46 +96,14 @@ func _init(p_host: Control) -> void:
 	b_menu.pressed.connect(func(): _exit())
 	side.add_child(b_menu)
 
-	win_panel = PanelContainer.new()
-	win_panel.set_anchors_preset(Control.PRESET_CENTER)
-	win_panel.custom_minimum_size = Vector2(380, 0)
-	win_panel.visible = false
+	# el panel es su propio componente: layout, scroll-clamp y
+	# botones; aquí solo se conectan las señales a las acciones
+	win_panel = WinPanel.new()
+	win_panel.next_pressed.connect(_next_level)
+	win_panel.replay_pressed.connect(_replay_saved)
+	win_panel.share_pressed.connect(_share_solution)
+	win_panel.menu_pressed.connect(_exit)
 	add_child(win_panel)
-	# Scroll fallback: on small windows the panel can exceed the
-	# viewport — clamp it so the buttons are always reachable.
-	_win_scroll = ScrollContainer.new()
-	_win_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	win_panel.add_child(_win_scroll)
-	var wv := VBoxContainer.new()
-	wv.add_theme_constant_override("separation", 10)
-	wv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_win_scroll.add_child(wv)
-	win_label = Widgets.label("¡Nivel completado!", 22, Color(0.4, 0.9, 0.5))
-	wv.add_child(win_label)
-	# two rows of paired buttons: compact enough to fit small windows
-	var brow := HBoxContainer.new()
-	brow.alignment = BoxContainer.ALIGNMENT_CENTER
-	brow.add_theme_constant_override("separation", 8)
-	wv.add_child(brow)
-	var b_next := Widgets.button("Siguiente nivel")
-	b_next.pressed.connect(func(): _next_level())
-	brow.add_child(b_next)
-	var b_rep := Widgets.button("Ver mi repetición")
-	b_rep.pressed.connect(func(): _replay_saved())
-	brow.add_child(b_rep)
-	var brow2 := HBoxContainer.new()
-	brow2.alignment = BoxContainer.ALIGNMENT_CENTER
-	brow2.add_theme_constant_override("separation", 8)
-	wv.add_child(brow2)
-	var b_share := Widgets.button("Compartir solución")
-	b_share.pressed.connect(func():
-		var code := level.to_code()
-		DisplayServer.clipboard_set(code + " · " + "".join(state.move_log))
-		b_share.text = "✓ Nivel+solución copiados")
-	brow2.add_child(b_share)
-	var b_menu2 := Widgets.button("Menú")
-	b_menu2.pressed.connect(func(): _exit())
-	brow2.add_child(b_menu2)
 
 
 func start(p_level: LevelData, p_context: Dictionary = {}) -> void:
@@ -681,11 +647,7 @@ func _on_win() -> void:
 	_status_sig = ""
 	_refresh_rules_hud()
 	_win_refresh(moves, pushes, assisted)
-	# clamp to the viewport so tall win panels never lose their buttons
-	var max_h := get_viewport_rect().size.y - 24.0
-	_win_scroll.custom_minimum_size.y = minf(
-		_win_scroll.get_child(0).get_combined_minimum_size().y + 8.0, max_h)
-	win_panel.visible = true
+	win_panel.show_panel(get_viewport_rect().size.y)
 	# Levels without a baked par (generated/editor/community): compute it
 	# off-thread — solving on the main thread would freeze the win moment.
 	if level.par <= 0:
@@ -699,8 +661,13 @@ func _on_win() -> void:
 
 
 func _win_refresh(moves: int, pushes: int, assisted: bool = false) -> void:
-	win_label.text = WinStats.summary(level.par, moves, pushes,
-		state.elapsed, undos_used, restarts_used, assisted)
+	win_panel.set_summary(WinStats.summary(level.par, moves, pushes,
+		state.elapsed, undos_used, restarts_used, assisted))
+
+
+func _share_solution() -> void:
+	var code := level.to_code()
+	DisplayServer.clipboard_set(code + " · " + "".join(state.move_log))
 
 
 func _confetti() -> void:
