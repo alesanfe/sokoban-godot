@@ -339,6 +339,21 @@ def _sanitize(e: dict) -> dict | None:
 class Handler(BaseHTTPRequestHandler):
     server_version = "SokobanCommunity/3.0"
     protocol_version = "HTTP/1.1"
+    # Un socket sin timeout deja un thread vivo por cada cliente que
+    # no envía nada (slowloris). 15 s cubre latencias malas reales.
+    SOCKET_TIMEOUT = 15.0
+
+    def setup(self) -> None:
+        super().setup()
+        self.request.settimeout(self.SOCKET_TIMEOUT)
+
+    def handle_one_request(self) -> None:
+        # un read que expira cierra la conexión en vez de propagar
+        # un traceback de socket por request lento
+        try:
+            super().handle_one_request()
+        except (TimeoutError, OSError):
+            self.close_connection = True
 
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
