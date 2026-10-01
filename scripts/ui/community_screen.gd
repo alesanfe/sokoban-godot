@@ -17,6 +17,8 @@ var _tabs: Array = []
 var _list: VBoxContainer
 var _search: LineEdit
 var _sync_label: Label
+var _auth_label: Label
+var _auth_row: HBoxContainer
 
 
 func _init(p_host: Control) -> void:
@@ -90,6 +92,45 @@ func _init(p_host: Control) -> void:
 	srv.add_child(_sync_label)
 	v.add_child(srv)
 
+	# cuenta del backend: publish/like requieren Bearer en el servidor
+	_auth_row = HBoxContainer.new()
+	var auth := _auth_row
+	auth.add_theme_constant_override("separation", 6)
+	var user_edit := LineEdit.new()
+	user_edit.placeholder_text = "usuario"
+	user_edit.custom_minimum_size = Vector2(130, 34)
+	var pass_edit := LineEdit.new()
+	pass_edit.placeholder_text = "contraseña"
+	pass_edit.secret = true
+	pass_edit.custom_minimum_size = Vector2(130, 34)
+	var b_login := Widgets.button("Entrar")
+	b_login.custom_minimum_size = Vector2(90, 34)
+	var b_reg := Widgets.button("Registro")
+	b_reg.custom_minimum_size = Vector2(100, 34)
+	_auth_label = Widgets.label("", 12, Color(0.6, 0.6, 0.65))
+	var do_auth := func(action: String):
+		if CommunityRemote.username() != "":
+			CommunityRemote.logout()   # el botón pasa a "Salir"
+			_refresh_auth()
+			return
+		CommunityRemote.auth(action,
+			user_edit.text.strip_edges(), pass_edit.text, func(r):
+				_refresh_auth()
+				if is_instance_valid(_auth_label):
+					_auth_label.text = ("conectado como " +
+						CommunityRemote.username() if r.get("ok", false)
+						else str(r.get("body", {}).get("error",
+							"sin conexión"))))
+	b_login.pressed.connect(func(): do_auth.call("login"))
+	b_reg.pressed.connect(func(): do_auth.call("register"))
+	auth.add_child(user_edit)
+	auth.add_child(pass_edit)
+	auth.add_child(b_login)
+	auth.add_child(b_reg)
+	auth.add_child(_auth_label)
+	v.add_child(auth)
+	_refresh_auth()
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(scroll)
@@ -101,6 +142,25 @@ func _init(p_host: Control) -> void:
 	CommunityService.seed_officials()
 	_populate()
 	_sync_remote()
+
+
+## Refleja el estado de sesión: con login solo queda el botón Entrar
+## (re-etiquetado "Salir") — pulsarlo hace logout; sin login aparecen
+## usuario+pass+Entrar+Registro.
+func _refresh_auth() -> void:
+	var logged := CommunityRemote.logged_in()
+	if _auth_row != null:
+		for c in _auth_row.get_children():
+			if c is LineEdit:
+				c.visible = not logged
+			elif c is Button and c.text == "Registro":
+				c.visible = not logged
+			elif c is Button and c.text in ["Entrar", "Salir"]:
+				c.text = "Salir" if logged else "Entrar"
+				c.visible = true
+	if _auth_label != null:
+		_auth_label.text = ("sesión: " + CommunityRemote.username()
+			if logged else "")
 
 
 ## Si hay backend configurado, refresca el espejo y repinta el feed.

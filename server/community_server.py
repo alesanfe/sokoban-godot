@@ -7,16 +7,19 @@ Data:   server/community.db (SQLite, WAL — safe under ThreadingHTTPServer;
         migrates a legacy community_db.json on first start)
 
 Endpoints (all JSON):
+  POST /api/register {username, password} -> {"token", "username"}
+  POST /api/login    {username, password} -> {"token", "username"}
   GET  /api/feed?offset=N&limit=M    -> {"entries":[…], "total", "offset", "limit"}
   GET  /api/health                   -> {"ok": true}  (fails if the DB is gone)
-  POST /api/publish  {title, author, data, rules, par?}  -> {"id", "token"}
-  POST /api/like     {id}            POST /api/play {id}   POST /api/clear {id}
-  POST /api/remove   {id, token}  — token returned by /api/publish
+  POST /api/publish  {title, data, rules, par?}  -> {"id", "token"}   (Bearer)
+  POST /api/like     {id}  -> {"liked", "likes"}  (Bearer — toggle real)
+  POST /api/play     {id}            POST /api/clear {id}   (anónimos)
+  POST /api/remove   {id}  (Bearer del autor)  o {id, token} (legacy)
 
-Auth: publish issues a per-entry token; remove requires it. The token
-is never exposed by /api/feed (not selected). Name-matching alone let
-anyone retire a level; the token is the actual auth boundary for
-self-hosted instances shared with strangers on a LAN.
+Auth: register/login issue Bearer tokens (sessions table); publish
+and like REQUIRE a session; remove requires the owner's session or the
+legacy per-entry token. Passwords are pbkdf2_sha256 (100k, per-user
+salt) — stdlib crypto, no plaintext anywhere.
 
 CORS is `*`: the feed is PUBLIC read-only data and auth travels in the
 POST body (no cookies/credentials), so an open policy leaks nothing.
@@ -29,8 +32,11 @@ of loading the whole catalogue on every request.
 """
 
 import argparse
+import hashlib
+import hmac
 import json
 import os
+import re
 import secrets
 import sqlite3
 import sys
@@ -60,6 +66,8 @@ MAX_AUTHOR = 40
 MAX_BOARD_ROWS = 80                  # el editor permite hasta 64×48;
 MAX_BOARD_LINE = 128                 # esto deja margen sin abusos
 FEED_MAX_LIMIT = 200
+USER_RE = re.compile(r"^[A-Za-z0-9_.\-]{3,24}$")
+PBKDF2_ROUNDS = 100_000
 
 _COLS = ("id", "title", "author", "data", "rules", "difficulty",
          "par", "ts", "likes", "plays", "clears")   # token NUNCA aquí
@@ -83,6 +91,19 @@ def _init_db() -> None:
             clears INTEGER DEFAULT 0)""")
         c.execute("CREATE INDEX IF NOT EXISTS idx_entries_ts"
                   " ON entries(ts DESC, id)")
+        c.execute("""CREATE TABLE IF NOT EXISTS users(
+            username TEXT PRIMARY KEY,
+            pw TEXT NOT NULL, salt TEXT NOT NULL, ts INTEGER)""")
+        c.execute("""CREATE TABLE IF NOT EXISTS sessions(
+            token TEXT PRIMARY KEY, user TEXT NOT NULL, ts INTEGER)""")
+        c.execute("""CREATE TABLE IF NOT EXISTS likes(
+            entry_id TEXT NOT NULL, user TEXT NOT NULL,
+            PRIMARY KEY(entry_id, user))""")
+        # entries.user = cuenta propietaria (legacy JSON importado: NULL)
+        try:
+            c.execute("ALTER TABLE entries ADD COLUMN user TEXT")
+        except sqlite3.OperationalError:
+            pass   # la columna ya existe
         # migración desde el store JSON anterior (si existe): importa
         # una vez y renombra el fichero para no repetir
         if os.path.exists(LEGACY_JSON):
@@ -134,6 +155,22 @@ def _feed(offset: int, limit: int) -> dict:
             "offset": offset, "limit": limit}
 
 
+def _hash_pw(password: str, salt: str) -> str:
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"),
+                               bytes.fromhex(salt), PBKDF2_ROUNDS).hex()
+
+
+def _auth(headers) -> str | None:
+    """Authorization: Bearer <token> → username o None."""
+    h = headers.get("Authorization", "")
+    if not h.startswith("Bearer "):
+        return None
+    with _conn() as c:
+        row = c.execute("SELECT user FROM sessions WHERE token=?",
+                        (h[7:],)).fetchone()
+    return row[0] if row else None
+
+
 def _sanitize(e: dict) -> dict | None:
     """Strict entry shape — anything else is rejected.
     LevelData.to_dict() emits {board, over, rules, …} — 'board' is the
@@ -160,7 +197,8 @@ def _sanitize(e: dict) -> dict | None:
         "data": json.dumps(e["data"], ensure_ascii=False),
         "rules": json.dumps([str(r)[:24] for r in rules],
                           ensure_ascii=False),
-        "difficulty": max(0, min(5, int(e.get("difficulty", 1) or 1))),
+        "difficulty": max(0, min(5,
+            int(e.get("difficulty", 1) or 1))),
         "par": max(0, int(e.get("par", 0) or 0)),
         "ts": int(time.time()),
     }
@@ -249,19 +287,67 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"error": "bad json"}, "bad_json")
             return
 
+        if path in ("/api/register", "/api/login"):
+            user = str(body.get("username", "")).strip()
+            pw = str(body.get("password", ""))
+            if not USER_RE.match(user):
+                self._json(422, {"error": "username 3-24 [A-Za-z0-9_.-]"},
+                           "invalid_user")
+                return
+            if path == "/api/register":
+                if len(pw) < 4:
+                    self._json(422, {"error": "password min 4"},
+                               "invalid_user")
+                    return
+                salt = secrets.token_hex(8)
+                with _conn() as c:
+                    try:
+                        c.execute("INSERT INTO users VALUES(?,?,?,?)",
+                                  (user, _hash_pw(pw, salt), salt,
+                                   int(time.time())))
+                    except sqlite3.IntegrityError:
+                        self._json(409, {"error": "user exists"},
+                                   "user_exists")
+                        return
+            else:
+                with _conn() as c:
+                    row = c.execute("SELECT pw,salt FROM users"
+                                    " WHERE username=?",
+                                    (user,)).fetchone()
+                ok = row is not None and secrets.compare_digest(
+                    row[0], _hash_pw(pw, row[1]))
+                if not ok:
+                    # misma respuesta para user inexistente — no
+                    # enumerar cuentas por el mensaje
+                    self._json(401, {"error": "bad credentials"},
+                               "bad_credentials")
+                    return
+            token = secrets.token_hex(24)
+            with _conn() as c:
+                c.execute("INSERT INTO sessions VALUES(?,?,?)",
+                          (token, user, int(time.time())))
+            self._json(200, {"token": token, "username": user})
+            return
+
         if path == "/api/publish":
-            entry = _sanitize(body)
+            me = _auth(self.headers)
+            if me is None:
+                self._json(401, {"error": "login required"},
+                           "auth_required")
+                return
+            body = {**body, "author": me}   # el autor es la cuenta,
+            entry = _sanitize(body)         # no un campo del cliente
             if entry is None:
                 self._json(422, {"error": "invalid entry"},
                            "invalid_entry")
                 return
             with _conn() as c:
                 c.execute("INSERT INTO entries(" + ",".join(_COLS) +
-                          ",token) VALUES(?,?,?,?,?,?,?,?,0,0,0,?)",
+                          ",token,user) VALUES(?,?,?,?,?,?,?,?,0,0,0,?,?)",
                           (entry["id"], entry["title"], entry["author"],
                            entry["data"], entry["rules"],
                            entry["difficulty"], entry["par"],
-                           entry["ts"], entry["token"]))
+                           entry["ts"], entry["token"], me))
                 # cap de catálogo: conserva los MAX_ENTRIES más nuevos
                 c.execute("""DELETE FROM entries WHERE id NOT IN (
                     SELECT id FROM entries ORDER BY ts DESC, id DESC
@@ -271,25 +357,60 @@ class Handler(BaseHTTPRequestHandler):
 
         eid = str(body.get("id", ""))
         if path == "/api/remove":
+            me = _auth(self.headers)
             with _conn() as c:
-                row = c.execute("SELECT token FROM entries WHERE id=?",
-                                (eid,)).fetchone()
+                row = c.execute("SELECT token,user FROM entries"
+                                " WHERE id=?", (eid,)).fetchone()
                 if row is None:
                     self._json(404, {"error": "unknown id"},
                                "unknown_id")
                     return
-                if not secrets.compare_digest(
-                        row[0], str(body.get("token", ""))):
+                # propietario por sesión, o token legacy por body
+                ok = (me is not None and row[1] == me) or \
+                    secrets.compare_digest(
+                        row[0], str(body.get("token", "")))
+                if not ok:
                     self._json(403, {"error": "not the author"},
                                "forbidden")
                     return
                 c.execute("DELETE FROM entries WHERE id=?", (eid,))
+                c.execute("DELETE FROM likes WHERE entry_id=?", (eid,))
             self._json(200, {"removed": eid})
             return
 
-        # contadores: UPDATE atómico — sin race aunque los hilos
-        # intercalen (la causa del antiguo lock RMW desaparece en SQL)
-        if path in ("/api/like", "/api/play", "/api/clear"):
+        if path == "/api/like":
+            # like = toggle autenticado por usuario: un like por cuenta,
+            # repetir quita el like (idempotente y sin trampa)
+            me = _auth(self.headers)
+            if me is None:
+                self._json(401, {"error": "login required"},
+                           "auth_required")
+                return
+            with _conn() as c:
+                if c.execute("SELECT 1 FROM entries WHERE id=?",
+                             (eid,)).fetchone() is None:
+                    self._json(404, {"error": "unknown id"},
+                               "unknown_id")
+                    return
+                if c.execute("SELECT 1 FROM likes WHERE entry_id=?"
+                             " AND user=?", (eid, me)).fetchone():
+                    c.execute("DELETE FROM likes WHERE entry_id=?"
+                              " AND user=?", (eid, me))
+                    liked = False
+                else:
+                    c.execute("INSERT INTO likes VALUES(?,?)",
+                              (eid, me))
+                    liked = True
+                n = c.execute("SELECT COUNT(*) FROM likes"
+                              " WHERE entry_id=?", (eid,)).fetchone()[0]
+                c.execute("UPDATE entries SET likes=? WHERE id=?",
+                          (n, eid))
+            self._json(200, {"liked": liked, "likes": n})
+            return
+
+        # play/clear: contadores anónimos (el juego los emite al
+        # abrir/superar un nivel, sin exigir login)
+        if path in ("/api/play", "/api/clear"):
             field = path.rsplit("/", 1)[1]
             with _conn() as c:
                 cur = c.execute(

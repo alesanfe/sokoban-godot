@@ -60,10 +60,9 @@ static func publish(level: LevelData, author: String) -> Dictionary:
 	_save(cat)
 	# publicar también al backend si hay uno configurado — la ficha
 	# local recuerda su remote_id para likes/removes posteriores
-	if CommunityRemote.enabled():
+	if CommunityRemote.enabled() and CommunityRemote.logged_in():
 		var lvl := level
-		var auth: String = entries[id]["author"]
-		CommunityRemote.publish(lvl, auth, func(r):
+		CommunityRemote.publish(lvl, func(r):
 			if r.get("ok", false) and r.get("body") is Dictionary:
 				var tok := str(r["body"].get("token", ""))
 				_mutate(id, func(e):
@@ -141,23 +140,28 @@ static func like(id: String) -> bool:
 	var now := false
 	var rid := _rid(id)
 	if rid != "":
-		# servidor: solo sube al dar like (no hay unlike) — el toggle
-		# local ajusta la vista; el conteo es aproximado como en el feed
+		# optimistic UI: el toggle local responde ya; la respuesta del
+		# servidor (toggle real por cuenta) reconcilia liked/likes
 		_remote_mutate(rid, func(e):
 			e["liked"] = not bool(e.get("liked", false))
 			e["likes"] = maxi(0, int(e.get("likes", 0)) + (1 if e["liked"] else -1))
 			now = e["liked"])
-		if now and CommunityRemote.enabled():
-			CommunityRemote.bump("like", rid)
+		if CommunityRemote.enabled() and CommunityRemote.logged_in():
+			CommunityRemote.like(rid, func(r):
+				if r.get("ok", false) and r.get("body") is Dictionary:
+					var b: Dictionary = r["body"]
+					_remote_mutate(rid, func(e):
+						e["liked"] = bool(b.get("liked", e["liked"]))
+						e["likes"] = int(b.get("likes", e["likes"]))))
 		return now
 	_mutate(id, func(e):
 		e["liked"] = not bool(e.get("liked", false))
 		e["likes"] = maxi(0, int(e.get("likes", 0)) + (1 if e["liked"] else -1))
 		now = e["liked"])
-	if now and CommunityRemote.enabled():
-		var rid2 := str(_catalog()["entries"][id].get("remote_id", ""))
-		if rid2 != "":
-			CommunityRemote.bump("like", rid2)
+	var rid2 := str(_catalog()["entries"].get(id, {}).get("remote_id", ""))
+	if rid2 != "" and CommunityRemote.enabled() \
+			and CommunityRemote.logged_in():
+		CommunityRemote.like(rid2, func(_r): pass)
 	return now
 
 

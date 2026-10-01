@@ -220,6 +220,13 @@ func _community_remote_e2e() -> void:
 		OS.kill(pid)
 		Storage.set_setting("community_remote_url", "")
 		return
+	# register → Bearer token en settings (publish/like lo exigen)
+	var adone := {}
+	CommunityRemote.auth("register", "e2e_tester", "pw1234",
+		func(r): adone["v"] = r.get("ok", false))
+	await _wait_until(func(): return adone.has("v"))
+	ok(adone.get("v", false), "e2e: registro devuelve token Bearer")
+	ok(CommunityRemote.logged_in(), "e2e: sesión persistida")
 	# publish → remote_id/token persistidos tras el POST
 	var lvl := LevelData.create("E2E", PackedStringArray([
 		"#####", "#@$.#", "#####"]), [], "dev")
@@ -243,10 +250,22 @@ func _community_remote_e2e() -> void:
 			if str(e.get("remote_id", "")) == str(rid):
 				dup = true
 	ok(not dup, "e2e: la publicación propia no se duplica en el feed")
+	# like remoto: el servidor reconcilia liked/likes (toggle por cuenta)
+	var ldone := {}
+	var rid0 := ""
+	for e in cat["entries"].values():
+		if str(e.get("remote_id", "")) != "":
+			rid0 = str(e["remote_id"])
+	CommunityRemote.like(rid0, func(r):
+		ldone["v"] = (r.get("ok", false)
+			and r.get("body", {}).get("liked") == true))
+	await _wait_until(func(): return ldone.has("v"))
+	ok(ldone.get("v", false), "e2e: like autenticado → liked+likes reales")
 	# remove → borra local + remoto (con token)
 	CommunityService.remove(pid_local)
 	await _wait_until(func():
 		return not CommunityService._catalog()["entries"].has(pid_local), 30)
 	ok(not cat["entries"].has(pid_local), "e2e: remove borra la entrada local")
 	OS.kill(pid)
+	CommunityRemote.logout()
 	Storage.set_setting("community_remote_url", "")
