@@ -148,7 +148,7 @@ python -m bandit -r server/                               # seguridad Python
 
 ## Estructura
 
-```
+```text
 sokoban-godot/
 ├── scripts/core/      motor determinista, reglas, solver, storage
 ├── scripts/ui/        pantallas construidas en código
@@ -164,11 +164,51 @@ sokoban-godot/
 > **v1.1.0** — estable y jugable. El backend de comunidad es
 > self-hosted (LAN/amigos); no hay instancia pública central.
 
+## Solución de problemas
+
+**La build web no carga en el navegador** — necesita cabeceras
+`Cross-Origin-Opener-Policy: same-origin` y
+`Cross-Origin-Embedder: require-corp` (SharedArrayBuffer). itch.io
+las aplica automáticamente; si la sirves a mano, añádelas.
+
+**El progreso/settings no arranca tras un corte** — `user://` cae al
+`.bak` de la última escritura buena (Storage escribe atómico). Si
+corrompiste ambos a mano, borra el JSON y vuelve a empezar.
+
+**La comunidad remota no conecta** — comprueba que `community_server.py`
+corre y que la URL en Ajustes → Comunidad incluye el puerto.
+
+## Hoja de ruta
+
+- [x] Motor determinista + 30 reglas mutantes
+- [x] Editor integrado con test-play y solver
+- [x] Campaña + pack clásico + desafío diario
+- [x] Modo Comunidad local + backend autoalojable
+- [ ] Builds firmadas (Windows/macOS) — requiere certificados
+- [ ] Instancia pública de comunidad — requiere hosting
+- [ ] i18n completo — hoy la UI está en español
+
+## Limitaciones conocidas
+
+- **UI solo en español** — las strings no pasan por `tr()`; i18n es
+  trabajo futuro, no un toggle.
+- **Backend sin instancia pública** — el modo Comunidad funciona en
+  local; para compartir online hay que autoalojar.
+- **Verificación server-side solo en vanilla** — los niveles con
+  reglas mutantes publican con `verified=0` y dependen de moderación
+  admin (ver ADR-006).
+- **macOS sin firma** — el preset existe pero sin notarizar; Gatekeeper
+  pedirá saltar la advertencia.
+- **Replay/guardado = misma versión** — los replays guardados no están
+  garantizados entre versiones del motor (el schema `v` lo rompe a
+  propósito, no lo esconde).
+
 ## Soporte
 
 - Bugs → [issues](https://github.com/alesanfe/sokoban-godot/issues)
 - Seguridad → [SECURITY.md](SECURITY.md) (privado, no issue público)
 - Contribuir → [CONTRIBUTING.md](CONTRIBUTING.md)
+- Canales y datos útiles para reportar → [SUPPORT.md](SUPPORT.md)
 
 ## Licencia
 

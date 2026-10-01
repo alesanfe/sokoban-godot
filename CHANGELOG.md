@@ -33,6 +33,7 @@ Backend de comunidad endurecido — se eliminan los límites que la
 versión 1.0 documentaba como aceptados.
 
 ### Añadido
+
 - **TLS nativo**: `--tls-cert/--tls-key` (PEM, TLS ≥1.2) — https://
   sin proxy obligatorio.
 - **Caducidad de sesiones**: `expires` por sesión, `SKM_SESSION_DAYS`
@@ -60,6 +61,7 @@ versión 1.0 documentaba como aceptados.
   `.editorconfig`, `.gitattributes`, `tools/test_all.{ps1,sh}`.
 
 ### Cambiado
+
 - Rate-limit por IP movido a SQLite (`rate` table, `BEGIN
   IMMEDIATE`): compartido entre procesos y persistente.
 - `publish` fija el autor desde la sesión y exige sesión válida;
@@ -70,6 +72,7 @@ versión 1.0 documentaba como aceptados.
 Primera versión completa: juego jugable + editor + comunidad.
 
 ### Juego
+
 - Motor Sokoban determinista: mover, empujar, deshacer/rehacer,
   reiniciar, replay y guardado de partida en curso.
 - 25 reglas mutantes (hielo, portales, gravedad, cadenas, límites de
@@ -84,6 +87,7 @@ Primera versión completa: juego jugable + editor + comunidad.
   por símbolos, reduce-motion, alto contraste.
 
 ### Editor
+
 - Editor de niveles integrado: pintado, undo/redo, rotación, resize,
   overlays de ocupante (caja sobre objetivo, etc.), reglas con
   parámetros, validación y solver de comprobación.
@@ -91,6 +95,7 @@ Primera versión completa: juego jugable + editor + comunidad.
 - Importación/exportación: códigos SKM1 (zlib+base64), XSB, packs.
 
 ### Comunidad
+
 - Feed local con likes, partidas, superados, búsqueda y ordenación.
 - Backend autoalojable (`server/community_server.py`, solo stdlib +
   SQLite): cuentas con Bearer token (pbkdf2), like como toggle por
@@ -100,6 +105,7 @@ Primera versión completa: juego jugable + editor + comunidad.
   reconciliación optimista de likes.
 
 ### Verificación
+
 - Suite headless: motor (227 checks), UI smoke, E2E, playthroughs,
   reglas, fuzz de determinismo, auditoría de campaña.
 - E2E de comunidad contra el servidor real (register → publish →
@@ -107,5 +113,6 @@ Primera versión completa: juego jugable + editor + comunidad.
 - Export Web verificado (HTML5/WASM).
 
 ### Infraestructura del repositorio
+
 - LICENSE (MIT), CHANGELOG, CONTRIBUTING, SECURITY, docs/ con
   arquitectura, ADRs y contrato de API.

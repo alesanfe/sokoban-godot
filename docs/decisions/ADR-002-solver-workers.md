@@ -17,4 +17,4 @@ muta, no se reutiliza).
 + UI fluida durante solve/generación.
 + La pantalla que lanza el trabajo puede morir antes del callback →
   cada call site debe comprobar `is_instance_valid`/identidad.
-- El test de determinismo fuzz cubre la serialización entre retries.
++ El test de determinismo fuzz cubre la serialización entre retries.

@@ -24,7 +24,7 @@ Gate en dos capas:
 + Los niveles vanilla del feed están probados por el servidor —
   el cliente ya no es el único garante.
 + `verified` es visible en el feed y permite filtrar/moderar.
-- La verificación de mutantes es trust-but-verify: reputación +
++ La verificación de mutantes es trust-but-verify: reputación +
   moderación admin. Reimplementar el motor de reglas en Python
   duplicaría ~2000 líneas que pueden divergir — peor deuda que el
   trust model. Documentado en ADR-006.

@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "Si usas este software, cítalo así."
+type: software
+title: "Sokoban Mutante"
+abstract: "Sokoban donde cada nivel introduce una regla absurda:
+  motor determinista, 30 reglas mutantes, editor integrado, solver,
+  comunidad autoalojable. Godot 4.7 + Python stdlib."
+authors:
+  - family-names: "alesanfe"
+    given-names: ""
+repository-code: "https://github.com/alesanfe/sokoban-godot"
+license: MIT
+version: "1.1.0"
+date-released: "2026-10-01"

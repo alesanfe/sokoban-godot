@@ -24,8 +24,9 @@ reglas mutantes vive en GDScript: rejugar un nivel con `ice` o
 
 ## Consecuencias
 
-+ La garantía fuerte cubre el caso común (vanilla es la mayoría).
-+ Las mutantes siguen siendo superables por diseño: el editor exige
+- La garantía fuerte cubre el caso común (vanilla es la mayoría).
+- Las mutantes siguen siendo superables por diseño: el editor exige
   playtest antes de permitir el publish local/remoto.
+
 - Un cliente malicioso puede publicar una mutante irresoluble con
   `verified=0` — el flag lo hace visible y la moderación la elimina.

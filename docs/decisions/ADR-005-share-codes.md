@@ -19,7 +19,8 @@ parámetros, dificultad y par. `to_code`/`from_code` en
 
 ## Consecuencias
 
-+ Nivel completo viaja en texto — copiar/pegar basta.
-+ `len` permite validar truncamientos antes de descomprimir.
+- Nivel completo viaja en texto — copiar/pegar basta.
+- `len` permite validar truncamientos antes de descomprimir.
+
 - Códigos grandes para tableros enormes: deflate lo mitiga; el
   límite práctico está en el feed (64 KB), no en el formato.

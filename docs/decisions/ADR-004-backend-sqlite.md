@@ -32,11 +32,12 @@ shim de compatibilidad.
 
 ## Consecuencias
 
-+ Cero dependencias: `python community_server.py` y funciona.
-+ WAL: lecturas concurrentes; `BEGIN IMMEDIATE` serializa las
+- Cero dependencias: `python community_server.py` y funciona.
+- WAL: lecturas concurrentes; `BEGIN IMMEDIATE` serializa las
   mutaciones de un misma clave (likes, rate-limit) — test de carga
   (`test_load.py`, 250 reqs concurrentes) lo verifica.
-+ Auto-servible: TLS, health real (toca DB), stats, backup en
+- Auto-servible: TLS, health real (toca DB), stats, backup en
   caliente con `.backup`.
+
 - Concurrencia real acotada por el GIL+threading — suficiente para
   el volumen objetivo; `test_load.py` mide el límite.

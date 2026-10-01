@@ -1,0 +1,8 @@
+# Docs as code: el markdown se valida en CI (job `docs`).
+# Desactivadas solo las reglas que chocan con decisiones deliberadas:
+default: true
+MD013: false   # line-length: la prosa en español tiene líneas largas
+MD033: false   # inline HTML: la galería usa <table><img> a propósito
+MD026: false   # "¡/¿" y puntuación española en encabezados
+MD041: false   # first-line-h1: ADRs y docs pueden abrir con frontmatter
+MD060: false   # table-column-style: usamos `| |` compacto a propósito

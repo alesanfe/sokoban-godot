@@ -2,7 +2,7 @@
 
 ## Panorama
 
-```
+```text
 ┌────────── UI (scripts/ui/*) ─────────────────────────┐
 │ MainScreen (navegación) · GameScreen · EditorScreen  │
 │ CommunityScreen · WinPanel · EditorRulesPanel · …    │

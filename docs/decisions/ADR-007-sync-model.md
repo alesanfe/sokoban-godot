@@ -19,8 +19,9 @@ comunidad remota sea un espejo, no una dependencia.
 
 ## Consecuencias
 
-+ Juego completo sin servidor; remota es additive.
-+ Sin estado de conflicto: los contadores los manda el servidor.
+- Juego completo sin servidor; remota es additive.
+- Sin estado de conflicto: los contadores los manda el servidor.
+
 - Pull completo escala hasta el orden de miles de entradas —
   suficiente para `MAX_ENTRIES` (5000); más allá haría falta sync
   incremental, fuera del volumen objetivo (ADR-004).

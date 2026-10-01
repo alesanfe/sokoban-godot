@@ -17,5 +17,5 @@ y les pasa datos; nunca al revés.
 + `tests/test_runner.gd` corre 227 checks en segundos sin UI.
 + Workers seguros: el solver muta su propia copia del estado.
 + Las pantallas quedan como orquestación (señales + callbacks).
-- Los singletons estáticos (`Storage.BASE_DIR`) requieren disciplina;
++ Los singletons estáticos (`Storage.BASE_DIR`) requieren disciplina;
   mitigado con override explícito en tests.

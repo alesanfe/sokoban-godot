@@ -42,7 +42,7 @@ python server/community_server.py --port 8765 \
 o vía env `SKM_TLS_CERT`/`SKM_TLS_KEY`. Alternativa con proxy —
 Caddy mínimo:
 
-```
+```text
 skm.ejemplo.com {
     reverse_proxy 127.0.0.1:8765
 }
