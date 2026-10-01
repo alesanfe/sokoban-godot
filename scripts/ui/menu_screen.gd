@@ -77,6 +77,13 @@ func _init(host: Control) -> void:
 		12, Color(0.45, 0.45, 0.5))
 	v.add_child(ver)
 
+	# a 720p el menú rebosaba (~750px de contenido) y "Salir"/versión
+	# quedaban fuera del viewport — comprime para que quepa sin scroll
+	v.add_theme_constant_override("separation", 8)
+	for c in v.get_children():
+		if c is Button:
+			c.custom_minimum_size.y = 38
+
 
 ## Generation runs the solver up to 40× per candidate — far too heavy
 ## for the main thread. Worker thread + deferred callback, like

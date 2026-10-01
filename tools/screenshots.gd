@@ -18,6 +18,7 @@ func _initialize() -> void:
 	Storage.BASE_DIR = "user://shots/"
 	DirAccess.make_dir_recursive_absolute(
 		ProjectSettings.globalize_path(OUT))
+	_seed_progress()
 	var main: Control = load("res://scripts/main.gd").new()
 	# main.tscn le da FULL_RECT; instanciado por script nace con size 0
 	main.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -28,13 +29,13 @@ func _initialize() -> void:
 		[func(): main.show_game(Campaign.levels()[30]), "mutant"],
 		[func(): main.show_level_select(), "select"],
 		[func(): _editor_shot(main), "editor"],
+		[func(): _import_shot(main), "import"],
 		[func(): main.show_community(), "community"],
 		[func(): main.show_map(), "map"],
 		[func(): main.show_stats(), "stats"],
 		[func(): main.show_options(), "options"],
 		[func(): main.show_controls(), "controls"],
 		[func(): main.show_generator(), "generator"],
-		[func(): main.show_import(), "import"],
 	]
 
 
@@ -88,7 +89,30 @@ func _process(_dt: float) -> bool:
 
 ## El editor es la pantalla más alta (grid + paleta + toolbar);
 ## se captura con la ventana algo más alta para que nada quede
-## cortado abajo, y se restaura al salir.
+## cortado abajo, y se restaura al salir. Se le da un nivel con
+## contenido — la cuadrícula vacía no enseña nada.
 func _editor_shot(main: Control) -> void:
 	root.size.y = 860
-	main.show_editor()
+	main.show_editor(_demo_level())
+
+
+## El importador se captura con un código pegado — la TextEdit
+## vacía era solo un rectángulo negro.
+func _import_shot(main: Control) -> void:
+	main.show_import()
+	for n in root.find_children("*", "TextEdit", true, false):
+		(n as TextEdit).text = "#######\n#@ $ .#\n#######"
+
+
+## Progreso de muestra: los shots de select/mapa/stats con todo a
+## cero parecen un juego vacío. El user:// aislado hace que esto
+## no toque el progreso real del jugador.
+func _seed_progress() -> void:
+	var camp := Campaign.levels()
+	for i in range(0, 26, 2):
+		var moves := PackedStringArray()
+		for _j in 6 + i % 9:
+			moves.append("r")
+		Storage.record_win(camp[i], moves, 20.0 + i)
+	# un nivel custom para que el feed/mapa lo tengan
+	Storage.save_custom_level(_demo_level())
