@@ -157,9 +157,87 @@ func _run() -> void:
 	var first_row := comm._list.get_children()[0]
 	ok(first_row is PanelContainer, "community row built")
 
+	# E2E comunidad con backend REAL: publish→sync→dedup→remove contra
+	# server/community_server.py levantado aquí (se salta sin python)
+	await _community_remote_e2e()
+
 	main.show_menu()
 	await process_frame
 	ok(main.current is MenuScreen, "back to menu")
 
 	print("== UI smoke: %d failures ==" % failures)
 	quit(1 if failures > 0 else 0)
+
+
+## Espera a que una promesa del ciclo remoto resuelva (frames, no sleeps).
+func _wait_until(cond: Callable, frames := 240) -> bool:
+	var f := 0
+	while not cond.call() and f < frames:
+		await process_frame
+		f += 1
+	return cond.call()
+
+
+func _community_remote_e2e() -> void:
+	var port := 18923
+	var srv := ProjectSettings.globalize_path("res://server/community_server.py")
+	# OS.execute BLOQUEA hasta que el proceso muere — para un servidor
+	# hay que usar create_process (no bloqueante, devuelve pid)
+	var pid := OS.create_process("python",
+		PackedStringArray([srv, str(port)]))
+	if pid <= 0:
+		print("  skip: community e2e (python no disponible)")
+		return
+	Storage.set_setting("community_remote_url", "http://127.0.0.1:%d" % port)
+	# poll /health hasta que el servidor escuche (espera real: los
+	# frames headless corren mucho más rápido que el arranque de python)
+	var up := false
+	for i in 40:
+		var r := HTTPRequest.new()
+		r.timeout = 1.5
+		root.add_child(r)
+		r.request("http://127.0.0.1:%d/api/health" % port)
+		var done_r := {}
+		r.request_completed.connect(func(_res, code, _h, _b):
+			done_r["code"] = code
+			r.queue_free())
+		await _wait_until(func(): return done_r.has("code"))
+		if done_r.get("code", 0) == 200:
+			up = true
+			break
+		await create_timer(0.15).timeout
+	ok(up, "e2e: servidor comunitario arranca")
+	if not up:
+		OS.kill(pid)
+		Storage.set_setting("community_remote_url", "")
+		return
+	# publish → remote_id/token persistidos tras el POST
+	var lvl := LevelData.create("E2E", PackedStringArray([
+		"#####", "#@$.#", "#####"]), [], "dev")
+	var pr := CommunityService.publish(lvl, "dev")
+	ok(pr.get("ok", false), "e2e: publish local ok")
+	var pid_local: String = pr["id"]
+	var got_remote: bool = await _wait_until(func():
+		var e: Variant = CommunityService._catalog()["entries"].get(pid_local)
+		return e != null and str(e.get("remote_id", "")) != "")
+	ok(got_remote, "e2e: publish remoto devuelve id+token")
+	# sync → el feed remoto llega, pero el propio nivel NO se duplica
+	var done := {}
+	CommunityService.sync_remote(func(r): done["v"] = r.get("ok", false))
+	await _wait_until(func(): return done.has("v"))
+	ok(done.get("v", false), "e2e: sync remote ok")
+	var cat: Dictionary = CommunityService._catalog()
+	var re: Dictionary = cat.get("remote_entries", {})
+	var dup := false
+	for rid in re.keys():
+		for e in cat["entries"].values():
+			if str(e.get("remote_id", "")) == str(rid):
+				dup = true
+	ok(not dup, "e2e: la publicación propia no se duplica en el feed")
+	# remove → borra local + remoto (con token)
+	CommunityService.remove(pid_local)
+	await _wait_until(func():
+		return not CommunityService._catalog()["entries"].has(pid_local), 30)
+	ok(not cat["entries"].has(pid_local), "e2e: remove borra la entrada local")
+	OS.kill(pid)
+	Storage.set_setting("community_remote_url", "")

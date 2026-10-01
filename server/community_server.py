@@ -10,7 +10,12 @@ Endpoints (all JSON; CORS open so the web export can call it):
   POST /api/like     {id}
   POST /api/play     {id}
   POST /api/clear    {id}
-  POST /api/remove   {id, author}  — author must match the entry's
+  POST /api/remove   {id, token}  — token returned by /api/publish
+
+Auth: publish issues a per-entry token; remove requires it. The token
+is never exposed by /api/feed (stripped on read). Name-matching alone
+let anyone retire a level; the token is the actual auth boundary for
+self-hosted instances shared with strangers on a LAN.
 
 The heavy validation (level parse, playtest gate) stays client-side;
 the server enforces shape/size limits so a malformed payload can't
@@ -19,6 +24,7 @@ poison the feed.
 
 import json
 import os
+import secrets
 import sys
 import tempfile
 import threading
@@ -71,6 +77,7 @@ def _sanitize(e: dict) -> dict | None:
         return None
     return {
         "id": uuid.uuid4().hex[:12],
+        "token": secrets.token_hex(16),      # auth de borrado — nunca sale por /feed
         "title": e["title"], "author": e["author"],
         "data": e["data"],
         "rules": [str(r)[:24] for r in rules],
@@ -105,7 +112,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path.rstrip("/") == "/api/feed":
-            self._json(200, {"entries": _load()})
+            # el token es el secreto de borrado: no lo filtra el feed
+            feed = [{k: v for k, v in e.items() if k != "token"}
+                    for e in _load()]
+            self._json(200, {"entries": feed})
         elif self.path.rstrip("/") == "/api/health":
             self._json(200, {"ok": True})
         else:
@@ -140,7 +150,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 entries.insert(0, entry)
                 _save(entries[:MAX_ENTRIES])
-                self._json(201, {"id": entry["id"]})
+                self._json(201, {"id": entry["id"], "token": entry["token"]})
                 return
 
             eid = str(body.get("id", ""))
@@ -155,7 +165,9 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/clear":
                 entry["clears"] += 1
             elif path == "/api/remove":
-                if body.get("author") != entry["author"]:
+                if not secrets.compare_digest(
+                        str(entry.get("token", "")),
+                        str(body.get("token", ""))):
                     self._json(403, {"error": "not the author"})
                     return
                 entries.remove(entry)

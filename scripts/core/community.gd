@@ -64,8 +64,11 @@ static func publish(level: LevelData, author: String) -> Dictionary:
 		var lvl := level
 		var auth: String = entries[id]["author"]
 		CommunityRemote.publish(lvl, auth, func(r):
-			if r.get("ok", false):
-				_mutate(id, func(e): e["remote_id"] = str(r["body"].get("id", ""))))
+			if r.get("ok", false) and r.get("body") is Dictionary:
+				var tok := str(r["body"].get("token", ""))
+				_mutate(id, func(e):
+					e["remote_id"] = str(r["body"].get("id", ""))
+					e["remote_token"] = tok))
 	return {"ok": true, "id": id}
 
 
@@ -182,11 +185,11 @@ static func remove(id: String) -> void:
 	var cat := _catalog()
 	var e: Variant = cat.get("entries", {}).get(id)
 	var rid := "" if e == null else str(e.get("remote_id", ""))
-	var author := "" if e == null else str(e.get("author", ""))
+	var tok := "" if e == null else str(e.get("remote_token", ""))
 	cat.get("entries", {}).erase(id)
 	_save(cat)
-	if rid != "" and CommunityRemote.enabled():
-		CommunityRemote.remove(rid, author)
+	if rid != "" and tok != "" and CommunityRemote.enabled():
+		CommunityRemote.remove(rid, tok)
 
 
 ## Sincroniza el feed remoto → espejo local. cb(recibe {"ok": bool}).

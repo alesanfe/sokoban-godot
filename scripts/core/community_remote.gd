@@ -60,6 +60,6 @@ static func bump(action: String, remote_id: String) -> void:
 		{"id": remote_id}, func(_r): pass)
 
 
-static func remove(remote_id: String, author: String) -> void:
+static func remove(remote_id: String, token: String) -> void:
 	_request(HTTPClient.METHOD_POST, "/api/remove",
-		{"id": remote_id, "author": author}, func(_r): pass)
+		{"id": remote_id, "token": token}, func(_r): pass)
