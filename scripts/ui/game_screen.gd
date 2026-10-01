@@ -72,6 +72,9 @@ func _init(p_host: Control) -> void:
 	side.add_child(Widgets.hsep())
 
 	hud_keys = Widgets.label("", 12, Color(0.55, 0.55, 0.6))
+	# la lista de atajos es larga — sin wrap el min-width del label
+	# comía el espacio del tablero (side acababa a ~800px)
+	hud_keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	side.add_child(hud_keys)
 
 	var b_undo := Widgets.button("Deshacer")

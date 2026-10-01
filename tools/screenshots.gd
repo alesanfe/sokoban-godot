@@ -27,9 +27,14 @@ func _initialize() -> void:
 		[func(): main.show_game(_demo_level()), "gameplay"],
 		[func(): main.show_game(Campaign.levels()[30]), "mutant"],
 		[func(): main.show_level_select(), "select"],
-		[func(): main.show_editor(), "editor"],
+		[func(): _editor_shot(main), "editor"],
 		[func(): main.show_community(), "community"],
 		[func(): main.show_map(), "map"],
+		[func(): main.show_stats(), "stats"],
+		[func(): main.show_options(), "options"],
+		[func(): main.show_controls(), "controls"],
+		[func(): main.show_generator(), "generator"],
+		[func(): main.show_import(), "import"],
 	]
 
 
@@ -70,6 +75,8 @@ func _process(_dt: float) -> bool:
 		var img := root.get_texture().get_image()
 		img.save_png(OUT + _pending + ".png")
 		print("shot: ", _pending)
+		if _pending == "editor":
+			root.size.y = 720              # restaurar para el resto
 		_pending = ""
 		return _i >= _shots.size()          # último → salir
 	if _i < _shots.size():
@@ -77,3 +84,11 @@ func _process(_dt: float) -> bool:
 		_pending = _shots[_i][1]
 		_i += 1
 	return false
+
+
+## El editor es la pantalla más alta (grid + paleta + toolbar);
+## se captura con la ventana algo más alta para que nada quede
+## cortado abajo, y se restaura al salir.
+func _editor_shot(main: Control) -> void:
+	root.size.y = 860
+	main.show_editor()

@@ -332,8 +332,10 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 
 	# palette — ButtonGroup makes tool selection exclusive across rows
 	var tool_group := ButtonGroup.new()
-	var pal := HBoxContainer.new()
-	pal.add_theme_constant_override("separation", 6)
+	# HFlowContainer (no HBox): cada fila hace wrap interno en vez de
+	# desbordar la ventana por la derecha cuando no cabe
+	var pal := HFlowContainer.new()
+	pal.add_theme_constant_override("h_separation", 6)
 	left.add_child(pal)
 	for t in TOOLS:
 		var b := Button.new()
@@ -345,8 +347,8 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 		pal.add_child(b)
 		if t[1] == "#":
 			b.button_pressed = true
-	var pal2 := HBoxContainer.new()
-	pal2.add_theme_constant_override("separation", 6)
+	var pal2 := HFlowContainer.new()
+	pal2.add_theme_constant_override("h_separation", 6)
 	left.add_child(pal2)
 	for t in TOOLS2:
 		var b := Button.new()
@@ -356,8 +358,8 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 		b.pressed.connect(func(): _pick_tool(t[1]))
 		_tool_buttons[t[1]] = b
 		pal2.add_child(b)
-	var pal3 := HBoxContainer.new()
-	pal3.add_theme_constant_override("separation", 6)
+	var pal3 := HFlowContainer.new()
+	pal3.add_theme_constant_override("h_separation", 6)
 	left.add_child(pal3)
 	for t in TOOLS3:
 		var b := Button.new()
@@ -367,8 +369,8 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 		b.pressed.connect(func(): _pick_tool(t[1]))
 		_tool_buttons[t[1]] = b
 		pal3.add_child(b)
-	var pal4 := HBoxContainer.new()
-	pal4.add_theme_constant_override("separation", 6)
+	var pal4 := HFlowContainer.new()
+	pal4.add_theme_constant_override("h_separation", 6)
 	left.add_child(pal4)
 	for t in TOOLS4:
 		var b := Button.new()
@@ -378,8 +380,8 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 		b.pressed.connect(func(): _pick_tool(t[1]))
 		_tool_buttons[t[1]] = b
 		pal4.add_child(b)
-	var pal5 := HBoxContainer.new()
-	pal5.add_theme_constant_override("separation", 6)
+	var pal5 := HFlowContainer.new()
+	pal5.add_theme_constant_override("h_separation", 6)
 	left.add_child(pal5)
 	for t in TOOLS5:
 		var b := Button.new()
@@ -391,8 +393,9 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 		pal5.add_child(b)
 
 	# shape modes + symmetry + board tools + clipboard
-	var row2 := HBoxContainer.new()
-	row2.add_theme_constant_override("separation", 5)
+	# (flow: si no cabe hace wrap en vez de empujar el panel derecho)
+	var row2 := HFlowContainer.new()
+	row2.add_theme_constant_override("h_separation", 5)
 	left.add_child(row2)
 	for s in ["point", "line", "rect", "fill"]:
 		var b := Button.new()
@@ -446,7 +449,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 
 	# --- right panel
 	var side := VBoxContainer.new()
-	side.custom_minimum_size.x = 360
+	side.custom_minimum_size.x = 300
 	side.add_theme_constant_override("separation", 8)
 	hbox.add_child(side)
 
@@ -488,6 +491,10 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	side.add_child(hidden_check)
 	var add_row := HBoxContainer.new()
 	var rule_pick := OptionButton.new()
+	# sin esto su min-width = el ítem más largo (~500px) y empuja
+	# el panel lateral fuera de la ventana
+	rule_pick.fit_to_longest_item = false
+	rule_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for id in RuleRegistry.all_ids():
 		rule_pick.add_item(str(RuleRegistry.describe(id)["title"]) + " (" + id + ")")
 	add_row.add_child(rule_pick)

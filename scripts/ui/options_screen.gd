@@ -18,11 +18,18 @@ func _init(p_host: Control) -> void:
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(scroll)
+	# margen horizontal: las cabeceras de sección quedaban pegadas
+	# al borde de la ventana ("Jugabilidad" llegaba a cortarse)
+	var m := MarginContainer.new()
+	m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for s in ["margin_left", "margin_right"]:
+		m.add_theme_constant_override(s, 24)
+	scroll.add_child(m)
 	var v := VBoxContainer.new()
 	v.custom_minimum_size.x = 560
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_theme_constant_override("separation", 10)
-	scroll.add_child(v)
+	m.add_child(v)
 
 	v.add_child(Widgets.label("Opciones", 30, Color(0.95, 0.8, 0.2)))
 

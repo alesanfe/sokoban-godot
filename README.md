@@ -34,6 +34,23 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
   </tr>
 </table>
 
+<details>
+<summary>Más capturas — selector, mapa, comunidad, ajustes y herramientas</summary>
+
+| Selector de niveles | Mapa de mundo |
+|---|---|
+| ![Selector de niveles con progreso por pack](docs/assets/select.png) | ![Mapa de mundo: camino por la campaña](docs/assets/map.png) |
+
+| Generador | Importador |
+|---|---|
+| ![Generador de niveles con semilla y regla](docs/assets/generator.png) | ![Importar código SKM o tablero XSB](docs/assets/import.png) |
+
+| Estadísticas | Opciones | Controles |
+|---|---|---|
+| ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) | ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
+
+</details>
+
 *Las capturas se regeneran con `godot --path . -s res://tools/screenshots.gd`
 y el GIF con `godot --path . -s res://tools/gif_demo.gd` +
 `python tools/make_gif.py`.*
