@@ -174,20 +174,24 @@ func _refresh_rules_hud() -> void:
 		lines.append("• ??? — Regla desconocida. Descúbrela jugando.")
 	else:
 		var any := false
+		var ids := {}
 		for r in level.rules:
 			var d := RuleRegistry.describe(r.get("id", ""))
 			lines.append("• " + str(d.get("title", "")) + ": " + str(d.get("description", "")))
+			ids[r.get("id", "")] = true
 			any = true
+		# portales/cintas existen como regla Y como tile — sin dedup el
+		# HUD los explicaba dos veces
 		if level.has_peekaboo():
 			lines.append("• Paredes tímidas: las paredes ? solo son sólidas mientras las miras.")
 			any = true
 		if level.has_switches():
 			lines.append("• Interruptores: pisar o cubrir una casilla ! activa/desactiva las reglas.")
 			any = true
-		if level.has_portals():
+		if level.has_portals() and not ids.has("portal"):
 			lines.append("• Portales: entra por una casilla o/O y sales por su pareja.")
 			any = true
-		if level.has_conveyors():
+		if level.has_conveyors() and not ids.has("conveyor"):
 			lines.append("• Cintas: > < ^ v arrastran lo que tengan encima cada turno.")
 			any = true
 		if level.has_doors():

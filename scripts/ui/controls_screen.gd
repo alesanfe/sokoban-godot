@@ -27,7 +27,10 @@ func _init(p_host: Control) -> void:
 	host = p_host
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
-	v.add_child(Widgets.label("Controles", 30, Color(0.95, 0.8, 0.2)))
+	# a 720p el conjunto (~770px) cortaba título y botón inferior —
+	# separación y filas más compactas para que quepa sin scroll
+	v.add_theme_constant_override("separation", 8)
+	v.add_child(Widgets.label("Controles", 28, Color(0.95, 0.8, 0.2)))
 	v.add_child(Widgets.label("Clic en una acción y pulsa la nueva"
 		+ " tecla. Las flechas siempre funcionan.", 13,
 		Color(0.6, 0.6, 0.65)))
@@ -39,7 +42,7 @@ func _init(p_host: Control) -> void:
 		lbl.custom_minimum_size.x = 200
 		row.add_child(lbl)
 		var b := Widgets.button(_key_name(a[0]))
-		b.custom_minimum_size = Vector2(140, 34)
+		b.custom_minimum_size = Vector2(140, 30)
 		b.pressed.connect(func():
 			_capturing = a[0]
 			# without this Space/Enter would re-trigger the focused
