@@ -71,36 +71,28 @@ static func publish(level: LevelData, author: String) -> Dictionary:
 	return {"ok": true, "id": id}
 
 
+static func _entry_out(id: String, e: Variant, own: bool) -> Dictionary:
+	if typeof(e) != TYPE_DICTIONARY:  # entrada corrupta → {}
+		return {}
+	return {"id": id, "level": LevelData.from_dict(e.get("level", {})),
+		"author": str(e.get("author", "")), "ts": int(e.get("ts", 0)),
+		"likes": int(e.get("likes", 0)), "plays": int(e.get("plays", 0)),
+		"clears": int(e.get("clears", 0)),
+		"liked": bool(e.get("liked", false)), "own": own}
+
+
 static func entries(sort: String = "recent") -> Array:
 	var cat := _catalog()
 	var out: Array = []
 	for id in cat.get("entries", {}).keys():
-		var e: Variant = cat["entries"][id]
-		if typeof(e) != TYPE_DICTIONARY:  # entrada corrupta → saltar
-			continue
-		var l := LevelData.from_dict(e.get("level", {}))
-		out.append({"id": id, "level": l,
-			"author": str(e.get("author", "")),
-			"ts": int(e.get("ts", 0)),
-			"likes": int(e.get("likes", 0)),
-			"plays": int(e.get("plays", 0)),
-			"clears": int(e.get("clears", 0)),
-			"liked": bool(e.get("liked", false)),
-			"own": bool(e.get("own", false))})
+		var e := _entry_out(id, cat["entries"][id],
+			bool(cat["entries"][id].get("own", false)))
+		if not e.is_empty(): out.append(e)
 	# espejo remoto: ids "r:<rid>"; los contadores son los del servidor
 	for rid in cat.get("remote_entries", {}).keys():
-		var e: Variant = cat["remote_entries"][rid]
-		if typeof(e) != TYPE_DICTIONARY:
-			continue
-		var l := LevelData.from_dict(e.get("level", {}))
-		out.append({"id": "r:" + str(rid), "level": l,
-			"author": str(e.get("author", "")),
-			"ts": int(e.get("ts", 0)),
-			"likes": int(e.get("likes", 0)),
-			"plays": int(e.get("plays", 0)),
-			"clears": int(e.get("clears", 0)),
-			"liked": bool(e.get("liked", false)),
-			"own": false})
+		var e := _entry_out("r:" + str(rid), cat["remote_entries"][rid],
+			false)
+		if not e.is_empty(): out.append(e)
 	match sort:
 		"likes":
 			out.sort_custom(func(a, b): return a["likes"] > b["likes"])
@@ -113,27 +105,28 @@ static func entries(sort: String = "recent") -> Array:
 	return out
 
 
-static func _mutate(id: String, fn: Callable) -> void:
-	var cat := _catalog()
-	var entries: Dictionary = cat.get("entries", {})
-	if not entries.has(id):
-		return
-	fn.call(entries[id])
-	_save(cat)
-
-
 ## ¿id remota ("r:<rid>")? Devuelve el rid o "".
 static func _rid(id: String) -> String:
 	return id.substr(2) if id.begins_with("r:") else ""
 
 
-static func _remote_mutate(rid: String, fn: Callable) -> void:
+## Mutación unificada: section es "entries" (local) u
+## "remote_entries" (espejo). No-op si la clave no existe.
+static func _mutate_in(section: String, key: String, fn: Callable) -> void:
 	var cat := _catalog()
-	var re: Dictionary = cat.get("remote_entries", {})
-	if not re.has(rid):
+	var bucket: Dictionary = cat.get(section, {})
+	if not bucket.has(key):
 		return
-	fn.call(re[rid])
+	fn.call(bucket[key])
 	_save(cat)
+
+
+static func _mutate(id: String, fn: Callable) -> void:
+	_mutate_in("entries", id, fn)
+
+
+static func _remote_mutate(rid: String, fn: Callable) -> void:
+	_mutate_in("remote_entries", rid, fn)
 
 
 static func like(id: String) -> bool:
@@ -165,24 +158,25 @@ static func like(id: String) -> bool:
 	return now
 
 
-static func record_play(id: String) -> void:
+## Contador local + bump remoto (si hay backend): field es la key
+## del catálogo ("plays"/"clears"), api el endpoint ("play"/"clear").
+static func _record(id: String, field: String, api: String) -> void:
 	var rid := _rid(id)
+	var incr := func(e): e[field] = int(e.get(field, 0)) + 1
 	if rid != "":
-		_remote_mutate(rid, func(e): e["plays"] = int(e.get("plays", 0)) + 1)
+		_remote_mutate(rid, incr)
 		if CommunityRemote.enabled():
-			CommunityRemote.bump("play", rid)
-		return
-	_mutate(id, func(e): e["plays"] = int(e.get("plays", 0)) + 1)
+			CommunityRemote.bump(api, rid)
+	else:
+		_mutate(id, incr)
+
+
+static func record_play(id: String) -> void:
+	_record(id, "plays", "play")
 
 
 static func record_clear(id: String) -> void:
-	var rid := _rid(id)
-	if rid != "":
-		_remote_mutate(rid, func(e): e["clears"] = int(e.get("clears", 0)) + 1)
-		if CommunityRemote.enabled():
-			CommunityRemote.bump("clear", rid)
-		return
-	_mutate(id, func(e): e["clears"] = int(e.get("clears", 0)) + 1)
+	_record(id, "clears", "clear")
 
 
 static func remove(id: String) -> void:

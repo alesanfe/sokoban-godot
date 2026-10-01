@@ -39,7 +39,14 @@ static func _request(method: HTTPClient.Method, path: String,
 		return
 	var req := HTTPRequest.new()
 	req.timeout = 8.0
-	tree.root.add_child.call_deferred(req)
+	# los callers viven en el hilo principal: add_child directo (un
+	# call_deferred aquí retrasaba la request un frame entero);
+	# deferred solo si algún día se llama desde un worker
+	var on_main := OS.get_thread_caller_id() == OS.get_main_thread_id()
+	if on_main:
+		tree.root.add_child(req)
+	else:
+		tree.root.add_child.call_deferred(req)
 	req.request_completed.connect(func(result, code, _h, b):
 		req.queue_free()
 		var parsed = JSON.parse_string(b.get_string_from_utf8())
@@ -54,7 +61,11 @@ static func _request(method: HTTPClient.Method, path: String,
 	if token() != "":
 		headers.append("Authorization: Bearer " + token())
 	var payload := "" if body == null else JSON.stringify(body)
-	req.request.call_deferred(url().rstrip("/") + path, headers, method, payload)
+	var target := url().rstrip("/") + path
+	if on_main:
+		req.request(target, headers, method, payload)
+	else:
+		req.request.call_deferred(target, headers, method, payload)
 
 
 ## GET /api/feed → cb({"ok", "entries": [...]})

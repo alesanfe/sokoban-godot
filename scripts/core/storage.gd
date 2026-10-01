@@ -40,27 +40,44 @@ static func load_json(path: String, fallback) -> Variant:
 	if _cache.has(rp):
 		return _cache[rp]
 	var out = fallback
-	if FileAccess.file_exists(rp):
-		var f := FileAccess.open(rp, FileAccess.READ)
-		if f:
-			var parsed = JSON.parse_string(f.get_as_text())
-			# raíz del tipo esperado: un JSON válido pero de otro tipo
-			# (p.ej. `[1]` donde se espera un objeto) rompería los
-			# `var x: Dictionary`/`Array` de los consumidores
-			if parsed != null and typeof(parsed) == typeof(fallback):
-				out = parsed
+	for p in [rp, rp + ".bak"]:
+		if not FileAccess.file_exists(p):
+			continue
+		var f := FileAccess.open(p, FileAccess.READ)
+		if f == null:
+			continue
+		var parsed = JSON.parse_string(f.get_as_text())
+		f.close()
+		# raíz del tipo esperado: un JSON válido pero de otro tipo
+		# (p.ej. `[1]` donde se espera un objeto) rompería los
+		# `var x: Dictionary`/`Array` de los consumidores
+		if parsed != null and typeof(parsed) == typeof(fallback):
+			out = parsed
+			break
 	_cache[rp] = out
 	return out
 
 
+## Escritura atómica: tmp + rename + .bak de la última versión buena.
+## Un corte a mitad de WRITE dejaba el fichero truncado y el jugador
+## perdía progreso/settings enteros; load_json cae a .bak solo.
 static func save_json(path: String, data) -> void:
 	if data is Dictionary:
 		data["v"] = SCHEMA_V
 	var rp := _p(path)
 	_cache[rp] = data
-	var f := FileAccess.open(rp, FileAccess.WRITE)
-	if f:
-		f.store_string(JSON.stringify(data))
+	var tmp := rp + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify(data))
+	f.close()
+	var abs_rp := ProjectSettings.globalize_path(rp)
+	var abs_tmp := ProjectSettings.globalize_path(tmp)
+	if FileAccess.file_exists(rp):
+		DirAccess.copy_absolute(abs_rp, abs_rp + ".bak")
+		DirAccess.remove_absolute(abs_rp)
+	DirAccess.rename_absolute(abs_tmp, abs_rp)
 
 
 # ------------------------------------------------------------- levels
