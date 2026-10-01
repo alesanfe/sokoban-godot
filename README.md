@@ -203,14 +203,44 @@ corre y que la URL en Ajustes → Comunidad incluye el puerto.
   garantizados entre versiones del motor (el schema `v` lo rompe a
   propósito, no lo esconde).
 
+## Documentación
+
+| Para | Doc |
+|---|---|
+| Jugar / instalar | este README |
+| Reglas y tiles | [docs/RULES.md](docs/RULES.md) |
+| Arquitectura + decisiones | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/decisions/](docs/decisions/) |
+| API del backend | [docs/API.md](docs/API.md) |
+| Autoalojar el backend | [docs/OPERATIONS.md](docs/OPERATIONS.md) |
+| Gate de release | [docs/operations/RELEASE_CHECKLIST.md](docs/operations/RELEASE_CHECKLIST.md) |
+| Modelo de datos | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) |
+| Amenazas / privacidad | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) · [docs/PRIVACY.md](docs/PRIVACY.md) |
+
+## Contribución
+
+[CONTRIBUTING.md](CONTRIBUTING.md) — `tools/test_all.ps1` es la puerta;
+los PRs pasan `ci.yml` (motor + UI + backend + lint + docs).
+
 ## Soporte
 
 - Bugs → [issues](https://github.com/alesanfe/sokoban-godot/issues)
 - Seguridad → [SECURITY.md](SECURITY.md) (privado, no issue público)
-- Contribuir → [CONTRIBUTING.md](CONTRIBUTING.md)
 - Canales y datos útiles para reportar → [SUPPORT.md](SUPPORT.md)
+
+## Autores y mantenimiento
+
+Mantenido por [@alesanfe](https://github.com/alesanfe).
+Las capturas se regeneran con `tools/screenshots.gd` y las decisiones
+grandes se registran como ADRs — la doc se revisa en cada release.
+
+## Reconocimientos
+
+- Sprites [Kenney Sokoban](https://kenney.nl) — CC0.
+- Nivel pack clásico Microban © David W. Skinner.
+- Inspiration: las variantes de Sokoban de la escena (SokoBond,
+  Sokobond, Patrick's Parabox) — el diseño es original.
 
 ## Licencia
 
-[MIT](LICENSE). Sprites [Kenney Sokoban](https://kenney.nl) — CC0.
-Nivel pack Microban © David W. Skinner.
+[MIT](LICENSE) para el código. Los assets de Kenney son CC0;
+el pack Microban se usa con atribución a su autor.
