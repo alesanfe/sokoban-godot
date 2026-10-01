@@ -9,6 +9,7 @@ config_version=5
 config/name="Sokoban Mutante"
 config/description="Sokoban donde cada nivel introduce una regla absurda."
 config/version="1.1.0"
+config/icon="res://game_icon.png"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7")
 

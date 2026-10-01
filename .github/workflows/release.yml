@@ -4,51 +4,110 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write
+  id-token: write        # attestation de procedencia
+  attestations: write
+
 jobs:
-  release-web:
+  verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write      # attestation de procedencia
-      attestations: write
     steps:
       - uses: actions/checkout@v4
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.7.2
-          include-prereleases: true
           use-dotnet: false
-          # export templates descargadas por la acción
           godot-export-templates: true
-      - name: Suites (gate de release)
+      - name: Gate de release (motor + reglas)
         run: |
           godot --headless --path . --import
           godot --headless --path . -s res://tests/test_runner.gd
           godot --headless --path . -s res://tests/test_rules.gd
-      - name: Export web
+
+  export:
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { preset: "Web",             out: "index.html",           slug: web }
+          - { preset: "Windows Desktop", out: "sokoban-mutante.exe",  slug: windows }
+          - { preset: "Linux/X11",       out: "sokoban-mutante.x86_64", slug: linux }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          godot-export-templates: true
+      - name: Import resources
+        run: godot --headless --path . --import
+      - name: Export ${{ matrix.preset }}
         run: |
-          mkdir -p dist
-          godot --headless --path . --export-release "Web" dist/index.html
-      - name: Paquete + SHA256
+          mkdir -p dist-${{ matrix.slug }}
+          godot --headless --path . --export-release \
+            "${{ matrix.preset }}" "dist-${{ matrix.slug }}/${{ matrix.out }}"
+      - name: Empaquetar + SHA256
         run: |
-          cd dist
-          zip -r ../sokoban-mutante-web.zip .
+          cd dist-${{ matrix.slug }}
+          zip -r ../sokoban-mutante-${{ matrix.slug }}.zip .
           cd ..
-          sha256sum sokoban-mutante-web.zip > sokoban-mutante-web.zip.sha256
+          sha256sum sokoban-mutante-${{ matrix.slug }}.zip \
+            > sokoban-mutante-${{ matrix.slug }}.zip.sha256
+      - name: Attestación de procedencia (SLSA)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: sokoban-mutante-${{ matrix.slug }}.zip
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: sokoban-mutante-${{ matrix.slug }}
+          path: |
+            sokoban-mutante-${{ matrix.slug }}.zip
+            sokoban-mutante-${{ matrix.slug }}.zip.sha256
+
+  publish:
+    needs: export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sokoban-mutante-*
+          merge-multiple: true
       - name: SBOM (CycloneDX)
         run: |
           pip install cyclonedx-bom==4.6.0
           cyclonedx-py environment -o sbom.json --of JSON \
             --mc-type application || true
-      - name: Attestación de procedencia (SLSA)
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: sokoban-mutante-web.zip
       - name: Publicar release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            sokoban-mutante-web.zip
-            sokoban-mutante-web.zip.sha256
+            sokoban-mutante-*.zip
+            sokoban-mutante-*.sha256
             sbom.json
           generate_release_notes: true
+
+  # itch.io via butler — requiere secrets.BUTLER_API_KEY y la página
+  # creada (canal = plataforma). Sin el secret el job se salta limpio.
+  deploy-itch:
+    needs: publish
+    runs-on: ubuntu-latest
+    if: ${{ vars.ITCH_DEPLOY == '1' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sokoban-mutante-*
+          merge-multiple: true
+      - name: Push a itch.io (butler)
+        uses: Ayowel/butler-to-itch@v1
+        with:
+          butler_key: ${{ secrets.BUTLER_API_KEY }}
+          itch_user: ${{ vars.ITCH_USER }}
+          itch_game: sokoban-mutante
+          version: ${{ github.ref_name }}
+          files: |
+            windows:sokoban-mutante-windows.zip
+            linux:sokoban-mutante-linux.zip
+            web:sokoban-mutante-web.zip

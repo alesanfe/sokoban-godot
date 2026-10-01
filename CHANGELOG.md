@@ -3,6 +3,30 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/);
 el proyecto usa [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+- Icono propio (`game_icon.png`) — deja de usar el genérico de Godot;
+  se aplica al proyecto, al preset web (PWA) y al ejecutable Windows.
+- Presets de exportación **Windows Desktop** y **Linux/X11**
+  además del web.
+- `release.yml` multi-plataforma (matriz web/windows/linux) con
+  sha256 + attestation SLSA por artefacto y despliegue a itch.io
+  opcional vía butler (`ITCH_DEPLOY=1` + `BUTLER_API_KEY`).
+- Versión del build visible en el menú principal
+  (`config/version` de `project.godot`).
+- `docs/operations/RELEASE_CHECKLIST.md` — puerta de QA por tag:
+  FTUE, guardado, build exportado real, COOP/COEP, regresiones.
+- `.godot-version` pinnado para CI.
+- `tools/screenshots.gd` — regenera las capturas de `docs/assets/`
+  ejecutando las pantallas reales del juego.
+- README reestructurado como portada (audiencias, galería, quickstart
+  verificable, diagrama Mermaid, docs por Diátaxis) y `docs/RULES.md`
+  recoge la referencia completa de reglas/tiles.
+- Backend refactorizado a paquete `server/community/` (capas
+  config/store/auth/verify/routes/http_api/app), handlers puros
+  testeables sin socket (`server/test_routes.py`), socket timeout
+  anti-slowloris, escritura atómica con `.bak` en `Storage`.
+
 ## [1.1.0] — 2026-10-01
 
 Backend de comunidad endurecido — se eliminan los límites que la

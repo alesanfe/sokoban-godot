@@ -5,10 +5,9 @@ solver, campaña de 81 niveles mutantes + 155 clásicos Microban, y un
 Modo Comunidad estilo Mario Maker con backend autoalojable.
 
 [![CI](https://github.com/alesanfe/sokoban-godot/actions/workflows/ci.yml/badge.svg)](https://github.com/alesanfe/sokoban-godot/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/alesanfe/sokoban-godot)](https://github.com/alesanfe/sokoban-godot/releases)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Godot 4.7](https://img.shields.io/badge/Godot-4.7-478cbf)
-![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-green)
-![Tests: 227 checks](https://img.shields.io/badge/tests-227%20checks-brightgreen)
 
 📖 [Arquitectura](docs/ARCHITECTURE.md) ·
 [Reglas](docs/RULES.md) ·
@@ -52,6 +51,10 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 | **Un comando lo verifica** | `tools/test_all.ps1` — motor + UI + backend + lint |
 
 ## Inicio rápido
+
+**Jugar sin compilar**: descarga la build de tu plataforma en
+[Releases](https://github.com/alesanfe/sokoban-godot/releases)
+(Windows, Linux o web jugable en el navegador).
 
 ```bash
 git clone https://github.com/alesanfe/sokoban-godot.git

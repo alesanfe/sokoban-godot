@@ -69,6 +69,14 @@ func _init(host: Control) -> void:
 	b_quit.pressed.connect(func(): get_tree().quit())
 	v.add_child(b_quit)
 
+	# build id visible: versión del project.godot — los bugreports y
+	# el QA de release se apoyan en ella ("¿en qué build pasó?")
+	var ver := Widgets.label(
+		"v" + str(ProjectSettings.get_setting(
+			"application/config/version", "?")),
+		12, Color(0.45, 0.45, 0.5))
+	v.add_child(ver)
+
 
 ## Generation runs the solver up to 40× per candidate — far too heavy
 ## for the main thread. Worker thread + deferred callback, like
