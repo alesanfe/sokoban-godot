@@ -23,7 +23,8 @@ python -m ruff check server/;          if ($LASTEXITCODE -ne 0) { $fail++ }
 python -m bandit -r server/ -q --severity-level medium
                                          if ($LASTEXITCODE -ne 0) { $fail++ }
 gdlint scripts/ tests/ tools/;         if ($LASTEXITCODE -ne 0) { $fail++ }
-Write-Output "=== backend: load test ==="
+Write-Output "=== backend: rutas (sin socket) + load test ==="
+python server/test_routes.py;         if ($LASTEXITCODE -ne 0) { $fail++ }
 python server/test_load.py
 if ($LASTEXITCODE -ne 0) { $fail++ }
 

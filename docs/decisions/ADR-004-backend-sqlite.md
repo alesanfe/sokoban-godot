@@ -16,6 +16,13 @@ paginado, rate-limit **persistido en SQLite** (`BEGIN IMMEDIATE`),
 TLS nativo opcional, admins/moderación, stats endpoint, log
 rotado, timeout de socket (15 s) por request.
 
+Estructura (paquete `server/community/`): `config` (env+ctes),
+`store` (schema/migraciones/rate-limit), `auth` (pbkdf2+sesiones),
+`verify` (replay vanilla), `routes` (handlers puros
+`(status, body, code)` + tabla ROUTES), `http_api` (Handler
+delgado), `app` (argparse/TLS/serve). `community_server.py` es un
+shim de compatibilidad.
+
 ## Alternativas
 
 - JSON file: era la primera versión — race RMW, carga completa cada

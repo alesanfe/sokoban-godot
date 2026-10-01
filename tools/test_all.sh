@@ -18,8 +18,9 @@ python -m bandit -r server/ -q --severity-level medium \
                                                  || fail=$((fail+1))
 gdlint scripts/ tests/ tools/                    || fail=$((fail+1))
 
-echo "=== backend: load test ==="
-python server/test_load.py || fail=$((fail+1))
+echo "=== backend: rutas (sin socket) + load test ==="
+python server/test_routes.py                 || fail=$((fail+1))
+python server/test_load.py                   || fail=$((fail+1))
 
 if [ "$fail" -eq 0 ]; then echo "== SUITE COMPLETA: OK =="
 else echo "== SUITE COMPLETA: $fail suites con fallos =="; fi

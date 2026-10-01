@@ -63,6 +63,8 @@ jobs:
             -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
             -d '{"title":"ci","data":{"board":"#####\n#@$.#\n#####"},"moves":"r"}' | grep -q '"verified": *1'
           curl -sf "http://127.0.0.1:18765/api/feed?limit=1" | grep -q '"total": *1'
+      - name: Unit tests de rutas (sin socket)
+        run: python server/test_routes.py
       - name: Load test (concurrencia + consistencia de likes)
         run: python server/test_load.py
 

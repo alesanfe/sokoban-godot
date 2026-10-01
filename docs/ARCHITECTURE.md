@@ -17,9 +17,15 @@
 └──────────────┬───────────────────────────────────────┘
                │ JSON REST (opcional)
         ┌──────┴───────┐
-        │ community_server.py  (Python stdlib + SQLite WAL)
+        │ server/community/    (Python stdlib + SQLite WAL)
+        │   config·store·auth·verify·stats·routes·http_api·app
         └──────────────┘
 ```
+
+`community_server.py` en `server/` es un shim de compatibilidad;
+la lógica vive en el paquete `community/` y los handlers de
+`routes.py` son puros (`(status, body, code)`) — se testean sin
+socket en `server/test_routes.py`.
 
 ## Reglas de dependencia
 
