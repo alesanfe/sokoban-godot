@@ -53,7 +53,7 @@ import sys
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 log = logging.getLogger("skm.community")
 
@@ -177,7 +177,8 @@ def _feed(offset: int, limit: int) -> dict:
     with _conn() as c:
         total = c.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
         rows = c.execute(
-            "SELECT " + ",".join(_COLS) + " FROM entries"
+            # nosec en la línea del literal concatenado: _COLS cte
+            "SELECT " + ",".join(_COLS) + " FROM entries"  # nosec B608
             " ORDER BY ts DESC, id DESC LIMIT ? OFFSET ?",
             (limit, offset)).fetchall()
     out = []
@@ -390,7 +391,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(503, {"ok": False}, "db_down")
         elif path == "/api/stats":
             # métricas operativas — solo admins (expone volumen de uso)
-            me, admin, expired = _auth(self.headers)
+            _me, admin, expired = _auth(self.headers)
             if expired:
                 self._json(401, {"error": "session expired"},
                            "token_expired")
@@ -515,7 +516,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             with _conn() as c:
                 c.execute(
-                    "INSERT INTO entries(" + ",".join(_COLS) +
+                    "INSERT INTO entries(" + ",".join(_COLS) +  # nosec B608
                     ",token,user) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (entry["id"], entry["title"], entry["author"],
                      entry["data"], entry["rules"],
@@ -595,13 +596,52 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, {"liked": liked, "likes": n})
             return
 
+        # /api/delete_user {username}: moderación — un admin elimina la
+        # cuenta: sesiones, likes del usuario y sus entradas publicadas.
+        if path == "/api/delete_user":
+            me, admin, expired = _auth(self.headers)
+            if expired:
+                self._json(401, {"error": "session expired"},
+                           "token_expired")
+                return
+            if not admin:
+                self._json(403, {"error": "admin only"}, "forbidden")
+                return
+            target = str(body.get("username", "")).strip()
+            if not USER_RE.match(target) or target == me:
+                # un admin no puede eliminar su propia cuenta por API —
+                # evita dejar el servicio sin moderadores por accidente
+                self._json(422, {"error": "invalid user"},
+                           "invalid_user")
+                return
+            with _conn() as c:
+                c.execute("BEGIN IMMEDIATE")
+                if c.execute("DELETE FROM users WHERE username=?",
+                             (target,)).rowcount == 0:
+                    self._json(404, {"error": "unknown user"},
+                               "unknown_id")
+                    return
+                c.execute("DELETE FROM sessions WHERE user=?",
+                          (target,))
+                c.execute("DELETE FROM likes WHERE user=?", (target,))
+                # recontar likes afectados por likes del usuario borrado
+                c.execute("""UPDATE entries SET likes=(
+                    SELECT COUNT(*) FROM likes
+                    WHERE likes.entry_id=entries.id)""")
+                c.execute("DELETE FROM entries WHERE user=?",
+                          (target,))
+            log.warning("admin_delete_user target=%s by=%s", target, me)
+            self._json(200, {"deleted": target})
+            return
+
         # play/clear: contadores anónimos (el juego los emite al
         # abrir/superar un nivel, sin exigir login)
         if path in ("/api/play", "/api/clear"):
             field = path.rsplit("/", 1)[1]
             with _conn() as c:
                 cur = c.execute(
-                    f"UPDATE entries SET {field}s = {field}s + 1"
+                    f"UPDATE entries SET {field}s = {field}s + 1"  # nosec B608
+                    # field es "play"|"clear" por el if de arriba
                     " WHERE id = ?", (eid,))
             if cur.rowcount == 0:
                 self._json(404, {"error": "unknown id"}, "unknown_id")
@@ -619,7 +659,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Sokoban Mutante community backend")
     ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--host", default="0.0.0.0")
+    ap.add_argument("--host", default="0.0.0.0")   # nosec B104: bind
+    # abierto deliberado — con TLS o proxy delante; LAN por defecto
     ap.add_argument("--db", default=None,
                     help="SQLite file (default: server/community.db or SKM_DB)")
     ap.add_argument("--tls-cert", default=os.environ.get("SKM_TLS_CERT", ""),

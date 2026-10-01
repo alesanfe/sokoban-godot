@@ -26,6 +26,7 @@
 | POST `/api/like` | `{id}` | `{liked, likes}` — toggle por cuenta | ✓ |
 | POST `/api/play` `/api/clear` | `{id}` | `{ok:true}` · `404 unknown_id` | — |
 | POST `/api/remove` | `{id}` o `{id,token}` | `{removed}` · `403 forbidden` | ✓ |
+| POST `/api/delete_user` | `{username}` | `{deleted}` — borra cuenta, sesiones, likes y sus entradas · `403` | admin |
 
 ## Verificación de soluciones
 

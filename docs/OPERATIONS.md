@@ -71,8 +71,14 @@ volver a un commit anterior y arrancar. La migración
 `community_db.json` → SQLite es unidireccional: conservar el JSON
 hasta validar que el feed responde.
 
-## Límites operativos conocidos
+## Moderación
+
+- `SKM_ADMINS=user1,user2` — admins pueden `POST /api/remove {id}`
+  sobre cualquier entrada, `POST /api/delete_user {username}` (borra
+  cuenta, sesiones, likes y sus entradas) y `GET /api/stats`.
+- Un admin no puede borrarse a sí mismo por API — el servicio no se
+  queda sin moderadores por accidente.
+
+## Límites operativos
 
 - `MAX_ENTRIES` poda el catálogo: backup antes de bajar el límite.
-- Sin revocación manual de usuarios (borrado de cuenta = SQL manual);
-  las sesiones caducan solas.

@@ -1,0 +1,15 @@
+# gdlint — política del proyecto (test_all / CI la aplican)
+max-line-length: 120
+max-file-lines: 1500
+max-public-methods: 60
+function-arguments-number: 10
+
+# Reglas desactivadas: convención intencional del repo —
+# constantes/helpers tras funciones en suites de test, load() por
+# caso, ficheros de suite grandes, nombres cortos de dominio.
+disable:
+  - class-definitions-order
+  - duplicated-load
+  - max-returns
+  - function-variable-name
+  - class-variable-name

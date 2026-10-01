@@ -41,7 +41,8 @@ func set_meta_difficulty(d: int) -> void:
 	difficulty = d
 
 
-static func create(p_title: String, p_board: PackedStringArray, p_rules: Array = [], p_author: String = "") -> LevelData:
+static func create(p_title: String, p_board: PackedStringArray,
+		p_rules: Array = [], p_author: String = "") -> LevelData:
 	var l := LevelData.new()
 	l.title = p_title
 	l.board = p_board

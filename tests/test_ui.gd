@@ -286,7 +286,7 @@ func _community_remote_e2e() -> void:
 	var fake_body := "{\"title\":\"fake\",\"data\":{\"board\":\"#####\\n#@$.#\\n#####\"},\"moves\":\"llll\"}"
 	r422.request("http://127.0.0.1:%d/api/publish" % port,
 		["Content-Type: application/json",
-		 "Authorization: Bearer " + CommunityRemote.token()],
+		"Authorization: Bearer " + CommunityRemote.token()],
 		HTTPClient.METHOD_POST, fake_body)
 	await _wait_until(func(): return fake.has("code"))
 	ok(fake.get("code", 0) == 422,

@@ -12,6 +12,9 @@ de Python. No hay `requirements.txt` porque no hay nada que
 | Godot Engine | 4.7.2 stable | juego + tests headless + export | MIT |
 | Python | ≥3.10 | servidor de comunidad (stdlib) | PSF |
 | Export templates | 4.7.2 | build Web (HTML5/WASM) | MIT |
+| ruff | 0.16.* | linter Python (CI/dev) | MIT |
+| bandit | latest | análisis de seguridad Python (CI/dev) | Apache-2.0 |
+| gdtoolkit | 4.* | gdlint (GDScript) en CI/dev | MIT |
 
 ## Assets
 

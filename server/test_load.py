@@ -12,15 +12,14 @@ Uso:  python server/test_load.py            (arranca su propio server)
 
 import argparse
 import json
-import statistics
+import os
 import subprocess
 import sys
 import tempfile
 import threading
 import time
-import urllib.request
 import urllib.error
-import os
+import urllib.request
 
 READERS = 20
 WRITERS = 10
@@ -39,13 +38,13 @@ def req(url, method="GET", body=None, token=None):
                                method=method)
     t0 = time.monotonic()
     try:
-        with urllib.request.urlopen(r, timeout=15) as resp:
+        with urllib.request.urlopen(r, timeout=15) as resp:  # nosec B310
             return resp.status, json.loads(resp.read()), \
                 (time.monotonic() - t0) * 1000
     except urllib.error.HTTPError as e:
         try:
             payload = json.loads(e.read())
-        except Exception:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             payload = {}
         return e.code, payload, (time.monotonic() - t0) * 1000
 
@@ -63,8 +62,9 @@ def main() -> int:
     proc = None
     url = args.url
     if url is None:
-        dbf = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        dbf.close()
+        with tempfile.NamedTemporaryFile(suffix=".db",
+                                         delete=False) as dbf:
+            pass                               # solo queremos el path
         os.unlink(dbf.name)
         srv = os.path.join(os.path.dirname(__file__),
                            "community_server.py")
@@ -79,8 +79,8 @@ def main() -> int:
                 code, _, _ = req(url + "/api/health")
                 if code == 200:
                     break
-            except Exception:
-                pass
+            except (OSError, urllib.error.URLError):
+                pass                           # aún no escucha: reintenta
             time.sleep(0.1)
         else:
             print("FAIL: server no arranca")
@@ -159,7 +159,7 @@ def main() -> int:
                f"likes({rid[:6]}) == {exp} (toggle concurrencia)")
 
         # stats admin
-        code, s, _ = req(url + "/api/stats", token=token)
+        code, _s, _ = req(url + "/api/stats", token=token)
         ok(code in (200, 403),
            f"stats -> {code} (403 si loaduser no es admin)")
     finally:

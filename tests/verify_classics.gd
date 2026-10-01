@@ -21,7 +21,10 @@ func _initialize() -> void:
 	print("valid: %d / %d" % [levels.size() - bad.size(), levels.size()])
 	for b in bad:
 		print("  INVALID " + b)
-	print("solver-verified: %d / %d in %d ms" % [levels.size() - bad.size() - unsolved.size(), levels.size() - bad.size(), Time.get_ticks_msec() - t0])
+	var solved: int = levels.size() - bad.size() - unsolved.size()
+	print("solver-verified: %d / %d in %d ms" % [
+		solved, levels.size() - bad.size(),
+		Time.get_ticks_msec() - t0])
 	for u in unsolved:
 		print("  UNSOLVED " + u)
 	quit()

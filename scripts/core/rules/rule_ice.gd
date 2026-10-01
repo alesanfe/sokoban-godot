@@ -58,7 +58,7 @@ func after_player_move(state, dir: Vector2i, pushed: bool) -> void:
 	state._pickup_key()
 
 
-func hud_lines(state) -> PackedStringArray:
+func hud_lines(_state) -> PackedStringArray:
 	if params.get("player_slide", false):
 		return PackedStringArray(["Hielo: cajas y jugador se deslizan"])
 	return PackedStringArray(["Hielo: las cajas se deslizan"])

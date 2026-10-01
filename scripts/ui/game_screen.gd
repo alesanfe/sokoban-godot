@@ -120,7 +120,10 @@ func start(p_level: LevelData, p_context: Dictionary = {}) -> void:
 	_hud_par = bool(Storage.get_setting("show_par"))
 	var kn := func(a): return OS.get_keycode_string(
 		keys.get(a, ControlsScreen.DEFAULTS[a]))
-	hud_keys.text = "Flechas mover (mantén) · %s deshacer (mantén = rebobinar) · %s rehacer · %s reiniciar · %s solución · %s pista · %s repetición · %s mejor ruta · Esc menú" % [
+	hud_keys.text = ("Flechas mover (mantén) · %s deshacer"
+		+ " (mantén = rebobinar) · %s rehacer · %s reiniciar"
+		+ " · %s solución · %s pista · %s repetición"
+		+ " · %s mejor ruta · Esc menú") % [
 		kn.call("undo"), kn.call("redo"), kn.call("restart"),
 		kn.call("solve"), kn.call("hint"), kn.call("replay"),
 		kn.call("trail")]

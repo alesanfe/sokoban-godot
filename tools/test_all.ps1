@@ -17,8 +17,13 @@ foreach ($s in $suites) {
     & $godot --headless --path . -s $s
     if ($LASTEXITCODE -ne 0) { $fail++ }
 }
-Write-Output "=== backend: py_compile + load test ==="
+Write-Output "=== lint: ruff + bandit + gdlint ==="
 python -m py_compile server/community_server.py
+python -m ruff check server/;          if ($LASTEXITCODE -ne 0) { $fail++ }
+python -m bandit -r server/ -q --severity-level medium
+                                         if ($LASTEXITCODE -ne 0) { $fail++ }
+gdlint scripts/ tests/ tools/;         if ($LASTEXITCODE -ne 0) { $fail++ }
+Write-Output "=== backend: load test ==="
 python server/test_load.py
 if ($LASTEXITCODE -ne 0) { $fail++ }
 

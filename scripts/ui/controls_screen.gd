@@ -28,7 +28,9 @@ func _init(p_host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
 	v.add_child(Widgets.label("Controles", 30, Color(0.95, 0.8, 0.2)))
-	v.add_child(Widgets.label("Clic en una acción y pulsa la nueva tecla. Las flechas siempre funcionan.", 13, Color(0.6, 0.6, 0.65)))
+	v.add_child(Widgets.label("Clic en una acción y pulsa la nueva"
+		+ " tecla. Las flechas siempre funcionan.", 13,
+		Color(0.6, 0.6, 0.65)))
 	v.add_child(Widgets.hsep())
 	for a in ACTIONS:
 		var row := HBoxContainer.new()

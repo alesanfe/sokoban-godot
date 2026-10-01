@@ -7,7 +7,9 @@ func _init(host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
 	v.add_child(Widgets.label("Importar nivel", 32, Color(0.95, 0.8, 0.2)))
-	v.add_child(Widgets.label("Pega un código SKM1.…/SKM2.… o un tablero XSB (también RLE: 4#|# @$.#)", 14, Color(0.7, 0.7, 0.75)))
+	v.add_child(Widgets.label("Pega un código SKM1.…/SKM2.… o un"
+		+ " tablero XSB (también RLE: 4#|# @$.#)", 14,
+		Color(0.7, 0.7, 0.75)))
 
 	# TextEdit (not LineEdit) so multi-line XSB boards paste correctly.
 	var edit := TextEdit.new()

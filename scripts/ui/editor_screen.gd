@@ -66,7 +66,7 @@ var grid_w := 12
 var grid_h := 9
 var cells := {}          # Vector2i -> char
 var over := {}           # Vector2i -> {c,m,r,h} caja sobre terreno
-						 # no componible (LevelData.over)
+# no componible (LevelData.over)
 var tool := "#"
 var _tool_buttons := {}      # tool id -> palette Button (eyedrop sync)
 var rule_entries: Array = []  # [{id, controls:{key->Control}}]

@@ -23,7 +23,7 @@ func after_player_move(state, dir: Vector2i, _pushed: bool) -> void:
 			state.boxes[i] = dest
 
 
-func state_key(state) -> String:
+func state_key(_state) -> String:
 	# mimic flags already included via boxes key
 	return ""
 
