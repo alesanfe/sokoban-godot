@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  godot-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          include-prereleases: true
+      # refrescar el class cache antes de compilar scripts sueltos
+      - run: godot --headless --path . --import
+      - run: godot --headless --path . -s res://tests/test_runner.gd
+      - run: godot --headless --path . -s res://tests/test_rules.gd
+      - run: godot --headless --path . -s res://tests/test_playthrough.gd
+      - run: godot --headless --path . -s res://tests/test_e2e.gd
+      - run: godot --headless --path . -s res://tests/test_ui.gd
+
+  server-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m py_compile server/community_server.py
+      # smoke: arranca, health, register, publish, feed, remove
+      - run: |
+          python server/community_server.py --port 18765 --db /tmp/skm_ci.db &
+          sleep 1.5
+          curl -sf http://127.0.0.1:18765/api/health | grep -q '"ok": *true'
+          TOKEN=$(curl -sf -X POST http://127.0.0.1:18765/api/register \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"ci","password":"pw1234"}' | python -c 'import json,sys;print(json.load(sys.stdin)["token"])')
+          curl -sf -X POST http://127.0.0.1:18765/api/publish \
+            -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+            -d '{"title":"ci","data":{"board":"#####\n#@$.#\n#####"}}' > /dev/null
+          curl -sf "http://127.0.0.1:18765/api/feed?limit=1" | grep -q '"total": *1'

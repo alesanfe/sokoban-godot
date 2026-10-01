@@ -1,6 +1,8 @@
 # Sokoban Mutante
 
-Sokoban donde cada nivel introduce una regla absurda. Proyecto **Godot 4.7** (GDScript).
+Sokoban donde cada nivel introduce una regla absurda. Proyecto **Godot 4.7** (GDScript) · **MIT** · v1.0.0.
+
+📖 [Arquitectura](docs/ARCHITECTURE.md) · [API del backend](docs/API.md) · [ADRs](docs/decisions/) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md) · [Changelog](CHANGELOG.md)
 
 Contenido: **155 niveles clásicos** (pack Microban de David W. Skinner, `levels/microban.sok`, formato XSB estándar) y **81 niveles de campaña** que introducen y combinan cada regla absurda, incluyendo interruptores `!` y reglas secretas.
 
@@ -165,3 +167,16 @@ godot --headless --path . --export-release "Web" export\web\index.html
 ```
 
 Genera `export/web/` (index.html + wasm + pck) servible desde cualquier host estático. El preset excluye `tests/`, `tools/` y `server/`.
+
+## Backend de comunidad (opcional)
+
+```powershell
+python server/community_server.py --port 8765     # stdlib + SQLite
+```
+
+Cuentas Bearer (pbkdf2), feed paginado, like por cuenta, rate-limit,
+migración automática del JSON legacy. Contrato completo: [docs/API.md](docs/API.md). Config: `server/.env.example`.
+
+## Licencia
+
+MIT — ver [LICENSE](LICENSE).
