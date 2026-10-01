@@ -21,6 +21,19 @@ versión 1.0 documentaba como aceptados.
   vanilla y devuelve `verified` o `422 unsolved`.
 - **Log de seguridad**: eventos (auth/publish/remove/rate-limit) a
   stderr y `--log-file` con rotación 1MB×3.
+- `POST /api/delete_user` (admin): borra cuenta, sesiones, likes y
+  entradas del usuario — último límite operativo eliminado.
+- Lint obligatorio: `ruff` + `bandit` + `gdlint` (política en
+  `gdlintrc`) en CI y `tools/test_all`; código a 0 hallazgos.
+- `server/test_load.py`: 250 reqs concurrentes, consistencia de
+  likes y p95 — descubrió la race del toggle de like (`BEGIN
+  IMMEDIATE`).
+- CI: gitleaks + load test; `release.yml`: export web + SHA256 +
+  SBOM CycloneDX + attestation SLSA; `dependabot.yml` +
+  `scorecard.yml` (OpenSSF).
+- Docs: `docs/operations/SLO.md`, `docs/operations/INCIDENTS.md`,
+  `docs/DATA_MODEL.md`, `docs/PRIVACY.md`, `DEPENDENCIES.md`,
+  `.editorconfig`, `.gitattributes`, `tools/test_all.{ps1,sh}`.
 
 ### Cambiado
 - Rate-limit por IP movido a SQLite (`rate` table, `BEGIN
