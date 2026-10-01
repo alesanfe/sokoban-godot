@@ -43,6 +43,10 @@ static func _request(method: HTTPClient.Method, path: String,
 	req.request_completed.connect(func(result, code, _h, b):
 		req.queue_free()
 		var parsed = JSON.parse_string(b.get_string_from_utf8())
+		# sesión caducada o token rechazado estando logueados →
+		# limpiar la sesión local; el siguiente intento pedirá login
+		if code == 401 and token() != "":
+			logout()
 		cb.call({"ok": result == HTTPRequest.RESULT_SUCCESS
 			and code >= 200 and code < 300, "code": code,
 			"body": parsed}))
@@ -85,12 +89,15 @@ static func logout() -> void:
 
 
 ## El servidor asigna el autor desde la sesión — el campo del
-## payload se ignora (nadie publica en nombre de otro).
+## payload se ignora (nadie publica en nombre de otro). Se adjunta la
+## solución del playtest (`moves`): el servidor la rejuega y marca
+## `verified`, o rechaza niveles vanilla cuya solución no cierra.
 static func publish(level: LevelData, cb: Callable) -> void:
 	_request(HTTPClient.METHOD_POST, "/api/publish", {
 		"title": level.title,
 		"data": level.to_dict(),
 		"rules": level.rules.map(func(r): return str(r.get("id", ""))),
+		"moves": "".join(Storage.get_replay_moves(level)),
 		"difficulty": level.difficulty, "par": level.par},
 		cb)
 

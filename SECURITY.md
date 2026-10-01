@@ -24,9 +24,20 @@ otros usuarios. Incluye: endpoint, payload, resultado y versión.
 - Login sin enumeración (misma respuesta para user inexistente).
 - `nosniff`, CORS `*` documentado (feed público, sin cookies).
 
-## Límites conocidos
+## Controles adicionales implementados
 
-- Sin TLS propio — despliega detrás de un proxy con HTTPS.
-- Sin moderación ni borrado masivo por admin — cualquiera con cuenta
-  puede publicar. Para una comunidad pública hace falta un panel de
-  moderación (roadmap abierto).
+- TLS nativo: `--tls-cert/--tls-key` (o `SKM_TLS_CERT/KEY`) — https://
+  directo sin proxy; también funciona detrás de Caddy/nginx.
+- Sesiones con caducidad (`SKM_SESSION_DAYS`, 30 por defecto,
+  renovación deslizante); el cliente cierra sesión local solo al
+  recibir 401.
+- Moderación: `SKM_ADMINS` da a esas cuentas borrado de cualquier
+  entrada y acceso a `/api/stats` (métricas operativas).
+- Prueba de solución server-side: `publish` exige `moves` y rejuega
+  la solución en niveles vanilla (`422 unsolved` si no resuelve);
+  los niveles con reglas mutantes salen `verified=0` y son
+  moderables.
+- Rate-limit persistido en SQLite (válido entre procesos y tras
+  reinicios).
+- Log de seguridad rotado (`--log-file`): auth fallidos, publish,
+  remove, rate-limits — sin bodies ni tokens.

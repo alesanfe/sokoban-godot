@@ -227,9 +227,24 @@ func _community_remote_e2e() -> void:
 	await _wait_until(func(): return adone.has("v"))
 	ok(adone.get("v", false), "e2e: registro devuelve token Bearer")
 	ok(CommunityRemote.logged_in(), "e2e: sesión persistida")
-	# publish → remote_id/token persistidos tras el POST
+	# publish sin login → 401 (el Bearer es obligatorio)
+	var noauth := {}
+	var r401 := HTTPRequest.new()
+	r401.timeout = 2.0
+	root.add_child(r401)
+	r401.request_completed.connect(func(_res, code, _h, _b):
+		noauth["code"] = code; r401.queue_free())
+	r401.request("http://127.0.0.1:%d/api/publish" % port,
+		["Content-Type: application/json"], HTTPClient.METHOD_POST,
+		"{\"title\":\"x\",\"data\":{\"board\":\"#####\\n#@$.#\\n#####\"}}")
+	await _wait_until(func(): return noauth.has("code"))
+	ok(noauth.get("code", 0) == 401, "e2e: publish anónimo → 401")
+	# publish → remote_id/token persistidos tras el POST.
+	# El nivel "#####/#@$.#/#####" se resuelve con un empuje "r" —
+	# record_win deja el replay que viaja como `moves` (verified=1).
 	var lvl := LevelData.create("E2E", PackedStringArray([
 		"#####", "#@$.#", "#####"]), [], "dev")
+	Storage.record_win(lvl, PackedStringArray(["r"]), 1.0)
 	var pr := CommunityService.publish(lvl, "dev")
 	ok(pr.get("ok", false), "e2e: publish local ok")
 	var pid_local: String = pr["id"]
@@ -261,6 +276,38 @@ func _community_remote_e2e() -> void:
 			and r.get("body", {}).get("liked") == true))
 	await _wait_until(func(): return ldone.has("v"))
 	ok(ldone.get("v", false), "e2e: like autenticado → liked+likes reales")
+	# solución falsa → el servidor rejuega y rechaza (unsolved)
+	var fake := {}
+	var r422 := HTTPRequest.new()
+	r422.timeout = 2.0
+	root.add_child(r422)
+	r422.request_completed.connect(func(_res, code, _h, _b):
+		fake["code"] = code; r422.queue_free())
+	var fake_body := "{\"title\":\"fake\",\"data\":{\"board\":\"#####\\n#@$.#\\n#####\"},\"moves\":\"llll\"}"
+	r422.request("http://127.0.0.1:%d/api/publish" % port,
+		["Content-Type: application/json",
+		 "Authorization: Bearer " + CommunityRemote.token()],
+		HTTPClient.METHOD_POST, fake_body)
+	await _wait_until(func(): return fake.has("code"))
+	ok(fake.get("code", 0) == 422,
+		"e2e: solución inválida → 422 unsolved")
+	# sesión caducada en el servidor → 401 token_expired y el cliente
+	# cierra sesión local automáticamente
+	OS.execute("python", PackedStringArray(["-c",
+		("import sqlite3; c=sqlite3.connect(r'%s');" % test_db) +
+		"c.execute('UPDATE sessions SET expires=1'); c.commit()"]))
+	var ex := {}
+	CommunityRemote.like(rid0, func(r): ex["code"] = r.get("code", 0))
+	await _wait_until(func(): return ex.has("code"))
+	ok(ex.get("code", 0) == 401, "e2e: sesión caducada → 401")
+	ok(not CommunityRemote.logged_in(),
+		"e2e: 401 limpia la sesión local")
+	# re-login para poder borrar como propietario
+	adone = {}
+	CommunityRemote.auth("login", "e2e_tester", "pw1234",
+		func(r): adone["v"] = r.get("ok", false))
+	await _wait_until(func(): return adone.has("v"))
+	ok(adone.get("v", false), "e2e: re-login tras caducidad")
 	# remove → borra local + remoto (con token)
 	CommunityService.remove(pid_local)
 	await _wait_until(func():

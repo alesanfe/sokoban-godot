@@ -1,6 +1,6 @@
 # Sokoban Mutante
 
-Sokoban donde cada nivel introduce una regla absurda. Proyecto **Godot 4.7** (GDScript) · **MIT** · v1.0.0.
+Sokoban donde cada nivel introduce una regla absurda. Proyecto **Godot 4.7** (GDScript) · **MIT** · v1.1.0.
 
 📖 [Arquitectura](docs/ARCHITECTURE.md) · [API del backend](docs/API.md) · [ADRs](docs/decisions/) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md) · [Changelog](CHANGELOG.md)
 

@@ -3,6 +3,31 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/);
 el proyecto usa [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.1.0] — 2026-10-01
+
+Backend de comunidad endurecido — se eliminan los límites que la
+versión 1.0 documentaba como aceptados.
+
+### Añadido
+- **TLS nativo**: `--tls-cert/--tls-key` (PEM, TLS ≥1.2) — https://
+  sin proxy obligatorio.
+- **Caducidad de sesiones**: `expires` por sesión, `SKM_SESSION_DAYS`
+  (30) con renovación deslizante; `401 token_expired` y el cliente
+  cierra sesión local solo (auto-logout).
+- **Moderación**: `SKM_ADMINS` — admins borran cualquier entrada y
+  leen `GET /api/stats` (métricas operativas por proceso + DB).
+- **Verificación server-side de soluciones**: `publish` recibe
+  `moves` (replay del playtest); el servidor rejuega el Sokoban
+  vanilla y devuelve `verified` o `422 unsolved`.
+- **Log de seguridad**: eventos (auth/publish/remove/rate-limit) a
+  stderr y `--log-file` con rotación 1MB×3.
+
+### Cambiado
+- Rate-limit por IP movido a SQLite (`rate` table, `BEGIN
+  IMMEDIATE`): compartido entre procesos y persistente.
+- `publish` fija el autor desde la sesión y exige sesión válida;
+  feed expone `verified` por entrada.
+
 ## [1.0.0] — 2026-10-01
 
 Primera versión completa: juego jugable + editor + comunidad.

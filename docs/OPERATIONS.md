@@ -30,8 +30,16 @@ Verificación de restauración (barata, hacerla de vez en cuando):
 levantar con `--db backup.db` en otro puerto y comprobar
 `/api/feed?limit=1` y `/api/health`.
 
-## Detrás de un proxy con TLS
+## TLS
 
+Nativo, sin proxy:
+
+```powershell
+python server/community_server.py --port 8765 \
+  --tls-cert certs/fullchain.pem --tls-key certs/privkey.pem
+```
+
+o vía env `SKM_TLS_CERT`/`SKM_TLS_KEY`. Alternativa con proxy —
 Caddy mínimo:
 
 ```
@@ -42,6 +50,20 @@ skm.ejemplo.com {
 
 Bind siempre a `127.0.0.1` cuando haya proxy delante.
 
+## Observabilidad
+
+- `GET /api/stats` (Bearer de admin): entradas, usuarios, sesiones
+  vivas, likes, requests/errores/rate-limits del proceso, uptime.
+- Log estructurado a stderr; `--log-file app.log` añade rotación
+  1MB×3. Eventos: start, register, login_fail, publish, remove,
+  rate_limited — nunca passwords ni tokens.
+
+## Multi-instancia
+
+El rate-limit vive en SQLite (`rate` table, BEGIN IMMEDIATE) y las
+sesiones/likes en la misma DB: varios procesos contra la misma DB
+comparten límites, cuentas y feed. Sessiones con TTL deslizante.
+
 ## Rollback
 
 El servidor es un único script sin migraciones destructivas —
@@ -51,7 +73,6 @@ hasta validar que el feed responde.
 
 ## Límites operativos conocidos
 
-- Rate-limit en memoria → una instancia por DB (o proxy con
-  rate-limit propio para multi-instancia).
-- Sin rotación de logs (el servidor apenas loguea).
 - `MAX_ENTRIES` poda el catálogo: backup antes de bajar el límite.
+- Sin revocación manual de usuarios (borrado de cuenta = SQL manual);
+  las sesiones caducan solas.

@@ -175,6 +175,7 @@ func _sync_remote() -> void:
 		if is_instance_valid(_sync_label):
 			_sync_label.text = ("conectado" if r.get("ok", false)
 				else "sin conexión al servidor")
+		_refresh_auth()   # un 401 en otra llamada pudo cerrar la sesión
 		if r.get("ok", false) and is_inside_tree():
 			_populate())
 
