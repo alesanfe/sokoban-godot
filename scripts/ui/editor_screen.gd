@@ -90,6 +90,7 @@ var author_edit: LineEdit
 var status: Label
 var code_edit: LineEdit
 var rules_box: VBoxContainer
+var rules_panel: EditorRulesPanel
 var w_spin: SpinBox
 var h_spin: SpinBox
 var hidden_check: CheckBox
@@ -498,6 +499,11 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	rules_box = VBoxContainer.new()
 	rules_box.add_theme_constant_override("separation", 6)
 	side.add_child(rules_box)
+	# el panel posee rule_entries y pinta dentro de rules_box;
+	# cada mutación invalida la solución verificada (la del tablero
+	# anterior ya no reproduce este nivel)
+	rules_panel = EditorRulesPanel.new(rules_box, rule_entries,
+		_invalidate_solution)
 
 	side.add_child(Widgets.hsep())
 	status = Widgets.label("", 13, Color(0.7, 0.9, 0.7))
@@ -583,7 +589,7 @@ func _load_level(l: LevelData) -> void:
 					cells[Vector2i(x, y)] = ch  # keeps *, +, % intact
 	rule_entries.clear()
 	for r in l.rules:
-		_add_rule(r.get("id", ""), r.get("params", {}))
+		rules_panel.add_rule(r.get("id", ""), r.get("params", {}))
 	_invalidate_solution()
 
 
@@ -916,70 +922,11 @@ func _resize_grid() -> void:
 # ---------------------------------------------------------------- rules
 
 func _add_rule(rule_id: String, params: Dictionary = {}) -> void:
-	var entry := {"id": rule_id, "controls": {}}
-	for spec in RuleRegistry.param_schema(rule_id):
-		entry["controls"][spec["key"]] = {"spec": spec, "value": params.get(spec["key"], spec.get("default"))}
-	rule_entries.append(entry)
-	_refresh_rules_ui()
-
-
-func _remove_rule(idx: int) -> void:
-	rule_entries.remove_at(idx)
-	_refresh_rules_ui()
+	rules_panel.add_rule(rule_id, params)
 
 
 func _refresh_rules_ui() -> void:
-	if rules_box == null:
-		return
-	for c in rules_box.get_children():
-		c.queue_free()
-	for i in rule_entries.size():
-		var e: Dictionary = rule_entries[i]
-		var d := RuleRegistry.describe(e["id"])
-		var box := PanelContainer.new()
-		var v := VBoxContainer.new()
-		box.add_child(v)
-		var head := HBoxContainer.new()
-		head.add_child(Widgets.label(str(d["title"]), 15))
-		var del := Button.new()
-		del.text = "x"
-		del.pressed.connect(func(): _remove_rule(i))
-		head.add_child(del)
-		v.add_child(head)
-		v.add_child(Widgets.label(str(d["description"]), 11, Color(0.6, 0.6, 0.65)))
-		for key in e["controls"].keys():
-			var c: Dictionary = e["controls"][key]
-			var spec: Dictionary = c["spec"]
-			var row := HBoxContainer.new()
-			row.add_child(Widgets.label(str(spec["label"]), 12))
-			if spec["type"] == "bool":
-				var cb := CheckBox.new()
-				cb.button_pressed = bool(c["value"])
-				cb.toggled.connect(func(on): c["value"] = on)
-				row.add_child(cb)
-			elif spec["type"] == "select":
-				var ob := OptionButton.new()
-				var vals: Array = spec.get("values", [])
-				var cur := 0
-				for oi in spec["options"].size():
-					ob.add_item(str(spec["options"][oi]))
-					var v2: Variant = vals[oi] if oi < vals.size() else oi
-					if v2 == c["value"]:
-						cur = oi
-				ob.selected = cur
-				ob.item_selected.connect(func(oi: int):
-					c["value"] = vals[oi] if oi < vals.size() else oi)
-				row.add_child(ob)
-			else:
-				var sb := SpinBox.new()
-				sb.min_value = float(spec.get("min", 0))
-				sb.max_value = float(spec.get("max", 100))
-				sb.step = 0.5 if spec["type"] == "float" else 1.0
-				sb.value = float(c["value"])
-				sb.value_changed.connect(func(val): c["value"] = int(val) if spec["type"] == "int" else val)
-				row.add_child(sb)
-			v.add_child(row)
-		rules_box.add_child(box)
+	rules_panel.refresh()
 
 
 func build_level() -> LevelData:
@@ -989,12 +936,7 @@ func build_level() -> LevelData:
 		for x in grid_w:
 			row += str(cells.get(Vector2i(x, y), " "))
 		lines.append(row)
-	var rules := []
-	for e in rule_entries:
-		var params := {}
-		for key in e["controls"].keys():
-			params[key] = e["controls"][key]["value"]
-		rules.append({"id": e["id"], "params": params})
+	var rules := rules_panel.to_rules()
 	var t := title_edit.text.strip_edges()
 	var l := LevelData.create(t if t != "" else "Sin título", lines, rules, author_edit.text.strip_edges())
 	l.hidden_rules = hidden_check.button_pressed

@@ -58,7 +58,12 @@ func _run() -> void:
 	ed.cells[Vector2i(3, 3)] = "@"
 	ed.cells[Vector2i(4, 3)] = "$"
 	ed.cells[Vector2i(5, 3)] = "."
+	# mutar las reglas invalida la solución verificada (el botón
+	# «Ver solución» no debe reproducir la del tablero anterior)
+	ed._solution = PackedStringArray(["u"])
+	ed.b_play_sol.visible = true
 	ed._add_rule("ice", {})
+	ok(not ed.b_play_sol.visible, "add_rule invalidates verified solution")
 	var l := ed.build_level()
 	ok(l != null and l.validate().is_empty(), "editor builds valid level")
 	ok(l.rules.size() == 1 and l.rules[0]["id"] == "ice", "editor attaches rule")
