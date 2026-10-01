@@ -4,6 +4,7 @@ Sokoban donde cada nivel introduce una regla absurda — con editor de niveles,
 solver, campaña de 81 niveles mutantes + 155 clásicos Microban, y un
 Modo Comunidad estilo Mario Maker con backend autoalojable.
 
+[![CI](https://github.com/alesanfe/sokoban-godot/actions/workflows/ci.yml/badge.svg)](https://github.com/alesanfe/sokoban-godot/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Godot 4.7](https://img.shields.io/badge/Godot-4.7-478cbf)
 ![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-green)
@@ -16,6 +17,21 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 [Contribuir](CONTRIBUTING.md) ·
 [Seguridad](SECURITY.md) ·
 [Changelog](CHANGELOG.md)
+
+## Galería
+
+<table>
+  <tr>
+    <td><img src="docs/assets/gameplay.png" alt="Nivel con cintas, portales y cajas de color en juego"></td>
+    <td><img src="docs/assets/mutant.png" alt="Nivel de campaña con regla fantasma"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/editor.png" alt="Editor de niveles con paleta de 46 tiles"></td>
+    <td><img src="docs/assets/community.png" alt="Modo Comunidad con feed, likes y miniaturas"></td>
+  </tr>
+</table>
+
+*Las capturas se regeneran con `godot --path . -s res://tools/screenshots.gd`.*
 
 ## Para el jugador
 
@@ -38,8 +54,8 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 ## Inicio rápido
 
 ```bash
-git clone https://github.com/usuario/sokoban-mutante.git
-cd sokoban-mutante
+git clone https://github.com/alesanfe/sokoban-godot.git
+cd sokoban-godot
 godot --path .            # jugar (o F5 en el editor)
 ```
 
@@ -130,7 +146,7 @@ python -m bandit -r server/                               # seguridad Python
 ## Estructura
 
 ```
-sokoban-mutante/
+sokoban-godot/
 ├── scripts/core/      motor determinista, reglas, solver, storage
 ├── scripts/ui/        pantallas construidas en código
 ├── server/community/  backend (paquete: config·store·auth·routes…)
@@ -147,7 +163,7 @@ sokoban-mutante/
 
 ## Soporte
 
-- Bugs → [issues](https://github.com/usuario/sokoban-mutante/issues)
+- Bugs → [issues](https://github.com/alesanfe/sokoban-godot/issues)
 - Seguridad → [SECURITY.md](SECURITY.md) (privado, no issue público)
 - Contribuir → [CONTRIBUTING.md](CONTRIBUTING.md)
 
