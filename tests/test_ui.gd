@@ -187,9 +187,13 @@ func _community_remote_e2e() -> void:
 	var port := 18923
 	var srv := ProjectSettings.globalize_path("res://server/community_server.py")
 	# OS.execute BLOQUEA hasta que el proceso muere — para un servidor
-	# hay que usar create_process (no bloqueante, devuelve pid)
+	# hay que usar create_process (no bloqueante, devuelve pid).
+	# --db a un fichero temporal: el test no debe tocar community.db real
+	var test_db := ProjectSettings.globalize_path(
+		"user://devin_test/e2e_community.db")
+	DirAccess.remove_absolute(test_db)
 	var pid := OS.create_process("python",
-		PackedStringArray([srv, str(port)]))
+		PackedStringArray([srv, "--port", str(port), "--db", test_db]))
 	if pid <= 0:
 		print("  skip: community e2e (python no disponible)")
 		return
