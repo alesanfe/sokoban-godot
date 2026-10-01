@@ -1,0 +1,11 @@
+# Propietarios por zona — revisión obligatoria en cambios sensibles
+
+# Motor y modelo (cualquier cambio de movimiento/reglas rompe niveles)
+/scripts/core/          @alex0
+/tests/                 @alex0
+
+# Backend de comunidad (auth, datos de usuarios)
+/server/                @alex0
+
+# Formato de niveles (códigos SKM/XSB = compatibilidad hacia atrás)
+/levels/                @alex0
