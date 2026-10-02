@@ -5,10 +5,13 @@ extends SceneTree
 ## (la ventana aparece unos segundos y se cierra sola)
 
 const OUT := "res://docs/assets/"
+const SIZE_OUT := "res://docs/assets/_sizes/"   # barrido de ventana
 
 var _frame := 0
 var _shots: Array = []        # [Callable monta la vista, nombre]
+var _size_jobs: Array = []    # [Vector2i, Callable, nombre]
 var _i := 0
+var _si := 0
 var _pending := ""            # vista montada, pendiente de capturar
 var _wait := 8                # frames a esperar antes de capturar
 var _recentered := false
@@ -45,6 +48,19 @@ func _initialize() -> void:
 		[func(): _trail_shot(main), "trail"],
 		[func(): _win_shot(main), "win"],
 	]
+	# barrido de ventana: las pantallas clave a varios tamaños para
+	# auditar el responsive — salen a _sizes/, no al README
+	var sizes := [Vector2i(800, 600), Vector2i(1024, 600),
+		Vector2i(1600, 900)]
+	for sz in sizes:
+		_size_jobs.append([sz, func(): main.show_menu(),
+			"menu"])
+		_size_jobs.append([sz, func(): main.show_game(_demo_level()),
+			"gameplay"])
+		_size_jobs.append([sz, func(): main.show_level_select(),
+			"select"])
+		_size_jobs.append([sz, func(): main.show_options(),
+			"options"])
 
 
 ## Nivel de muestra: varios tiles especiales que saltan a la vista
@@ -72,7 +88,8 @@ func _process(_dt: float) -> bool:
 	_wait = 8
 	if _pending != "":
 		# fuerza un re-centrado por si resized disparó con state==null
-		if not _recentered and _pending in ["gameplay", "mutant"] \
+		if not _recentered and (_pending in ["gameplay", "mutant"]
+				or _pending.begins_with("size_gameplay")) \
 				and root.get_child_count() > 0:
 			var scr: Variant = root.get_child(0).get("current")
 			if scr != null and scr.has_method("_center_board"):
@@ -84,17 +101,29 @@ func _process(_dt: float) -> bool:
 			return false            # un frame más y se captura
 		_recentered = false
 		var img := root.get_texture().get_image()
-		img.save_png(OUT + _pending + ".png")
+		var dir := SIZE_OUT if _pending.begins_with("size_") else OUT
+		DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path(dir))
+		img.save_png(dir + _pending + ".png")
 		print("shot: ", _pending)
 		if _pending == "editor":
 			root.size.y = 720              # restaurar para el resto
 		_pending = ""
-		return _i >= _shots.size()          # último → salir
+		return false
 	if _i < _shots.size():
 		_shots[_i][0].call()
 		_pending = _shots[_i][1]
 		_i += 1
-	return false
+		return false
+	# barrido de resoluciones tras las capturas del README
+	if _si < _size_jobs.size():
+		var job: Array = _size_jobs[_si]
+		root.size = job[0]
+		job[1].call()
+		_pending = "size_%s_%dx%d" % [job[2], job[0].x, job[0].y]
+		_si += 1
+		return false
+	return true
 
 
 ## El editor es la pantalla más alta (grid + paleta + toolbar);
