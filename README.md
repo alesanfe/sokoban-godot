@@ -37,17 +37,21 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 <details>
 <summary>Más capturas — selector, mapa, comunidad, ajustes y herramientas</summary>
 
-| Selector de niveles | Mapa de mundo |
+| Selector de niveles | Panel de victoria |
 |---|---|
-| ![Selector de niveles con progreso por pack](docs/assets/select.png) | ![Mapa de mundo: camino por la campaña](docs/assets/map.png) |
+| ![Selector de niveles con progreso por pack](docs/assets/select.png) | ![Panel de victoria: medalla, movimientos, empujes y par](docs/assets/win.png) |
 
-| Generador | Importador |
+| Mapa de mundo | Importador |
 |---|---|
-| ![Generador de niveles con semilla y regla](docs/assets/generator.png) | ![Importar código SKM o tablero XSB](docs/assets/import.png) |
+| ![Mapa de mundo: camino por la campaña](docs/assets/map.png) | ![Importar código SKM o tablero XSB](docs/assets/import.png) |
 
-| Estadísticas | Opciones | Controles |
-|---|---|---|
-| ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) | ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
+| Generador | Estadísticas |
+|---|---|
+| ![Generador de niveles con semilla y regla](docs/assets/generator.png) | ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) |
+
+| Opciones | Controles |
+|---|---|
+| ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
 
 </details>
 
