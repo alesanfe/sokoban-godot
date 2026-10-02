@@ -123,7 +123,9 @@ func _generator_shot(main: Control) -> void:
 ## Panel de victoria: autoplay resuelve un nivel trivial (3 empujes)
 ## y se espera a que el panel termine de aparecer.
 func _win_shot(main: Control) -> void:
-	_wait = 110
+	# ~190 frames: autoplay (3×0.16s) + confetti (one_shot, vida 1.4s)
+	# disipado — capturar antes tapaba el panel con partículas
+	_wait = 190
 	main.show_game(LevelData.create("Primer empujón", PackedStringArray([
 		"#######",
 		"#@ $ .#",

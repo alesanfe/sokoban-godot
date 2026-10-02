@@ -14,7 +14,7 @@ if not frames:
     raise SystemExit(f"sin frames en {frames_dir} — corre primero gif_demo.gd")
 
 imgs = []
-W = 640
+W = 800
 for f in frames:
     im = Image.open(f).convert("RGB")
     # quantize por frame con paleta amplia — la UI es dark-theme y una
