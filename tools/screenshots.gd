@@ -15,8 +15,11 @@ var _recentered := false
 
 
 func _initialize() -> void:
-	# user:// aislado: no tocar el progreso real del jugador
+	# user:// aislado: no tocar el progreso real del jugador.
+	# Se borra para que el seeding sea idempotente entre corridas
+	# (bump_total acumula).
 	Storage.BASE_DIR = "user://shots/"
+	_wipe(Storage.BASE_DIR)
 	DirAccess.make_dir_recursive_absolute(
 		ProjectSettings.globalize_path(OUT))
 	_seed_progress()
@@ -36,7 +39,7 @@ func _initialize() -> void:
 		[func(): main.show_stats(), "stats"],
 		[func(): main.show_options(), "options"],
 		[func(): main.show_controls(), "controls"],
-		[func(): main.show_generator(), "generator"],
+		[func(): _generator_shot(main), "generator"],
 		[func(): _win_shot(main), "win"],
 	]
 
@@ -108,6 +111,15 @@ func _import_shot(main: Control) -> void:
 		(n as TextEdit).text = "#######\n#@ $ .#\n#######"
 
 
+## El generador con una regla mutante seleccionada — "Clásico
+## (sin regla)" no enseña lo que el juego hace.
+func _generator_shot(main: Control) -> void:
+	main.show_generator()
+	for n in root.find_children("*", "OptionButton", true, false):
+		(n as OptionButton).selected = mini(6,
+			(n as OptionButton).item_count - 1)
+
+
 ## Panel de victoria: autoplay resuelve un nivel trivial (3 empujes)
 ## y se espera a que el panel termine de aparecer.
 func _win_shot(main: Control) -> void:
@@ -117,6 +129,17 @@ func _win_shot(main: Control) -> void:
 		"#@ $ .#",
 		"#######",
 	]), []), {"autoplay": PackedStringArray(["r", "r", "r"])})
+
+
+static func _wipe(dir: String) -> void:
+	var d := DirAccess.open(dir)
+	if d == null:
+		return
+	for f in d.get_files():
+		d.remove(f)
+	for sub in d.get_directories():
+		_wipe(dir + sub + "/")
+	d.remove(dir)
 
 
 ## Progreso de muestra: los shots de select/mapa/stats con todo a
@@ -129,5 +152,13 @@ func _seed_progress() -> void:
 		for _j in 6 + i % 9:
 			moves.append("r")
 		Storage.record_win(camp[i], moves, 20.0 + i)
+	# contadores de actividad coherentes con las victorias sembradas
+	# (sin esto stats mostraba "13/81" pero "0 victorias")
+	Storage.bump_total("wins", 13)
+	Storage.bump_total("moves", 126)
+	Storage.bump_total("pushes", 41)
+	Storage.bump_total("undos", 17)
+	Storage.bump_total("restarts", 6)
+	Storage.bump_total("hints", 3)
 	# un nivel custom para que el feed/mapa lo tengan
 	Storage.save_custom_level(_demo_level())
