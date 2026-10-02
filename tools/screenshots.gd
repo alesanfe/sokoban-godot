@@ -41,6 +41,7 @@ func _initialize() -> void:
 		[func(): main.show_controls(), "controls"],
 		[func(): _generator_shot(main), "generator"],
 		[func(): _deadlock_shot(main), "deadlock"],
+		[func(): _hint_shot(main), "hint"],
 		[func(): _win_shot(main), "win"],
 	]
 
@@ -138,6 +139,25 @@ func _deadlock_shot(main: Control) -> void:
 			"#      #",
 			"########",
 		]), []), {"autoplay": PackedStringArray(["l"])})
+
+
+## Flecha de pista (H): el solver corre en worker; ~150 frames dan
+## margen de sobra para que vuelva y pinte la flecha cyan.
+func _hint_shot(main: Control) -> void:
+	_wait = 150
+	main.show_game(LevelData.create("Hacia la meta",
+		PackedStringArray([
+			"########",
+			"#      #",
+			"# @ $. #",
+			"#      #",
+			"########",
+		]), []))
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr != null and scr.has_method("_hint"):
+			scr._hint()).call_deferred()
 
 
 ## Panel de victoria: autoplay resuelve un nivel trivial (3 empujes)

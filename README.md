@@ -49,9 +49,13 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 |---|---|
 | ![Mapa de mundo: camino por la campaña](docs/assets/map.png) | ![Generador de niveles con semilla y regla](docs/assets/generator.png) |
 
-| Estadísticas | Opciones | Controles |
-|---|---|---|
-| ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) | ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
+| Pista del solucionador | Estadísticas |
+|---|---|
+| ![Flecha de pista del solver sobre el jugador](docs/assets/hint.png) | ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) |
+
+| Opciones | Controles |
+|---|---|
+| ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
 
 </details>
 
