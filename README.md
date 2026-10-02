@@ -56,8 +56,6 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 | Estadísticas | Opciones | Controles |
 |---|---|---|
 | ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) | ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
-|---|---|
-| ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
 
 </details>
 
