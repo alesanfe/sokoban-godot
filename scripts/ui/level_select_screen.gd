@@ -120,6 +120,11 @@ var _scroll: ScrollContainer
 var _filter_edit: LineEdit
 var _next_unsolved: Control = null
 
+# Contexto al volver («volver conserva la navegación»): el filtro y
+# el scroll sobreviven a ida/vuelta jugar↔selector dentro de la sesión
+static var _saved_filter := ""
+static var _saved_scroll := 0
+
 
 func _init(host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -151,7 +156,11 @@ func _init(host: Control) -> void:
 	_filter_edit = LineEdit.new()
 	_filter_edit.placeholder_text = "Buscar por título o regla…"
 	_filter_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_filter_edit.text_changed.connect(func(_t): _populate(host))
+	_filter_edit.text = _saved_filter
+	_filter_edit.text_changed.connect(func(_t):
+		_saved_filter = _t
+		_saved_scroll = 0
+		_populate(host))
 	bar.add_child(_filter_edit)
 	# foco inicial en el buscador: primer gesto natural al elegir nivel
 	_filter_edit.grab_focus.call_deferred()
@@ -170,6 +179,7 @@ func _init(host: Control) -> void:
 	_list.add_theme_constant_override("separation", 6)
 	_scroll.add_child(_list)
 	_populate(host)
+	(func(): _scroll.scroll_vertical = _saved_scroll).call_deferred()
 
 
 var _stats: Label
@@ -193,6 +203,7 @@ func _populate(host: Control) -> void:
 				return true
 		return false
 
+	var added := 0
 	var add_section := func(levels: Array, heading: String, col: Color, sub: String = "") -> void:
 		var shown: Array = []
 		for level in levels:
@@ -206,6 +217,7 @@ func _populate(host: Control) -> void:
 		for level in shown:
 			var row := _level_button(host, level, heading == "Mis niveles")
 			_list.add_child(row)
+			added += 1
 			if _next_unsolved == null and Storage.best_moves(level) <= 0:
 				_next_unsolved = row
 
@@ -231,6 +243,12 @@ func _populate(host: Control) -> void:
 			b_pack.text = "✓ Pack copiado al portapapeles (%d niveles)" % customs.size()
 		)
 		_list.add_child(b_pack)
+	# estado «sin resultados»: sin él el filtro dejaba una lista
+	# vacía que parecía un bug
+	if added == 0 and f != "":
+		_list.add_child(Widgets.label(
+			"  Sin niveles que coincidan con «%s»." % _filter_edit.text,
+			15, Color(0.7, 0.7, 0.75)))
 
 
 func _stars_for(level: LevelData, best: int) -> int:
