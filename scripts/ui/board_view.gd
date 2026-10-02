@@ -453,7 +453,9 @@ func _draw() -> void:
 	if not trail_cells.is_empty():
 		for tc in trail_cells.keys():
 			var tcc := Vector2(tc) * tile + Vector2(tile / 2, tile / 2)
-			draw_circle(tcc, tile * 0.09, Color(0.75, 0.75, 0.95, 0.16))
+			# alpha 0.16 / r 0.09 era casi invisible en captura — la
+			# "mejor ruta" no se distinguía del fondo
+			draw_circle(tcc, tile * 0.12, Color(0.75, 0.75, 0.95, 0.30))
 	for i in state.boxes.size():
 		var bv := _pos_for(i, Vector2(state.boxes[i]))
 		var r := Rect2(bv.x * tile + 3, bv.y * tile + 3, tile - 6, tile - 6)

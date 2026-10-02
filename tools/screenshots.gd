@@ -42,6 +42,7 @@ func _initialize() -> void:
 		[func(): _generator_shot(main), "generator"],
 		[func(): _deadlock_shot(main), "deadlock"],
 		[func(): _hint_shot(main), "hint"],
+		[func(): _trail_shot(main), "trail"],
 		[func(): _win_shot(main), "win"],
 	]
 
@@ -158,6 +159,32 @@ func _hint_shot(main: Control) -> void:
 		var scr: Variant = root.get_child(0).get("current")
 		if scr != null and scr.has_method("_hint"):
 			scr._hint()).call_deferred()
+
+
+## Mejor ruta (T): puntos sobre las casillas visitadas por la
+## repetición guardada — hay que grabar una solución primero
+## para que la ruta exista.
+func _trail_shot(main: Control) -> void:
+	_wait = 25
+	# solución en L (bajar, bajar, 3 empujes a la derecha): el trail
+	# dibuja un recodo legible en vez de una fila tapada por la caja
+	var lvl := LevelData.create("La ruta óptima", PackedStringArray([
+		"#########",
+		"#       #",
+		"# @     #",
+		"#   ##  #",
+		"#  $  . #",
+		"#       #",
+		"#########",
+	]), [])
+	Storage.record_win(lvl,
+		PackedStringArray(["d", "d", "r", "r", "r"]), 12.0)
+	main.show_game(lvl, {})
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr != null and scr.has_method("_toggle_trail"):
+			scr._toggle_trail()).call_deferred()
 
 
 ## Panel de victoria: autoplay resuelve un nivel trivial (3 empujes)
