@@ -41,7 +41,7 @@ func play_sfx(name: String) -> void:
 		sfx.play(name)
 
 
-func _swap(node: Control) -> void:
+func _swap(node: Control, screen_title := "") -> void:
 	if current:
 		current.queue_free()
 	current = node
@@ -51,49 +51,57 @@ func _swap(node: Control) -> void:
 	if not bool(Storage.get_setting("reduce_motion")):
 		node.modulate = Color(1, 1, 1, 0)
 		create_tween().tween_property(node, "modulate:a", 1.0, 0.15)
+	# lector de pantalla: anuncia el nombre de la pantalla al entrar
+	# (ajuste de accesibilidad en Opciones; no anuncia sin voz del SO)
+	if screen_title != "" \
+			and bool(Storage.get_setting("screen_reader")) \
+			and DisplayServer.has_feature(
+				DisplayServer.FEATURE_TEXT_TO_SPEECH):
+		DisplayServer.tts_stop()
+		DisplayServer.tts_speak(screen_title, "")   # voz por defecto del SO
 
 
 func show_menu() -> void:
-	_swap(MenuScreen.new(self))
+	_swap(MenuScreen.new(self), "Menú principal")
 
 
 func show_level_select() -> void:
-	_swap(LevelSelectScreen.new(self))
+	_swap(LevelSelectScreen.new(self), "Elegir nivel")
 
 
 func show_game(level: LevelData, context: Dictionary = {}) -> void:
 	var s := GameScreen.new(self)
-	_swap(s)
+	_swap(s, "Jugando %s" % level.title)
 	s.start(level, context)
 
 
 func show_editor(level: LevelData = null) -> void:
-	_swap(EditorScreen.new(self, level))
+	_swap(EditorScreen.new(self, level), "Editor de niveles")
 
 
 func show_map() -> void:
-	_swap(MapScreen.new(self))
+	_swap(MapScreen.new(self), "Mapa del mundo")
 
 
 func show_stats() -> void:
-	_swap(StatsScreen.new(self))
+	_swap(StatsScreen.new(self), "Estadísticas")
 
 
 func show_community() -> void:
-	_swap(CommunityScreen.new(self))
+	_swap(CommunityScreen.new(self), "Comunidad")
 
 
 func show_controls() -> void:
-	_swap(ControlsScreen.new(self))
+	_swap(ControlsScreen.new(self), "Controles")
 
 
 func show_options() -> void:
-	_swap(OptionsScreen.new(self))
+	_swap(OptionsScreen.new(self), "Opciones")
 
 
 func show_generator() -> void:
-	_swap(GeneratorScreen.new(self))
+	_swap(GeneratorScreen.new(self), "Desafío personalizado")
 
 
 func show_import() -> void:
-	_swap(ImportScreen.new(self))
+	_swap(ImportScreen.new(self), "Importar código")

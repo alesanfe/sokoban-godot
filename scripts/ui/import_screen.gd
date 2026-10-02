@@ -17,6 +17,8 @@ func _init(host: Control) -> void:
 	edit.placeholder_text = "SKM1.… / SKM2.… o tablero XSB (varias líneas)"
 	edit.scroll_fit_content_height = true
 	v.add_child(edit)
+	# foco en el campo de código (Jugar nace deshabilitado)
+	edit.grab_focus.call_deferred()
 
 	var status := Widgets.label("", 14)
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

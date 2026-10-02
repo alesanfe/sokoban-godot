@@ -102,6 +102,10 @@ func _init(p_host: Control) -> void:
 		func(on: bool, b: Button):
 			Storage.set_setting("reduce_motion", on)
 			b.text = "Movimiento reducido: " + ("ON" if on else "OFF")))
+	v.add_child(_toggle("screen_reader", "Anunciar pantallas (lector)",
+		func(on: bool, b: Button):
+			Storage.set_setting("screen_reader", on)
+			b.text = "Anunciar pantallas: " + ("ON" if on else "OFF")))
 
 	var ap_idx := _nearest_idx(AP_SPEEDS,
 		float(Storage.get_setting("autoplay_speed")))

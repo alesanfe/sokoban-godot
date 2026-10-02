@@ -195,6 +195,10 @@ func _on_fx_teleport(pos: Vector2i) -> void:
 func _on_moved(pre: Dictionary) -> void:
 	if int(pre.get("width", -1)) != state.width or (pre.get("boxes", []) as Array).size() != state.boxes.size():
 		return  # board resized (rotation) or boxes teleported: snap
+	# reduce_motion: el slide de 130ms por paso era el único tween que
+	# no respetaba la preferencia — posición directa al destino
+	if reduce_motion:
+		return
 	_anim_prev = pre
 	_anim_t = 0.0
 	var pd: Vector2i = state.player - Vector2i(pre.get("player", state.player))

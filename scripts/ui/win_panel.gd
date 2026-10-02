@@ -40,6 +40,7 @@ func _init() -> void:
 	brow.add_theme_constant_override("separation", 8)
 	wv.add_child(brow)
 	var b_next := Widgets.primary("Siguiente nivel")
+	b_next.grab_focus.call_deferred()   # foco en la acción principal
 	b_next.pressed.connect(func(): next_pressed.emit())
 	brow.add_child(b_next)
 	var b_rep := Widgets.button("Ver mi repetición")

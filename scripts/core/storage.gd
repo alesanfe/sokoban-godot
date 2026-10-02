@@ -12,8 +12,9 @@ const SETTING_DEFAULTS := {
 	"ui_theme": "dark", "board_skin": 0,
 	"music": true, "music_vol": 70, "sfx": true,
 	"show_moves": true, "show_timer": true, "show_par": true,
-	"deadlock_assist": 2, "confirm_restart": false,
+	"deadlock_assist": 2, "confirm_restart": true,
 	"reduce_motion": false, "repeat_rate": 0.11, "autoplay_speed": 1.0,
+	"screen_reader": false,
 }
 
 ## Versión de esquema de los JSON persistidos: save_json la estampa en

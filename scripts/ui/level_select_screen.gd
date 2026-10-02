@@ -153,7 +153,9 @@ func _init(host: Control) -> void:
 	_filter_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_filter_edit.text_changed.connect(func(_t): _populate(host))
 	bar.add_child(_filter_edit)
-	var b_next := Widgets.button("▶ Siguiente sin resolver")
+	# foco inicial en el buscador: primer gesto natural al elegir nivel
+	_filter_edit.grab_focus.call_deferred()
+	var b_next := Widgets.primary("▶ Siguiente sin resolver")
 	b_next.pressed.connect(func():
 		if _next_unsolved:
 			_scroll.scroll_vertical = int(_next_unsolved.position.y) - 60)
