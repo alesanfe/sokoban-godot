@@ -16,6 +16,11 @@ var _scroll: ScrollContainer
 
 func _init() -> void:
 	set_anchors_preset(Control.PRESET_CENTER)
+	# sin grow BOTH el preset ancla la esquina superior-izquierda al
+	# centro: el panel se desplazaba a la derecha y se salía de la
+	# ventana (visible en docs/assets/win.png)
+	grow_horizontal = Control.GROW_DIRECTION_BOTH
+	grow_vertical = Control.GROW_DIRECTION_BOTH
 	custom_minimum_size = Vector2(380, 0)
 	visible = false
 	# Scroll fallback: on small windows the panel can exceed the
@@ -61,7 +66,12 @@ func set_summary(text: String) -> void:
 ## Muestra el panel clameado a la altura del viewport — sin el clamp,
 ## un resumen alto (medalla + badges) empuja los botones fuera.
 func show_panel(viewport_h: float) -> void:
+	visible = true
+	# medir antes del primer layout devuelve un min-size pequeño y la
+	# fila de botones quedaba cortada a medias
+	await get_tree().process_frame
+	if not is_instance_valid(_scroll):
+		return
 	_scroll.custom_minimum_size.y = minf(
 		_scroll.get_child(0).get_combined_minimum_size().y + 8.0,
 		viewport_h - 24.0)
-	visible = true

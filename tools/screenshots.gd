@@ -10,6 +10,7 @@ var _frame := 0
 var _shots: Array = []        # [Callable monta la vista, nombre]
 var _i := 0
 var _pending := ""            # vista montada, pendiente de capturar
+var _wait := 8                # frames a esperar antes de capturar
 var _recentered := false
 
 
@@ -36,6 +37,7 @@ func _initialize() -> void:
 		[func(): main.show_options(), "options"],
 		[func(): main.show_controls(), "controls"],
 		[func(): main.show_generator(), "generator"],
+		[func(): _win_shot(main), "win"],
 	]
 
 
@@ -56,10 +58,12 @@ func _demo_level() -> LevelData:
 
 func _process(_dt: float) -> bool:
 	_frame += 1
-	# 8 frames por paso: _ready, layout, resized y tweens pintan todo
-	if _frame < 8:
+	# por defecto 8 frames por paso: _ready, layout, resized y tweens
+	# pintan todo; el shot de victoria espera a que el autoplay acabe
+	if _frame < _wait:
 		return false
 	_frame = 0
+	_wait = 8
 	if _pending != "":
 		# fuerza un re-centrado por si resized disparó con state==null
 		if not _recentered and _pending in ["gameplay", "mutant"] \
@@ -102,6 +106,17 @@ func _import_shot(main: Control) -> void:
 	main.show_import()
 	for n in root.find_children("*", "TextEdit", true, false):
 		(n as TextEdit).text = "#######\n#@ $ .#\n#######"
+
+
+## Panel de victoria: autoplay resuelve un nivel trivial (3 empujes)
+## y se espera a que el panel termine de aparecer.
+func _win_shot(main: Control) -> void:
+	_wait = 110
+	main.show_game(LevelData.create("Primer empujón", PackedStringArray([
+		"#######",
+		"#@ $ .#",
+		"#######",
+	]), []), {"autoplay": PackedStringArray(["r", "r", "r"])})
 
 
 ## Progreso de muestra: los shots de select/mapa/stats con todo a
