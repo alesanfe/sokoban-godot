@@ -985,7 +985,7 @@ func _verify() -> void:
 				status.text = "✗ El solucionador alcanzó el límite de búsqueda — puede que sea soluble aunque no lo haya probado."
 			else:
 				status.text = "✗ El nivel es irresoluble (%s)." % reason,
-		SokobanSolver.MAX_STATES, true)  # escalate: reintenta ×4 y ×10
+		SokobanSolver.MAX_STATES, true)  # escalate: reintenta ×4 y ×15
 
 
 func _playtest() -> void:
