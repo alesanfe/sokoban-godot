@@ -563,6 +563,9 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	else:
 		_new_room()
 	_refresh_rules_ui()
+	# foco inicial: primera herramienta de la paleta (la acción
+	# dominante del editor es pintar con el tile elegido)
+	Widgets.focus_first(self)
 
 
 func _new_room() -> void:

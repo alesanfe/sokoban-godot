@@ -51,6 +51,7 @@ func _init(host: Control) -> void:
 	var b_back := Widgets.button("← Menú")
 	b_back.pressed.connect(host.show_menu)
 	v.add_child(b_back)
+	Widgets.focus_first(self)
 
 
 func _stars(l: LevelData, best: int) -> int:

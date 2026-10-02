@@ -73,6 +73,8 @@ func _init(p_host: Control) -> void:
 	_search.text_changed.connect(func(_t): _populate())
 	search.add_child(_search)
 	v.add_child(search)
+	# foco inicial: el buscador es el primer gesto natural del feed
+	_search.grab_focus.call_deferred()
 
 	# backend opcional: URL del servidor de comunidad autoalojado
 	# (server/community_server.py). Vacío = modo local puro.

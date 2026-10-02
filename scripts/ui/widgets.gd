@@ -86,6 +86,29 @@ static func toast(root: Control, text: String, dur := 1.8) -> void:
 	tw.finished.connect(l.queue_free)
 
 
+## Foco inicial para teclado/lector: primer control enfocable en
+## orden de árbol (el primer elemento visible de la pantalla).
+## Deferred — los screens se construyen en _init, fuera del árbol.
+static func focus_first(root: Control) -> void:
+	(func():
+		var f := _first_focusable(root)
+		if f != null:
+			f.grab_focus()).call_deferred()
+
+
+static func _first_focusable(c: Control) -> Control:
+	if not c.visible:
+		return null
+	if (c is BaseButton or c is LineEdit or c is TextEdit) \
+			and not (c is BaseButton and c.disabled):
+		return c
+	for ch in c.get_children():
+		var f := _first_focusable(ch)
+		if f != null:
+			return f
+	return null
+
+
 static func stars(n: int) -> String:
 	if n <= 0:
 		return ""
