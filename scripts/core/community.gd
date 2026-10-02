@@ -271,7 +271,11 @@ static func seed_officials() -> void:
 		var id := id_for(l)
 		cat_e[id] = {
 			"level": l.to_dict(), "author": "Equipo Sokoban",
-			"ts": 1700000000 + i * 86400,
+			# ts relativo a "ahora": con epoch fijo (nov-2023) el feed
+			# semilla parecía abandonado de hace años en capturas y en
+			# el juego real
+			"ts": int(Time.get_unix_time_from_system()) \
+				- (seeds.size() - i) * 86400,
 			"likes": 4 + i * 3, "plays": 10 + i * 5, "clears": 6 + i * 2,
 			"liked": false, "own": false,
 		}

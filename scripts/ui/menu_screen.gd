@@ -6,7 +6,19 @@ extends Control
 func _init(host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
-	v.add_child(Widgets.label("SOKOBAN MUTANTE", 44, Color(0.95, 0.8, 0.2)))
+	# icono junto al título: la columna de botones sola no tenía
+	# identidad visual (el icono existe pero no se usaba en el juego)
+	var head := HBoxContainer.new()
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	head.add_theme_constant_override("separation", 14)
+	var icon := TextureRect.new()
+	icon.texture = load("res://game_icon.png")
+	icon.custom_minimum_size = Vector2(56, 56)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	head.add_child(icon)
+	head.add_child(Widgets.label("SOKOBAN MUTANTE", 44, Color(0.95, 0.8, 0.2)))
+	v.add_child(head)
 	v.add_child(Widgets.label("Cada nivel, una regla absurda.", 16, Color(0.7, 0.7, 0.75)))
 	v.add_child(Widgets.hsep())
 
