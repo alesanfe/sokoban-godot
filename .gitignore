@@ -6,3 +6,6 @@ user://
 __pycache__/
 server/community.db*
 server/community_db.json*
+
+# metadatos .import que Godot genera al abrir docs/assets/
+docs/assets/*.import
