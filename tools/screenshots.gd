@@ -40,6 +40,7 @@ func _initialize() -> void:
 		[func(): main.show_options(), "options"],
 		[func(): main.show_controls(), "controls"],
 		[func(): _generator_shot(main), "generator"],
+		[func(): _deadlock_shot(main), "deadlock"],
 		[func(): _win_shot(main), "win"],
 	]
 
@@ -118,6 +119,25 @@ func _generator_shot(main: Control) -> void:
 	for n in root.find_children("*", "OptionButton", true, false):
 		(n as OptionButton).selected = mini(6,
 			(n as OptionButton).item_count - 1)
+
+
+## Marcas de deadlock: nivel clásico con la asistencia (Marca) — las
+## casillas de las que ninguna caja puede llegar a meta se pintan.
+## Un empuje para que no parezca el frame 0.
+func _deadlock_shot(main: Control) -> void:
+	# la caja queda empujada contra la pared izquierda: casilla muerta
+	# → la ✕ roja sobre la caja y el tinte de las demás son visibles;
+	# ~25 frames para que el autoplay ejecute el movimiento
+	_wait = 25
+	main.show_game(LevelData.create("Cuidado con las esquinas",
+		PackedStringArray([
+			"########",
+			"#      #",
+			"#  .   #",
+			"# $@   #",
+			"#      #",
+			"########",
+		]), []), {"autoplay": PackedStringArray(["l"])})
 
 
 ## Panel de victoria: autoplay resuelve un nivel trivial (3 empujes)

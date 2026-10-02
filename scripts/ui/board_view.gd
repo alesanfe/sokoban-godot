@@ -447,7 +447,9 @@ func _draw() -> void:
 				var base2 := c - dv * tile * 0.36
 				draw_colored_polygon(PackedVector2Array([tip2, base2 + s, base2 - s]), Color(0.3, 0.7, 0.85, 0.4))
 			if show_dead and _dead.has(pos) and not state.goals.has(pos):
-				draw_rect(r, Color(0.6, 0.15, 0.15, 0.10))
+				# alpha 0.10 era imperceptible incluso en captura — la
+				# asistencia no se veía
+				draw_rect(r, Color(0.6, 0.15, 0.15, 0.22))
 	if not trail_cells.is_empty():
 		for tc in trail_cells.keys():
 			var tcc := Vector2(tc) * tile + Vector2(tile / 2, tile / 2)
