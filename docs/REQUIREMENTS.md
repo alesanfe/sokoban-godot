@@ -49,12 +49,38 @@ Criterio: checks de merge + E2E.
 | # | Propiedad | Objetivo | Verificación |
 |---|---|---|---|
 | NFR-1 | Determinismo | mismo estado+input → mismo resultado, en todos los workers | fuzz `test_runner` |
-| NFR-2 | Presupuesto solver | ≤60k estados/intento, escalado ×4/×10 documentado | `audit_levels` |
+| NFR-2 | Presupuesto solver | ≤60k estados/intento, escalado ×4/×15 documentado | `audit_levels` |
 | NFR-3 | Límites API | payload ≤68KB, reglas ≤8, rate-limit 30 POST/min | backend + E2E |
 | NFR-4 | Privacidad | token de borrado nunca sale por `/api/feed`; passwords solo pbkdf2 | test + SECURITY.md |
 | NFR-5 | Recuperación | `user://` con write atómico `.tmp`+rename y `.bak` | tests storage |
 | NFR-6 | Instalación | clonar → `godot --path .` sin pasos no documentados | README |
 | NFR-7 | Portabilidad | Windows/Linux/macOS + export Web | `export_presets.cfg` |
+
+## Métricas de éxito (UX)
+
+Sin telemetría (offline-first), pero los mismos datos que `Storage`
+persiste en `user://` permiten definir KPIs medibles por sesión o por
+herramienta de análisis local. Se calculan sobre:
+
+- `progress.json` → `best` (movimientos/tiempo por nivel), `replays`
+- `stats.json` → totales `wins`, `moves`, `pushes`, `undos`,
+  `restarts`, `hints`
+- `in_progress.json` → existencia de partida pausada
+- `community.json` → `plays`, `clears`, `likes` por entrada
+
+| KPI | Definición | Umbral de alerta |
+|---|---|---|
+| Tasa de completación | `wins / (wins + restarts)` | < 0.3 por nivel = nivel frustrante |
+| Abandono | `in_progress.json` con `state.moves` altos y sin `win` | nivel con muchos abandonos = revisar par |
+| Eficiencia | `moves / pushes` medio | alejado del par = nivel demasiado suelto |
+| Uso de asistencia | `hints / wins` | > 0.5 = campaña demasiado dura |
+| Ratio deshacer | `undos / moves` | > 0.2 = input impreciso o regla confusa |
+| Replay share | `replays` con ruta vs `wins` | si nadie reutiliza = feature invisible |
+| Community funnel | `plays → clears → likes` | conversión baja = niveles publicados pobres |
+
+Estos KPIs no son telemetry externa: es el análisis local de los
+datos que el juego ya guarda. Sirven para decidir si un nivel,
+una regla o una asistencia funcionan como se esperaba.
 
 ## Definición de terminado (DoD)
 
