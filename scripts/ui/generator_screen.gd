@@ -46,7 +46,7 @@ func _init(p_host: Control) -> void:
 	v.add_child(row2)
 
 	v.add_child(Widgets.hsep())
-	_b_go = Widgets.button("Generar y jugar")
+	_b_go = Widgets.primary("Generar y jugar")
 	_b_go.pressed.connect(_go)
 	v.add_child(_b_go)
 	status = Widgets.label("", 13, Color(0.9, 0.6, 0.5))

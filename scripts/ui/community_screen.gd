@@ -246,12 +246,15 @@ func _row(e: Dictionary) -> Control:
 	h.add_child(info)
 
 	# botones compactos: el mínimo 260×44 de Widgets.button desbordaría la fila
-	var b_play := Widgets.button("Jugar")
+	var b_play := Widgets.primary("Jugar")
 	b_play.custom_minimum_size = Vector2(96, 44)
 	b_play.pressed.connect(func(): host.show_game(l, {"community": e["id"]}))
 	h.add_child(b_play)
 	var b_like := Widgets.button("♥" if e["liked"] else "♡")
 	b_like.custom_minimum_size = Vector2(48, 44)
+	# único icono de la fila sin tooltip — la rúbrica pide que el
+	# significado de iconos sin etiqueta sea recuperable
+	b_like.tooltip_text = "Quitar me gusta" if e["liked"] else "Me gusta"
 	b_like.pressed.connect(func():
 		CommunityService.like(e["id"])
 		_populate())

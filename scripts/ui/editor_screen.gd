@@ -83,6 +83,7 @@ var _undo_stack: Array = []
 var _redo_stack: Array = []
 var _solution := PackedStringArray()
 var b_play_sol: Button
+var _dirty := false          # ediciones sin guardar (aviso al salir)
 
 var grid: EditorGrid
 var title_edit: LineEdit
@@ -519,8 +520,9 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 
 	var btn_row := HBoxContainer.new()
 	btn_row.add_theme_constant_override("separation", 6)
-	var b_test := Button.new()
-	b_test.text = "Probar"
+	var b_test := Widgets.primary("Probar")
+	# la fila es compacta: el min-size 260×44 de la base desbordaría
+	b_test.custom_minimum_size = Vector2(0, 44)
 	b_test.pressed.connect(_playtest)
 	btn_row.add_child(b_test)
 	var b_verify := Button.new()
@@ -552,7 +554,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	side.add_child(code_edit)
 
 	var b_back := Widgets.button("← Menú")
-	b_back.pressed.connect(host.show_menu)
+	b_back.pressed.connect(_back_or_warn)
 	side.add_child(b_back)
 
 	# init: either load a level or a bordered empty room
@@ -617,6 +619,7 @@ func _push_undo() -> void:
 	if _undo_stack.size() > 100:
 		_undo_stack.pop_front()
 	_redo_stack.clear()
+	_dirty = true
 	_invalidate_solution()
 
 
@@ -1022,7 +1025,19 @@ func _save() -> void:
 		status.text = "⚠ " + "; ".join(problems)
 		return
 	Storage.save_custom_level(l)
+	_dirty = false
 	status.text = "✓ Guardado en Mis niveles."
+
+
+## Salir sin guardar: doble-confirmación (mismo patrón que
+## «Restaurar por defecto» en Controles y «✕» en Comunidad) —
+## antes el botón destruía el trabajo sin avisar.
+func _back_or_warn() -> void:
+	if not _dirty:
+		host.show_menu()
+		return
+	_dirty = false          # el segundo clic sale de verdad
+	status.text = "⚠ Tienes cambios sin guardar — pulsa «← Menú» de nuevo para salir."
 
 
 func _export() -> void:

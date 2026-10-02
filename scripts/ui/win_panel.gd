@@ -39,7 +39,7 @@ func _init() -> void:
 	brow.alignment = BoxContainer.ALIGNMENT_CENTER
 	brow.add_theme_constant_override("separation", 8)
 	wv.add_child(brow)
-	var b_next := Widgets.button("Siguiente nivel")
+	var b_next := Widgets.primary("Siguiente nivel")
 	b_next.pressed.connect(func(): next_pressed.emit())
 	brow.add_child(b_next)
 	var b_rep := Widgets.button("Ver mi repetición")

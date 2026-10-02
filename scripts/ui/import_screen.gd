@@ -26,7 +26,7 @@ func _init(host: Control) -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var b_check := Widgets.button("Comprobar")
-	var b_play := Widgets.button("Jugar")
+	var b_play := Widgets.primary("Jugar")
 	var b_save := Widgets.button("Guardar")
 	var b_back := Widgets.button("← Menú")
 	b_play.disabled = true

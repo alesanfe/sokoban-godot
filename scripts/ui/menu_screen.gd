@@ -24,12 +24,12 @@ func _init(host: Control) -> void:
 
 	var saved = Storage.get_in_progress()
 	if saved != null:
-		var b_cont := Widgets.button("▶ Continuar: %s" % saved["level"].title)
+		var b_cont := Widgets.primary("▶ Continuar: %s" % saved["level"].title)
 		b_cont.pressed.connect(func():
 			host.show_game(saved["level"], {"resume": true, "saved_state": saved["state"]}))
 		v.add_child(b_cont)
 
-	var b_campaign := Widgets.button("Jugar campaña")
+	var b_campaign := Widgets.primary("Jugar campaña")
 	b_campaign.pressed.connect(host.show_level_select)
 	v.add_child(b_campaign)
 

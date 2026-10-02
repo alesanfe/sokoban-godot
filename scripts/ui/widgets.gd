@@ -23,6 +23,25 @@ static func button(text: String) -> Button:
 
 ## Juicee-lite: subtle squash on press. Cheap, GPU-side, opt-out via
 ## reduce_motion.
+## Acción primaria: fondo acento — la rúbrica UX pide una acción
+## principal identificable por pantalla; todos los botones iguales
+## no la tienen.
+static func primary(text: String) -> Button:
+	var b := button(text)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.85, 0.62, 0.08)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 16
+	sb.content_margin_right = 16
+	b.add_theme_stylebox_override("normal", sb)
+	var sb_h := sb.duplicate()
+	sb_h.bg_color = Color(0.95, 0.72, 0.18)
+	b.add_theme_stylebox_override("hover", sb_h)
+	b.add_theme_color_override("font_color", Color(0.1, 0.1, 0.1))
+	b.add_theme_color_override("font_hover_color", Color(0.1, 0.1, 0.1))
+	return b
+
+
 static func juice(b: Button) -> void:
 	b.pivot_offset = b.custom_minimum_size / 2.0
 	b.button_down.connect(func():
