@@ -179,6 +179,15 @@ func _run() -> void:
 	ok(wl.rules[0]["params"]["dir"] == 2, "select param serializes")
 	ed2.queue_free()
 
+	# borrador del editor: lo pintado arriba quedó en
+	# editor_draft.json — abrir el editor sin nivel lo restaura y lo
+	# marca dirty (una sala nueva no lo estaría)
+	var ed3 := EditorScreen.new(main)
+	root.add_child(ed3)
+	await process_frame
+	ok(ed3._dirty, "draft: editor restaura trabajo sin guardar")
+	ed3.queue_free()
+
 	main.show_community()
 	await process_frame
 	var comm: CommunityScreen = main.current

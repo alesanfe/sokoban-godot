@@ -84,6 +84,13 @@ var _redo_stack: Array = []
 var _solution := PackedStringArray()
 var b_play_sol: Button
 var _dirty := false          # ediciones sin guardar (aviso al salir)
+var _loading := false        # true durante _load_level: sus asignaciones a los campos disparan text_changed
+
+## Borrador persistente: los cambios sin guardar sobreviven a salir
+## al menú e incluso a cerrar el juego — al abrir el editor vacío se
+## restaura el último intento (la rúbrica pide «guardar borrador en
+## procesos largos», no solo advertir antes de perderlos).
+const DRAFT_PATH := "user://editor_draft.json"
 
 var grid: EditorGrid
 var title_edit: LineEdit
@@ -457,9 +464,23 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	side.add_child(Widgets.label("Editor de niveles", 24, UiTheme.accent()))
 	title_edit = LineEdit.new()
 	title_edit.placeholder_text = "Título"
+	# título/autor también ensucian (y viajan al borrador): antes solo
+	# lo hacían las mutaciones de celdas y un cambio de metadatos se
+	# perdía sin aviso ni respaldo. _loading evita que _load_level
+	# (que rellena estos campos) ensucie al cargar.
+	title_edit.text_changed.connect(func(_t):
+		if _loading:
+			return
+		_dirty = true
+		_save_draft())
 	side.add_child(title_edit)
 	author_edit = LineEdit.new()
 	author_edit.placeholder_text = "Autor"
+	author_edit.text_changed.connect(func(_t):
+		if _loading:
+			return
+		_dirty = true
+		_save_draft())
 	side.add_child(author_edit)
 
 	var size_row := HBoxContainer.new()
@@ -557,15 +578,41 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	b_back.pressed.connect(_back_or_warn)
 	side.add_child(b_back)
 
-	# init: either load a level or a bordered empty room
+	# init: either load a level, restore the last unsaved draft or
+	# fall back to a bordered empty room
 	if p_level:
 		_load_level(p_level)
+	elif _restore_draft():
+		_dirty = true
+		Widgets.status(status,
+			"Borrador recuperado — últimos cambios sin guardar restaurados.")
 	else:
 		_new_room()
 	_refresh_rules_ui()
 	# foco inicial: primera herramienta de la paleta (la acción
 	# dominante del editor es pintar con el tile elegido)
 	Widgets.focus_first(self)
+
+
+## Persiste el borrador al mutar (no al salir): la doble-confirmación
+## de «← Menú» apaga _dirty antes de destruir la vista, así que el
+## hook de salida llegaría tarde. Un JSON de unos cientos de bytes por
+## stroke es trivial frente al coste de perder el trabajo.
+func _save_draft() -> void:
+	Storage.save_json(DRAFT_PATH, {"code": build_level().to_code()})
+
+
+func _restore_draft() -> bool:
+	var d: Dictionary = Storage.load_json(DRAFT_PATH, {})
+	var l := LevelData.from_code(str(d.get("code", "")))
+	if l == null:
+		return false
+	_load_level(l)
+	return true
+
+
+func _discard_draft() -> void:
+	Storage.save_json(DRAFT_PATH, {})
 
 
 func _new_room() -> void:
@@ -578,6 +625,7 @@ func _new_room() -> void:
 
 
 func _load_level(l: LevelData) -> void:
+	_loading = true
 	editing = l
 	title_edit.text = l.title
 	author_edit.text = l.author
@@ -603,6 +651,7 @@ func _load_level(l: LevelData) -> void:
 	for r in l.rules:
 		rules_panel.add_rule(r.get("id", ""), r.get("params", {}))
 	_invalidate_solution()
+	_loading = false
 
 
 func _cell_ok(p: Vector2i) -> bool:
@@ -623,6 +672,7 @@ func _push_undo() -> void:
 		_undo_stack.pop_front()
 	_redo_stack.clear()
 	_dirty = true
+	_save_draft()
 	_invalidate_solution()
 
 
@@ -1018,6 +1068,8 @@ func _publish() -> void:
 		return
 	var res := CommunityService.publish(l, author_edit.text.strip_edges())
 	if res.get("ok"):
+		_dirty = false         # publicado = trabajo cerrado
+		_discard_draft()
 		Widgets.status(status, "✓ Publicado en la Comunidad.")
 	else:
 		Widgets.status(status, "✗ " + str(res.get("err", "")))
@@ -1031,6 +1083,7 @@ func _save() -> void:
 		return
 	Storage.save_custom_level(l)
 	_dirty = false
+	_discard_draft()          # el borrador deja de tener sentido
 	Widgets.status(status, "✓ Guardado en Mis niveles.")
 
 
