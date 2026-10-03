@@ -27,6 +27,18 @@ func _init(p_host: Control) -> void:
 	_build_map()
 	_spawn_avatar()
 	resized.connect(queue_redraw)  # camera/bottom bar depend on size
+	# salida visible y enfocable: el mapa se dibuja a mano y solo
+	# respondía a Esc/_unhandled_input — sin botón no había ningún
+	# control al que pudiera llegar el foco de teclado
+	# salida visible y enfocable: el mapa se dibuja a mano y solo
+	# respondía a Esc/_unhandled_input. Es enfocable pero NO toma el
+	# foco: con foco en él las flechas las consumiría la navegación
+	# de foco y el avatar dejaría de caminar
+	var back := Widgets.button("← Menú")
+	back.position = Vector2(10, 10)
+	back.custom_minimum_size.x = 120
+	back.pressed.connect(host.show_menu)
+	add_child(back)
 
 
 func _carve(r: Rect2i) -> void:

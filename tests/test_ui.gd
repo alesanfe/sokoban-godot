@@ -23,20 +23,38 @@ func ok(cond: bool, name: String) -> void:
 		printerr("  FAIL: " + name)
 
 
+## WCAG 2.4.7-ish: toda pantalla debe tener al menos un control
+## alcanzable por teclado — una pantalla sin focusables es una trampa.
+func _has_focusable(n: Node) -> bool:
+	if n is Control and (n as Control).focus_mode != Control.FOCUS_NONE:
+		return true
+	for c in n.get_children():
+		if _has_focusable(c):
+			return true
+	return false
+
+
+func _check_focus(screen: Control, name: String) -> void:
+	ok(_has_focusable(screen), name + ": tiene control enfocable")
+
+
 func _run() -> void:
 	print("== UI smoke test ==")
 	var main: Control = load("res://scripts/main.gd").new()
 	root.add_child(main)
 	await process_frame
 	ok(main.current is MenuScreen, "menu shown")
+	_check_focus(main.current, "menu")
 
 	main.show_level_select()
 	await process_frame
 	ok(main.current is LevelSelectScreen, "level select shown")
+	_check_focus(main.current, "selector")
 
 	main.show_editor()
 	await process_frame
 	ok(main.current is EditorScreen, "editor shown")
+	_check_focus(main.current, "editor")
 
 	var ed: EditorScreen = main.current
 	# editor QoL: stroke/undo/redo/mirror
@@ -73,6 +91,7 @@ func _run() -> void:
 	main.show_game(Campaign.levels()[2])
 	await process_frame
 	var gs: GameScreen = main.current
+	_check_focus(gs, "game")
 	ok(gs.state != null, "game state built")
 	ok(gs.state.rules.size() == 1, "ice rule loaded")
 	gs._move(Vector2i(1, 0))
@@ -90,19 +109,23 @@ func _run() -> void:
 	await process_frame
 	ok(main.current is MapScreen, "map screen shown")
 	ok((main.current as MapScreen).nodes.size() >= 200, "map has level nodes")
+	_check_focus(main.current, "map")
 
 	main.show_import()
 	await process_frame
 	ok(main.current is ImportScreen, "import screen shown")
+	_check_focus(main.current, "import")
 
 	main.show_stats()
 	await process_frame
 	ok(main.current is StatsScreen, "stats screen shown")
+	_check_focus(main.current, "stats")
 
 	main.show_controls()
 	await process_frame
 	var cs: ControlsScreen = main.current
 	ok(cs is ControlsScreen, "controls screen shown")
+	_check_focus(cs, "controls")
 	cs._capturing = "undo"
 	var kev := InputEventKey.new()
 	kev.keycode = KEY_M
@@ -114,10 +137,12 @@ func _run() -> void:
 	main.show_options()
 	await process_frame
 	ok(main.current is OptionsScreen, "options screen shown")
+	_check_focus(main.current, "options")
 
 	main.show_generator()
 	await process_frame
 	ok(main.current is GeneratorScreen, "generator screen shown")
+	_check_focus(main.current, "generator")
 
 	# async guard: generar y salir a mitad — el callback diferido no
 	# debe tocar la pantalla liberada ni saltar a una partida
@@ -158,6 +183,7 @@ func _run() -> void:
 	await process_frame
 	var comm: CommunityScreen = main.current
 	ok(comm is CommunityScreen, "community screen shown")
+	_check_focus(comm, "community")
 	ok(not comm._list.get_children().is_empty(), "community has seeded levels")
 	var first_row := comm._list.get_children()[0]
 	ok(first_row is PanelContainer, "community row built")
