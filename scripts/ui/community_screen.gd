@@ -47,8 +47,8 @@ func _init(p_host: Control) -> void:
 	back.custom_minimum_size.x = 140
 	back.pressed.connect(host.show_menu)
 	top.add_child(back)
-	top.add_child(Widgets.label("  Comunidad", 26, Color(0.95, 0.8, 0.2)))
-	var hint := Widgets.label("Publica desde el editor: debes superar tu propio nivel primero.", 13, Color(0.6, 0.6, 0.65))
+	top.add_child(Widgets.label("  Comunidad", 26, UiTheme.accent()))
+	var hint := Widgets.label("Publica desde el editor: debes superar tu propio nivel primero.", 13, UiTheme.dim())
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(hint)
@@ -95,7 +95,7 @@ func _init(p_host: Control) -> void:
 	# (server/community_server.py). Vacío = modo local puro.
 	var srv := HBoxContainer.new()
 	srv.add_theme_constant_override("separation", 6)
-	srv.add_child(Widgets.label("Servidor:", 13, Color(0.6, 0.6, 0.65)))
+	srv.add_child(Widgets.label("Servidor:", 13, UiTheme.dim()))
 	var url_edit := LineEdit.new()
 	url_edit.placeholder_text = "vacío = offline · p. ej. http://192.168.1.10:8765"
 	url_edit.text = CommunityRemote.url()
@@ -105,7 +105,7 @@ func _init(p_host: Control) -> void:
 		Storage.set_setting("community_remote_url", t.strip_edges())
 		_sync_remote())
 	srv.add_child(url_edit)
-	_sync_label = Widgets.label("", 12, Color(0.6, 0.6, 0.65))
+	_sync_label = Widgets.label("", 12, UiTheme.dim())
 	srv.add_child(_sync_label)
 	v.add_child(srv)
 
@@ -115,11 +115,11 @@ func _init(p_host: Control) -> void:
 	auth.add_theme_constant_override("separation", 6)
 	# etiquetas visibles: un placeholder no sustituye al label — al
 	# escribir, el único nombre del campo desaparece
-	auth.add_child(Widgets.label("Usuario:", 13, Color(0.6, 0.6, 0.65)))
+	auth.add_child(Widgets.label("Usuario:", 13, UiTheme.dim()))
 	var user_edit := LineEdit.new()
 	user_edit.custom_minimum_size = Vector2(130, 34)
 	auth.add_child(user_edit)
-	auth.add_child(Widgets.label("Contraseña:", 13, Color(0.6, 0.6, 0.65)))
+	auth.add_child(Widgets.label("Contraseña:", 13, UiTheme.dim()))
 	var pass_edit := LineEdit.new()
 	pass_edit.secret = true
 	pass_edit.custom_minimum_size = Vector2(130, 34)
@@ -127,7 +127,7 @@ func _init(p_host: Control) -> void:
 	b_login.custom_minimum_size = Vector2(90, 34)
 	var b_reg := Widgets.button("Registro")
 	b_reg.custom_minimum_size = Vector2(100, 34)
-	_auth_label = Widgets.label("", 12, Color(0.6, 0.6, 0.65))
+	_auth_label = Widgets.label("", 12, UiTheme.dim())
 	var do_auth := func(action: String):
 		if CommunityRemote.username() != "":
 			CommunityRemote.logout()   # el botón pasa a "Salir"
@@ -220,7 +220,7 @@ func _populate() -> void:
 		_list.add_child(Widgets.label(
 			"Sin resultados para «%s»." % q if q != ""
 				else "Aún no hay niveles publicados.",
-			15, Color(0.6, 0.6, 0.65)))
+			15, UiTheme.dim()))
 		return
 	_append_rows(es.slice(0, PAGE))
 	if es.size() > PAGE:
@@ -261,7 +261,7 @@ func _row(e: Dictionary) -> Control:
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.add_child(Widgets.label(l.title + Widgets.stars(l.difficulty), 17))
 	var d := Time.get_date_string_from_unix_time(e["ts"])
-	info.add_child(Widgets.label("por %s · %s" % [e["author"], d], 12, Color(0.6, 0.6, 0.65)))
+	info.add_child(Widgets.label("por %s · %s" % [e["author"], d], 12, UiTheme.dim()))
 	info.add_child(Widgets.label("♥ %d   ▶ %d   ✓ %d" % [
 		e["likes"], e["plays"], e["clears"]], 13, Color(0.9, 0.6, 0.6)))
 	if e["own"]:

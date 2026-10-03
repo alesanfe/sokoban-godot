@@ -7,11 +7,11 @@ extends Control
 func _init(host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
-	v.add_child(Widgets.label("Estadísticas", 30, Color(0.95, 0.8, 0.2)))
+	v.add_child(Widgets.label("Estadísticas", 30, UiTheme.accent()))
 	v.add_child(Widgets.hsep())
 
 	var packs := [
-		["Campaña Mutante", Campaign.levels(), Color(0.95, 0.8, 0.2)],
+		["Campaña Mutante", Campaign.levels(), UiTheme.accent()],
 		["Clásicos Microban", LevelPack.load_microban(), Color(0.4, 0.8, 0.9)],
 		["Mis niveles", Storage.custom_levels(), Color(0.9, 0.7, 0.3)],
 	]
@@ -43,10 +43,10 @@ func _init(host: Control) -> void:
 	var t := Storage.totals()
 	v.add_child(Widgets.label("Toda tu actividad: %d victorias · %d movimientos · %d empujes" % [
 		int(t.get("wins", 0)), int(t.get("moves", 0)), int(t.get("pushes", 0))],
-		13, Color(0.55, 0.55, 0.6)))
+		13, UiTheme.dim()))
 	v.add_child(Widgets.label("%d deshacer · %d reinicios · %d pistas" % [
 		int(t.get("undos", 0)), int(t.get("restarts", 0)), int(t.get("hints", 0))],
-		13, Color(0.55, 0.55, 0.6)))
+		13, UiTheme.dim()))
 	v.add_child(Widgets.hsep())
 	var b_back := Widgets.button("← Menú")
 	b_back.pressed.connect(host.show_menu)

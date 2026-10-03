@@ -30,10 +30,10 @@ func _init(p_host: Control) -> void:
 	# a 720p el conjunto (~770px) cortaba título y botón inferior —
 	# separación y filas más compactas para que quepa sin scroll
 	v.add_theme_constant_override("separation", 8)
-	v.add_child(Widgets.label("Controles", 28, Color(0.95, 0.8, 0.2)))
+	v.add_child(Widgets.label("Controles", 28, UiTheme.accent()))
 	v.add_child(Widgets.label("Clic en una acción y pulsa la nueva"
 		+ " tecla. Las flechas siempre funcionan.", 13,
-		Color(0.6, 0.6, 0.65)))
+		UiTheme.dim()))
 	v.add_child(Widgets.hsep())
 	for a in ACTIONS:
 		var row := HBoxContainer.new()
@@ -54,7 +54,7 @@ func _init(p_host: Control) -> void:
 		_buttons[a[0]] = b
 		v.add_child(row)
 	v.add_child(Widgets.hsep())
-	_status = Widgets.label("", 14, Color(0.7, 0.9, 0.7))
+	_status = Widgets.label("", 14, UiTheme.ok())
 	v.add_child(_status)
 	var b_reset := Widgets.button("Restaurar por defecto")
 	var _armed := false

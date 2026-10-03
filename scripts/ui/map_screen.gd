@@ -158,13 +158,13 @@ func _draw() -> void:
 		var best := Storage.best_moves(level)
 		var col := Color(0.5, 0.5, 0.56)
 		if best > 0:
-			col = Color(0.95, 0.8, 0.2) if level.par > 0 and best <= level.par else Color(0.3, 0.85, 0.5)
+			col = UiTheme.accent() if level.par > 0 and best <= level.par else Color(0.3, 0.85, 0.5)
 		draw_circle(ctr, T * 0.3, col)
 		draw_circle(ctr, T * 0.3, col.darkened(0.5), false, 1.5)
 		if c == avatar:
 			draw_arc(ctr, T * 0.44, 0, TAU, 24, Color.WHITE, 2.5)
 	var ac := Vector2(avatar) * T - cam + Vector2(T / 2, T / 2)
-	draw_circle(ac, T * 0.24, Color(0.95, 0.8, 0.2))
+	draw_circle(ac, T * 0.24, UiTheme.accent())
 	draw_circle(ac, T * 0.24, Color.BLACK, false, 2.0)
 	# bottom bar
 	draw_rect(Rect2(0, size.y - 38, size.x, 38), Color(0.05, 0.05, 0.08, 0.88))

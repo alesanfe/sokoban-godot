@@ -13,18 +13,21 @@ const VARIANTS := {
 		"panel_hi": Color(0.15, 0.18, 0.22), "edge": Color(0.25, 0.30, 0.38),
 		"accent": Color(0.95, 0.8, 0.2), "accent_hi": Color(1.0, 0.9, 0.45),
 		"text": Color(0.92, 0.93, 0.96), "dim": Color(0.6, 0.63, 0.7),
+		"ok": Color(0.35, 0.85, 0.5), "info": Color(0.35, 0.85, 0.95),
 	},
 	"light": {
 		"bg": Color(0.90, 0.89, 0.85), "panel": Color(0.98, 0.97, 0.94),
 		"panel_hi": Color(0.88, 0.87, 0.82), "edge": Color(0.65, 0.63, 0.58),
 		"accent": Color(0.55, 0.38, 0.05), "accent_hi": Color(0.75, 0.55, 0.15),
 		"text": Color(0.12, 0.12, 0.15), "dim": Color(0.38, 0.38, 0.42),
+		"ok": Color(0.12, 0.55, 0.22), "info": Color(0.05, 0.45, 0.65),
 	},
 	"contrast": {
 		"bg": Color(0, 0, 0), "panel": Color(0.05, 0.05, 0.05),
 		"panel_hi": Color(0.12, 0.12, 0.12), "edge": Color(0.95, 0.95, 0.95),
 		"accent": Color(1.0, 0.85, 0.3), "accent_hi": Color(1.0, 0.95, 0.55),
 		"text": Color(1, 1, 1), "dim": Color(0.85, 0.85, 0.85),
+		"ok": Color(0.45, 1.0, 0.55), "info": Color(0.5, 0.95, 1.0),
 	},
 	# dark variant tuned for deuteranopia/protanopia (Okabe–Ito accents)
 	"cb": {
@@ -32,6 +35,7 @@ const VARIANTS := {
 		"panel_hi": Color(0.15, 0.18, 0.22), "edge": Color(0.3, 0.4, 0.55),
 		"accent": Color(0.34, 0.65, 0.95), "accent_hi": Color(0.55, 0.8, 1.0),
 		"text": Color(0.92, 0.93, 0.96), "dim": Color(0.6, 0.63, 0.7),
+		"ok": Color(0.25, 0.8, 0.6), "info": Color(0.55, 0.8, 1.0),
 	},
 }
 
@@ -49,6 +53,26 @@ static func apply(root: Control) -> Theme:
 
 static func bg_color() -> Color:
 	return VARIANTS.get(current_mode(), VARIANTS.dark)["bg"]
+
+
+## Tokens semánticos para texto coloreado en código (hints, éxito,
+## info): las pantallas NO deben hardcodear un gris/verde pensado para
+## el tema oscuro — en Claro quedaba por debajo de contraste AA y en
+## Alto contraste era invisible.
+static func dim() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["dim"]
+
+
+static func accent() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["accent"]
+
+
+static func ok() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["ok"]
+
+
+static func info() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["info"]
 
 
 static func make(mode: String) -> Theme:

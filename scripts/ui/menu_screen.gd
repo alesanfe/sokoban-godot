@@ -17,9 +17,9 @@ func _init(host: Control) -> void:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	head.add_child(icon)
-	head.add_child(Widgets.label("SOKOBAN MUTANTE", 44, Color(0.95, 0.8, 0.2)))
+	head.add_child(Widgets.label("SOKOBAN MUTANTE", 44, UiTheme.accent()))
 	v.add_child(head)
-	v.add_child(Widgets.label("Cada nivel, una regla absurda.", 16, Color(0.7, 0.7, 0.75)))
+	v.add_child(Widgets.label("Cada nivel, una regla absurda.", 16, UiTheme.dim()))
 	v.add_child(Widgets.hsep())
 
 	var saved = Storage.get_in_progress()

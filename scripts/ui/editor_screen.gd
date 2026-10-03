@@ -173,17 +173,17 @@ class EditorGrid extends Control:
 						draw_circle(r.get_center(), tile * 0.28, Color(0.85, 0.35, 0.35))
 						_text(font, "!", r, Color.WHITE)
 					"$", "*":
-						draw_circle(r.get_center(), tile * 0.18, Color(0.25, 0.7, 0.35))
+						draw_circle(r.get_center(), tile * 0.18, UiTheme.ok())
 						draw_rect(r.grow(-3), Color(0.72, 0.5, 0.24))
 					"&", "%":
 						draw_rect(r.grow(-3), Color(0.7, 0.35, 0.85))
 						_text(font, "&", r, Color.WHITE)
 					".":
-						draw_circle(r.get_center(), tile * 0.18, Color(0.25, 0.7, 0.35))
+						draw_circle(r.get_center(), tile * 0.18, UiTheme.ok())
 					"@", "+":
-						draw_circle(r.get_center(), tile * 0.28, Color(0.95, 0.8, 0.2))
+						draw_circle(r.get_center(), tile * 0.28, UiTheme.accent())
 					"o", "O":
-						var pc := Color(0.35, 0.85, 0.95) if ch == "o" else Color(0.9, 0.45, 0.85)
+						var pc := UiTheme.info() if ch == "o" else Color(0.9, 0.45, 0.85)
 						draw_arc(r.get_center(), tile * 0.3, 0, TAU, 20, pc, 2.5)
 						_text(font, ch, r, pc)
 					">", "<", "^", "v":
@@ -274,7 +274,7 @@ class EditorGrid extends Control:
 						# caja de color sobre meta (a/e/i = meta de su color)
 						var ci2 := "aeijlm".find(ch) % 3 + 1
 						draw_circle(r.get_center(), tile * 0.18,
-							gpal[ci2] if ch in "aei" else Color(0.25, 0.7, 0.35))
+							gpal[ci2] if ch in "aei" else UiTheme.ok())
 						draw_rect(r.grow(-3), bpal[ci2])
 						_text(font, "bcd"["aeijlm".find(ch) % 3].to_upper(), r, Color.WHITE)
 		# overlays: caja posada sobre terreno no componible — se dibuja
@@ -454,7 +454,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	side.add_theme_constant_override("separation", 8)
 	hbox.add_child(side)
 
-	side.add_child(Widgets.label("Editor de niveles", 24, Color(0.95, 0.8, 0.2)))
+	side.add_child(Widgets.label("Editor de niveles", 24, UiTheme.accent()))
 	title_edit = LineEdit.new()
 	title_edit.placeholder_text = "Título"
 	side.add_child(title_edit)
@@ -514,7 +514,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 		_invalidate_solution)
 
 	side.add_child(Widgets.hsep())
-	status = Widgets.label("", 13, Color(0.7, 0.9, 0.7))
+	status = Widgets.label("", 13, UiTheme.ok())
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	side.add_child(status)
 

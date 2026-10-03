@@ -16,10 +16,10 @@ func _init(p_host: Control) -> void:
 	host = p_host
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
-	v.add_child(Widgets.label("Generador", 30, Color(0.95, 0.8, 0.2)))
+	v.add_child(Widgets.label("Generador", 30, UiTheme.accent()))
 	v.add_child(Widgets.label(
 		"Tu desafío a medida. Semilla vacía = aleatoria.",
-		13, Color(0.6, 0.6, 0.65)))
+		13, UiTheme.dim()))
 	v.add_child(Widgets.hsep())
 
 	w_spin = _spin("Ancho", 6, 16, 10, v)

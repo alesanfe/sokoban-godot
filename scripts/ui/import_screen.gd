@@ -6,10 +6,10 @@ extends Control
 func _init(host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
-	v.add_child(Widgets.label("Importar nivel", 32, Color(0.95, 0.8, 0.2)))
+	v.add_child(Widgets.label("Importar nivel", 32, UiTheme.accent()))
 	v.add_child(Widgets.label("Pega un código SKM1.…/SKM2.… o un"
 		+ " tablero XSB (también RLE: 4#|# @$.#)", 14,
-		Color(0.7, 0.7, 0.75)))
+		UiTheme.dim()))
 
 	# TextEdit (not LineEdit) so multi-line XSB boards paste correctly.
 	var edit := TextEdit.new()
@@ -24,7 +24,7 @@ func _init(host: Control) -> void:
 	# nacen deshabilitados (los tooltips no se muestran en disabled)
 	var status := Widgets.label(
 		"Pega un código o tablero y pulsa «Comprobar» para habilitar Jugar y Guardar.",
-		14, Color(0.6, 0.6, 0.65))
+		14, UiTheme.dim())
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.custom_minimum_size.x = 520
 	v.add_child(status)

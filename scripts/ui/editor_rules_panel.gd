@@ -76,7 +76,7 @@ func refresh() -> void:
 		del.pressed.connect(func(): remove_rule(i))
 		head.add_child(del)
 		v.add_child(head)
-		v.add_child(Widgets.label(str(d["description"]), 11, Color(0.6, 0.6, 0.65)))
+		v.add_child(Widgets.label(str(d["description"]), 11, UiTheme.dim()))
 		for key in e["controls"].keys():
 			var c: Dictionary = e["controls"][key]
 			var spec: Dictionary = c["spec"]

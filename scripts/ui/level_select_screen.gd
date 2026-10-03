@@ -34,12 +34,12 @@ class LevelThumb extends Control:
 						[c + a, c - a + s, c - a - s]), col)
 				match ch:
 					"#":
-						draw_rect(r, Color(0.4, 0.42, 0.5))
+						draw_rect(r, UiTheme.dim())
 					"?":
 						draw_rect(r, Color(0.55, 0.4, 0.6))
 					"W":
-						draw_rect(r, Color(0.6, 0.6, 0.65))
-						draw_rect(r.grow(-t * 0.15), Color(0.4, 0.42, 0.5))
+						draw_rect(r, UiTheme.dim())
+						draw_rect(r.grow(-t * 0.15), UiTheme.dim())
 					"$", "*":
 						draw_rect(r.grow(-0.5), Color(0.72, 0.5, 0.24))
 					"&", "%":
@@ -57,7 +57,7 @@ class LevelThumb extends Control:
 					"n":
 						draw_rect(r.grow(-0.5), Color(0.45, 0.34, 0.2))
 					".":
-						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), Color(0.25, 0.7, 0.35))
+						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), UiTheme.ok())
 					"B", "C", "D":
 						draw_circle(r.get_center(), maxf(t * 0.28, 1.0),
 							BoardView.GOAL_COLORS["BCD".find(ch) + 1])
@@ -65,13 +65,13 @@ class LevelThumb extends Control:
 						draw_rect(r, BoardView.GOAL_COLORS[
 							"EGH".find(ch) + 1], false, 2.0)
 					"@", "+":
-						draw_circle(r.get_center(), maxf(t * 0.35, 1.0), Color(0.95, 0.8, 0.2))
+						draw_circle(r.get_center(), maxf(t * 0.35, 1.0), UiTheme.accent())
 					"p":
 						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), Color(0.95, 0.6, 0.3))
 					"!":
 						draw_rect(r, Color(0.55, 0.4, 0.6))
 					"o":
-						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), Color(0.35, 0.85, 0.95))
+						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), UiTheme.info())
 					"O":
 						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), Color(0.9, 0.45, 0.85))
 					">", "<", "^", "v":
@@ -98,14 +98,14 @@ class LevelThumb extends Control:
 						draw_rect(r, Color(0.3, 0.55, 0.45), false, 2.0)
 					"=":
 						draw_rect(Rect2(r.position.x, r.get_center().y - t * 0.12,
-							t, maxf(t * 0.08, 1.0)), Color(0.55, 0.55, 0.6))
+							t, maxf(t * 0.08, 1.0)), UiTheme.dim())
 						draw_rect(Rect2(r.position.x, r.get_center().y + t * 0.08,
-							t, maxf(t * 0.08, 1.0)), Color(0.55, 0.55, 0.6))
+							t, maxf(t * 0.08, 1.0)), UiTheme.dim())
 					":":
 						draw_rect(Rect2(r.get_center().x - t * 0.12, r.position.y,
-							maxf(t * 0.08, 1.0), t), Color(0.55, 0.55, 0.6))
+							maxf(t * 0.08, 1.0), t), UiTheme.dim())
 						draw_rect(Rect2(r.get_center().x + t * 0.08, r.position.y,
-							maxf(t * 0.08, 1.0), t), Color(0.55, 0.55, 0.6))
+							maxf(t * 0.08, 1.0), t), UiTheme.dim())
 		# overlays de ocupante por encima del terreno
 		for op in over.keys():
 			var os: Dictionary = over[op]
@@ -216,7 +216,7 @@ func _populate(host: Control) -> void:
 			return
 		_list.add_child(Widgets.label(heading, 22, col))
 		if sub != "":
-			_list.add_child(Widgets.label(sub, 14, Color(0.6, 0.6, 0.65)))
+			_list.add_child(Widgets.label(sub, 14, UiTheme.dim()))
 		for level in shown:
 			var row := _level_button(host, level, heading == "Mis niveles")
 			_list.add_child(row)
@@ -229,15 +229,15 @@ func _populate(host: Control) -> void:
 	for level in classics:
 		if Storage.best_moves(level) > 0:
 			done += 1
-	add_section.call(Campaign.levels(), "Campaña Mutante", Color(0.95, 0.8, 0.2))
+	add_section.call(Campaign.levels(), "Campaña Mutante", UiTheme.accent())
 	_list.add_child(Widgets.hsep())
 	add_section.call(classics, "Clásicos · Microban (David W. Skinner)",
 		Color(0.4, 0.8, 0.9), "  %d niveles — %d completados" % [classics.size(), done])
 	_list.add_child(Widgets.hsep())
 	var customs := Storage.custom_levels()
-	add_section.call(customs, "Mis niveles", Color(0.95, 0.8, 0.2))
+	add_section.call(customs, "Mis niveles", UiTheme.accent())
 	if customs.is_empty():
-		_list.add_child(Widgets.label("  (vacío — crea niveles en el editor o importa un código)", 14, Color(0.6, 0.6, 0.65)))
+		_list.add_child(Widgets.label("  (vacío — crea niveles en el editor o importa un código)", 14, UiTheme.dim()))
 	else:
 		var b_pack := Widgets.button("Exportar colección (código de pack)")
 		b_pack.pressed.connect(func():
@@ -251,7 +251,7 @@ func _populate(host: Control) -> void:
 	if added == 0 and f != "":
 		_list.add_child(Widgets.label(
 			"  Sin niveles que coincidan con «%s»." % _filter_edit.text,
-			15, Color(0.7, 0.7, 0.75)))
+			15, UiTheme.dim()))
 
 
 func _stars_for(level: LevelData, best: int) -> int:

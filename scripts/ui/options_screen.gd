@@ -32,7 +32,7 @@ func _init(p_host: Control) -> void:
 	v.add_theme_constant_override("separation", 10)
 	m.add_child(v)
 
-	v.add_child(Widgets.label("Opciones", 30, Color(0.95, 0.8, 0.2)))
+	v.add_child(Widgets.label("Opciones", 30, UiTheme.accent()))
 
 	# ------------------------------------------------------------ Vídeo
 	v.add_child(_section("Vídeo"))
@@ -54,7 +54,7 @@ func _init(p_host: Control) -> void:
 			b.text = "Tablero: " + SKIN_NAMES[n]))
 	v.add_child(Widgets.label(
 		"Sprites: Kenney · Plano: look procedural · Retro: sprites con tinte",
-		11, Color(0.6, 0.6, 0.65)))
+		11, UiTheme.dim()))
 	# texto ampliable (accesibilidad): escala toda la UI sin perder
 	# contenido — content_scale_factor reajusta el layout en vivo
 	var us_idx := _nearest_idx(UI_SCALES,
@@ -146,7 +146,7 @@ func _init(p_host: Control) -> void:
 	v.add_child(Widgets.hsep())
 	v.add_child(Widgets.label(
 		"Los controles se reasignan en «Controles…» del menú.",
-		12, Color(0.6, 0.6, 0.65)))
+		12, UiTheme.dim()))
 	var b_back := Widgets.button("← Menú")
 	b_back.pressed.connect(host.show_menu)
 	v.add_child(b_back)

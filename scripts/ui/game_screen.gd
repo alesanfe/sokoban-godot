@@ -71,7 +71,7 @@ func _init(p_host: Control) -> void:
 	side.add_child(hud_status)
 	side.add_child(Widgets.hsep())
 
-	hud_keys = Widgets.label("", 12, Color(0.55, 0.55, 0.6))
+	hud_keys = Widgets.label("", 12, UiTheme.dim())
 	# la lista de atajos es larga — sin wrap el min-width del label
 	# comía el espacio del tablero (side acababa a ~800px)
 	hud_keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -695,9 +695,9 @@ func _confetti() -> void:
 	p.scale_amount_min = 3.0
 	p.scale_amount_max = 6.0
 	var grad := Gradient.new()
-	grad.add_point(0.0, Color(0.95, 0.8, 0.2))
+	grad.add_point(0.0, UiTheme.accent())
 	grad.add_point(0.5, Color(0.4, 0.9, 0.5))
-	grad.add_point(1.0, Color(0.35, 0.85, 0.95))
+	grad.add_point(1.0, UiTheme.info())
 	p.color_ramp = grad
 	add_child(p)
 	p.emitting = true
