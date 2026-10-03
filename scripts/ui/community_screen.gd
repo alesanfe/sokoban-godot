@@ -259,9 +259,16 @@ func _row(e: Dictionary) -> Control:
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_child(Widgets.label(l.title + Widgets.stars(l.difficulty), 17))
+	# resaltado de coincidencias (rúbrica 5.4): la query puede casar
+	# con título O autor — se ilumina donde casó
+	var q := _search.text.strip_edges()
+	var title_row := HBoxContainer.new()
+	title_row.add_child(Widgets.marked(l.title, 17, q))
+	title_row.add_child(Widgets.label(Widgets.stars(l.difficulty), 17))
+	info.add_child(title_row)
 	var d := Time.get_date_string_from_unix_time(e["ts"])
-	info.add_child(Widgets.label("por %s · %s" % [e["author"], d], 12, UiTheme.dim()))
+	info.add_child(Widgets.marked("por %s · %s" % [e["author"], d],
+		12, q, UiTheme.dim()))
 	info.add_child(Widgets.label("♥ %d   ▶ %d   ✓ %d" % [
 		e["likes"], e["plays"], e["clears"]], 13, Color(0.9, 0.6, 0.6)))
 	if e["own"]:

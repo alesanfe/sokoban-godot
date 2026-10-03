@@ -65,6 +65,41 @@ static func hsep() -> HSeparator:
 	return HSeparator.new()
 
 
+## Search-match highlighting (rúbrica 5.4): RichTextLabel con la
+## subcadena buscada en negrita+accent sobre el color del tema.
+## Devuelve Control para que el llamador pueda usarlo siempre — con
+## q vacío se comporta como un label normal.
+static func marked(text: String, size: int, q: String,
+		col := Color(0, 0, 0, 0)) -> Control:
+	var rt := RichTextLabel.new()
+	rt.bbcode_enabled = true
+	rt.fit_content = true
+	rt.scroll_active = false
+	rt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rt.add_theme_font_size_override("normal_font_size", size)
+	rt.add_theme_font_size_override("bold_font_size", size)
+	if col.a == 0.0:
+		rt.add_theme_color_override("default_color",
+			UiTheme.VARIANTS[UiTheme.current_mode()]["text"])
+	else:
+		rt.add_theme_color_override("default_color", col)
+	var i := -1 if q == "" else text.to_lower().find(q.to_lower())
+	if i < 0:
+		rt.text = _bbc(text)
+	else:
+		var hi := UiTheme.accent()
+		rt.text = _bbc(text.substr(0, i)) \
+			+ "[b][color=#" + hi.to_html(false) + "]" \
+			+ _bbc(text.substr(i, q.length())) + "[/color][/b]" \
+			+ _bbc(text.substr(i + q.length()))
+	return rt
+
+
+## "[" literal rompería el parser BBCode — escapa antes de insertar.
+static func _bbc(s: String) -> String:
+	return s.replace("[", "[lb]").replace("]", "[rb]")
+
+
 ## Status-channel setter: writes the label AND speaks the text when
 ## the screen-reader option is on — the HUD/editor status lines carry
 ## critical feedback (deadlocks, hints, confirm prompts) that would
