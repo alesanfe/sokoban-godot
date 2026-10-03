@@ -68,6 +68,12 @@ static func hsep() -> HSeparator:
 ## Lightweight toast (ProperUI-Toast equivalent): bottom-center label
 ## that fades out. Survives screen swaps when parented to the host root.
 static func toast(root: Control, text: String, dur := 1.8) -> void:
+	# si el lector está activo los toasts (éxito/error/estado) también
+	# se dictan — sin esto el canal principal de feedback era mudo
+	if bool(Storage.get_setting("screen_reader")) \
+			and DisplayServer.has_feature(
+				DisplayServer.FEATURE_TEXT_TO_SPEECH):
+		DisplayServer.tts_speak(text, "")
 	var l := label(text, 15, Color(1, 1, 1))
 	l.anchor_left = 0.5
 	l.anchor_right = 0.5

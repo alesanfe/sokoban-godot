@@ -20,7 +20,11 @@ func _init(host: Control) -> void:
 	# foco en el campo de código (Jugar nace deshabilitado)
 	edit.grab_focus.call_deferred()
 
-	var status := Widgets.label("", 14)
+	# instrucción antes de la entrada: explica por qué Jugar/Guardar
+	# nacen deshabilitados (los tooltips no se muestran en disabled)
+	var status := Widgets.label(
+		"Pega un código o tablero y pulsa «Comprobar» para habilitar Jugar y Guardar.",
+		14, Color(0.6, 0.6, 0.65))
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.custom_minimum_size.x = 520
 	v.add_child(status)

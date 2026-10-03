@@ -19,6 +19,13 @@ var _search: LineEdit
 var _sync_label: Label
 var _auth_label: Label
 var _auth_row: HBoxContainer
+var _scroll: ScrollContainer
+
+# contexto al volver («volver conserva la navegación»): búsqueda,
+# pestaña de orden y scroll sobreviven a ida/vuelta jugar↔feed
+static var _saved_sort := "recent"
+static var _saved_search := ""
+static var _saved_scroll := 0
 
 
 func _init(p_host: Control) -> void:
@@ -47,6 +54,7 @@ func _init(p_host: Control) -> void:
 	top.add_child(hint)
 	v.add_child(top)
 
+	_sort = _saved_sort
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
 	for t in SORT_TABS:
@@ -55,12 +63,15 @@ func _init(p_host: Control) -> void:
 		b.toggle_mode = true
 		b.pressed.connect(func():
 			_sort = t[0]
+			_saved_sort = _sort
+			_saved_scroll = 0
 			for tb in _tabs:
 				tb.button_pressed = tb == b
 			_populate())
 		tabs.add_child(b)
 		_tabs.append(b)
-	_tabs[0].button_pressed = true
+	for i in SORT_TABS.size():
+		_tabs[i].button_pressed = SORT_TABS[i][0] == _sort
 	v.add_child(tabs)
 
 	# búsqueda por título o autor dentro del feed
@@ -70,7 +81,11 @@ func _init(p_host: Control) -> void:
 	_search.placeholder_text = "Buscar por título o autor…"
 	_search.custom_minimum_size.x = 260
 	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_search.text_changed.connect(func(_t): _populate())
+	_search.text = _saved_search
+	_search.text_changed.connect(func(_t):
+		_saved_search = _t
+		_saved_scroll = 0
+		_populate())
 	search.add_child(_search)
 	v.add_child(search)
 	# foco inicial: el buscador es el primer gesto natural del feed
@@ -133,13 +148,17 @@ func _init(p_host: Control) -> void:
 	v.add_child(auth)
 	_refresh_auth()
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(_scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
-	scroll.add_child(_list)
+	_scroll.add_child(_list)
+	# guarda el scroll al salir (el swap destruye el screen)
+	_scroll.get_v_scroll_bar().value_changed.connect(func(v2: float):
+		_saved_scroll = int(v2))
+	(func(): _scroll.scroll_vertical = _saved_scroll).call_deferred()
 
 	CommunityService.seed_officials()
 	_populate()

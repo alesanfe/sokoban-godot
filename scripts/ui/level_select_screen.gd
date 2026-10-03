@@ -178,6 +178,9 @@ func _init(host: Control) -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
 	_scroll.add_child(_list)
+	# guarda el scroll al salir (el swap destruye el screen)
+	_scroll.get_v_scroll_bar().value_changed.connect(func(v2: float):
+		_saved_scroll = int(v2))
 	_populate(host)
 	(func(): _scroll.scroll_vertical = _saved_scroll).call_deferred()
 
