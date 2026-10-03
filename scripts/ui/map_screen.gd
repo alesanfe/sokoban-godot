@@ -145,20 +145,20 @@ func _draw() -> void:
 		var r := Rect2(Vector2(c) * T - cam, Vector2(T, T))
 		draw_rect(r, Color(0.13, 0.16, 0.13))
 		draw_rect(r, Color(1, 1, 1, 0.04), false, 1.0)
-	_text(font, "CAMPAÑA MUTANTE", Vector2(4.0, 4.2) * T - cam, 18, Color(0.95, 0.8, 0.2, 0.85))
-	_text(font, "CLÁSICOS", Vector2(45.0, 3.2) * T - cam, 18, Color(0.4, 0.8, 0.9, 0.85))
+	_text(font, "CAMPAÑA MUTANTE", Vector2(4.0, 4.2) * T - cam, 18, Color(UiTheme.accent(), 0.85))
+	_text(font, "CLÁSICOS", Vector2(45.0, 3.2) * T - cam, 18, Color(UiTheme.info(), 0.85))
 	_text(font, "MIS NIVELES" + ("  (+%d más)" % _custom_overflow
 		if _custom_overflow > 0 else ""),
-		Vector2(45.0, 21.2) * T - cam, 18, Color(0.9, 0.7, 0.3, 0.85))
+		Vector2(45.0, 21.2) * T - cam, 18, Color(UiTheme.accent(), 0.85))
 	for i in nodes.size():
 		var nd: Dictionary = nodes[i]
 		var c: Vector2i = nd["cell"]
 		var ctr := Vector2(c) * T - cam + Vector2(T / 2, T / 2)
 		var level: LevelData = nd["level"]
 		var best := Storage.best_moves(level)
-		var col := Color(0.5, 0.5, 0.56)
+		var col := UiTheme.dim()
 		if best > 0:
-			col = UiTheme.accent() if level.par > 0 and best <= level.par else Color(0.3, 0.85, 0.5)
+			col = UiTheme.accent() if level.par > 0 and best <= level.par else UiTheme.ok()
 		draw_circle(ctr, T * 0.3, col)
 		draw_circle(ctr, T * 0.3, col.darkened(0.5), false, 1.5)
 		if c == avatar:

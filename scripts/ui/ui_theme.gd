@@ -14,6 +14,7 @@ const VARIANTS := {
 		"accent": Color(0.95, 0.8, 0.2), "accent_hi": Color(1.0, 0.9, 0.45),
 		"text": Color(0.92, 0.93, 0.96), "dim": Color(0.6, 0.63, 0.7),
 		"ok": Color(0.35, 0.85, 0.5), "info": Color(0.35, 0.85, 0.95),
+		"warn": Color(0.95, 0.75, 0.3),
 	},
 	"light": {
 		"bg": Color(0.90, 0.89, 0.85), "panel": Color(0.98, 0.97, 0.94),
@@ -21,6 +22,7 @@ const VARIANTS := {
 		"accent": Color(0.55, 0.38, 0.05), "accent_hi": Color(0.75, 0.55, 0.15),
 		"text": Color(0.12, 0.12, 0.15), "dim": Color(0.38, 0.38, 0.42),
 		"ok": Color(0.12, 0.55, 0.22), "info": Color(0.05, 0.45, 0.65),
+		"warn": Color(0.7, 0.45, 0.0),
 	},
 	"contrast": {
 		"bg": Color(0, 0, 0), "panel": Color(0.05, 0.05, 0.05),
@@ -28,6 +30,7 @@ const VARIANTS := {
 		"accent": Color(1.0, 0.85, 0.3), "accent_hi": Color(1.0, 0.95, 0.55),
 		"text": Color(1, 1, 1), "dim": Color(0.85, 0.85, 0.85),
 		"ok": Color(0.45, 1.0, 0.55), "info": Color(0.5, 0.95, 1.0),
+		"warn": Color(1.0, 0.9, 0.3),
 	},
 	# dark variant tuned for deuteranopia/protanopia (Okabe–Ito accents)
 	"cb": {
@@ -36,6 +39,7 @@ const VARIANTS := {
 		"accent": Color(0.34, 0.65, 0.95), "accent_hi": Color(0.55, 0.8, 1.0),
 		"text": Color(0.92, 0.93, 0.96), "dim": Color(0.6, 0.63, 0.7),
 		"ok": Color(0.25, 0.8, 0.6), "info": Color(0.55, 0.8, 1.0),
+		"warn": Color(0.95, 0.7, 0.25),
 	},
 }
 
@@ -73,6 +77,10 @@ static func ok() -> Color:
 
 static func info() -> Color:
 	return VARIANTS.get(current_mode(), VARIANTS.dark)["info"]
+
+
+static func warn() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["warn"]
 
 
 static func make(mode: String) -> Theme:

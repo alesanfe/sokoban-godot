@@ -374,16 +374,16 @@ func _draw() -> void:
 							Vector2.ONE * tile * 0.44), false, Color(1, 1, 1, 0.85))
 				else:
 					# cracked-glass lines warn that it collapses underfoot
-					draw_line(r.position + Vector2(3, 3), c, Color(0.8, 0.75, 0.6, 0.6), 1.5)
-					draw_line(r.position + Vector2(r.size.x - 4, 4), c, Color(0.8, 0.75, 0.6, 0.6), 1.5)
-					draw_line(c, c + Vector2(tile * 0.3, tile * 0.28), Color(0.8, 0.75, 0.6, 0.6), 1.5)
-					draw_line(c, c + Vector2(-tile * 0.28, tile * 0.3), Color(0.8, 0.75, 0.6, 0.6), 1.5)
+					draw_line(r.position + Vector2(3, 3), c, Color(UiTheme.warn(), 0.6), 1.5)
+					draw_line(r.position + Vector2(r.size.x - 4, 4), c, Color(UiTheme.warn(), 0.6), 1.5)
+					draw_line(c, c + Vector2(tile * 0.3, tile * 0.28), Color(UiTheme.warn(), 0.6), 1.5)
+					draw_line(c, c + Vector2(-tile * 0.28, tile * 0.3), Color(UiTheme.warn(), 0.6), 1.5)
 			if state.rails.has(pos):
 				var c := r.get_center()
 				var dv := Vector2(state.rails[pos])
 				var s := Vector2(-dv.y, dv.x) * tile * 0.28
-				draw_line(c - dv * tile * 0.42 + s, c + dv * tile * 0.42 + s, Color(0.6, 0.62, 0.7, 0.8), 2.5)
-				draw_line(c - dv * tile * 0.42 - s, c + dv * tile * 0.42 - s, Color(0.6, 0.62, 0.7, 0.8), 2.5)
+				draw_line(c - dv * tile * 0.42 + s, c + dv * tile * 0.42 + s, Color(UiTheme.info(), 0.8), 2.5)
+				draw_line(c - dv * tile * 0.42 - s, c + dv * tile * 0.42 - s, Color(UiTheme.info(), 0.8), 2.5)
 			if state.weak_walls.has(pos):
 				var wt := tex("weak_wall")
 				if wt != null:
