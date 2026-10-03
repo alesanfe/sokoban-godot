@@ -10,6 +10,9 @@ var _bg: ColorRect
 
 func _ready() -> void:
 	UiTheme.apply(self)
+	# texto ampliable: escala global de UI desde ajustes
+	get_window().content_scale_factor = \
+		clampf(float(Storage.get_setting("ui_scale")), 0.85, 1.3)
 	_bg = ColorRect.new()
 	_bg.color = UiTheme.bg_color()
 	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)

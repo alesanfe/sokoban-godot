@@ -15,6 +15,7 @@ const SETTING_DEFAULTS := {
 	"deadlock_assist": 2, "confirm_restart": true,
 	"reduce_motion": false, "repeat_rate": 0.11, "autoplay_speed": 1.0,
 	"screen_reader": false,
+	"ui_scale": 1.0,
 }
 
 ## Versión de esquema de los JSON persistidos: save_json la estampa en

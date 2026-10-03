@@ -785,7 +785,7 @@ func _eyedrop(p: Vector2i) -> void:
 			else "n" if os.get("h", false) else "$"
 		if _tool_buttons.has(tool):
 			_tool_buttons[tool].button_pressed = true
-		status.text = "Herramienta: %s" % tool
+		Widgets.status(status, "Herramienta: %s" % tool)
 		return
 	var ch: String = cells.get(p, " ")
 	ch = {"+": "@", "*": "$", "%": "&"}.get(ch, ch)
@@ -793,7 +793,7 @@ func _eyedrop(p: Vector2i) -> void:
 	# keep the palette's pressed state in sync with the active tool
 	if _tool_buttons.has(ch):
 		_tool_buttons[ch].button_pressed = true
-	status.text = "Herramienta: %s" % ch
+	Widgets.status(status, "Herramienta: %s" % ch)
 
 
 # ---------------------------------------------------------- transforms
@@ -869,13 +869,13 @@ func _copy_board() -> void:
 			row += str(cells.get(Vector2i(x, y), " "))
 		lines.append(row)
 	DisplayServer.clipboard_set("\n".join(lines))
-	status.text = "✓ Tablero copiado al portapapeles."
+	Widgets.status(status, "✓ Tablero copiado al portapapeles.")
 
 
 func _paste_board() -> void:
 	var txt := DisplayServer.clipboard_get()
 	if txt.strip_edges() == "":
-		status.text = "⚠ El portapapeles no contiene un tablero."
+		Widgets.status(status, "⚠ El portapapeles no contiene un tablero.")
 		return
 	var lines := txt.split("\n", false)
 	_push_undo()
@@ -897,9 +897,9 @@ func _paste_board() -> void:
 	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
 	grid.queue_redraw()
 	_refresh_dead()
-	status.text = "✓ Tablero pegado (%dx%d)." % [grid_w, grid_h] \
+	Widgets.status(status, ("✓ Tablero pegado (%dx%d)." % [grid_w, grid_h])
 		+ (" ⚠ Los overlays de caja no viajan en texto plano — se han descartado."
-			if had_over else "")
+			if had_over else ""))
 
 
 # ------------------------------------------------------ dead overlay
@@ -968,9 +968,9 @@ func _verify() -> void:
 	var l := build_level()
 	var problems := l.validate()
 	if not problems.is_empty():
-		status.text = "⚠ " + "; ".join(problems)
+		Widgets.status(status, "⚠ " + "; ".join(problems))
 		return
-	status.text = "Buscando solución…"
+	Widgets.status(status, "Buscando solución…")
 	var expect := l.content_code()  # si el tablero cambia en medio del
 	# "límite de estados" no es veredicto → escala el presupuesto antes
 	# de declararse incapaz
@@ -982,15 +982,17 @@ func _verify() -> void:
 			l.par = res["moves"].size()
 			_solution = res["moves"]
 			b_play_sol.visible = true
-			status.text = "✓ Soluble en %d movimientos. Dificultad:%s" % [res["moves"].size(), Widgets.stars(l.difficulty)]
+			Widgets.status(status, "✓ Soluble en %d movimientos. Dificultad:%s"
+				% [res["moves"].size(), Widgets.stars(l.difficulty)])
 		else:
 			var reason: String = res.get("reason", "")
 			# "límite de estados" no es un veredicto: el nivel puede ser
 			# soluble y el solver simplemente se quedó sin presupuesto
 			if reason.contains("límite"):
-				status.text = "✗ El solucionador alcanzó el límite de búsqueda — puede que sea soluble aunque no lo haya probado."
+				Widgets.status(status,
+					"✗ El solucionador alcanzó el límite de búsqueda — puede que sea soluble aunque no lo haya probado.")
 			else:
-				status.text = "✗ El nivel es irresoluble (%s)." % reason,
+				Widgets.status(status, "✗ El nivel es irresoluble (%s)." % reason),
 		SokobanSolver.MAX_STATES, true)  # escalate: reintenta ×4 y ×15
 
 
@@ -998,7 +1000,7 @@ func _playtest() -> void:
 	var l := build_level()
 	var problems := l.validate()
 	if not problems.is_empty():
-		status.text = "⚠ " + "; ".join(problems)
+		Widgets.status(status, "⚠ " + "; ".join(problems))
 		return
 	host.show_game(l, {"from_editor": true, "playtest": l.to_code()})
 
@@ -1009,27 +1011,27 @@ func _publish() -> void:
 	var l := build_level()
 	var problems := l.validate()
 	if not problems.is_empty():
-		status.text = "⚠ " + "; ".join(problems)
+		Widgets.status(status, "⚠ " + "; ".join(problems))
 		return
 	if not Storage.is_playtested(l):
-		status.text = "⚠ Para publicar debes superar tu propio nivel: pulsa «Probar» y complétalo."
+		Widgets.status(status, "⚠ Para publicar debes superar tu propio nivel: pulsa «Probar» y complétalo.")
 		return
 	var res := CommunityService.publish(l, author_edit.text.strip_edges())
 	if res.get("ok"):
-		status.text = "✓ Publicado en la Comunidad."
+		Widgets.status(status, "✓ Publicado en la Comunidad.")
 	else:
-		status.text = "✗ " + str(res.get("err", ""))
+		Widgets.status(status, "✗ " + str(res.get("err", "")))
 
 
 func _save() -> void:
 	var l := build_level()
 	var problems := l.validate()
 	if not problems.is_empty():
-		status.text = "⚠ " + "; ".join(problems)
+		Widgets.status(status, "⚠ " + "; ".join(problems))
 		return
 	Storage.save_custom_level(l)
 	_dirty = false
-	status.text = "✓ Guardado en Mis niveles."
+	Widgets.status(status, "✓ Guardado en Mis niveles.")
 
 
 ## Salir sin guardar: doble-confirmación (mismo patrón que
@@ -1040,7 +1042,7 @@ func _back_or_warn() -> void:
 		host.show_menu()
 		return
 	_dirty = false          # el segundo clic sale de verdad
-	status.text = "⚠ Tienes cambios sin guardar — pulsa «← Menú» de nuevo para salir."
+	Widgets.status(status, "⚠ Tienes cambios sin guardar — pulsa «← Menú» de nuevo para salir.")
 
 
 func _export() -> void:
@@ -1050,8 +1052,8 @@ func _export() -> void:
 	DisplayServer.clipboard_set(code)
 	var problems := l.validate()
 	if problems.is_empty():
-		status.text = "✓ Código copiado al portapapeles (%d caracteres)." % code.length()
+		Widgets.status(status, "✓ Código copiado al portapapeles (%d caracteres)." % code.length())
 	else:
 		# se puede exportar un nivel roto (work in progress), pero el
 		# código tiene que advertir que no está listo para compartir
-		status.text = "⚠ Exportado, pero el nivel tiene problemas: " + "; ".join(problems)
+		Widgets.status(status, "⚠ Exportado, pero el nivel tiene problemas: " + "; ".join(problems))

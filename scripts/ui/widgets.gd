@@ -65,6 +65,18 @@ static func hsep() -> HSeparator:
 	return HSeparator.new()
 
 
+## Status-channel setter: writes the label AND speaks the text when
+## the screen-reader option is on — the HUD/editor status lines carry
+## critical feedback (deadlocks, hints, confirm prompts) that would
+## otherwise stay silent for non-sighted users.
+static func status(lbl: Label, text: String) -> void:
+	lbl.text = text
+	if bool(Storage.get_setting("screen_reader")) \
+			and DisplayServer.has_feature(
+				DisplayServer.FEATURE_TEXT_TO_SPEECH):
+		DisplayServer.tts_speak(text, "")
+
+
 ## Lightweight toast (ProperUI-Toast equivalent): bottom-center label
 ## that fades out. Survives screen swaps when parented to the host root.
 static func toast(root: Control, text: String, dur := 1.8) -> void:

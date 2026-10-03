@@ -48,7 +48,8 @@ func _init(p_host: Control) -> void:
 			# without this Space/Enter would re-trigger the focused
 			# button instead of reaching _unhandled_input
 			b.release_focus()
-			_status.text = "Pulsa una tecla para «%s» (Esc cancela)" % a[1])
+			Widgets.status(_status,
+				"Pulsa una tecla para «%s» (Esc cancela)" % a[1]))
 		row.add_child(b)
 		_buttons[a[0]] = b
 		v.add_child(row)
@@ -91,7 +92,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if e.keycode == KEY_ESCAPE:
 		_capturing = ""
-		_status.text = "Cancelado."
+		Widgets.status(_status, "Cancelado.")
 		return
 	Storage.set_setting("key_" + _capturing, e.keycode)
 	# same key on two actions → the second one silently dead-binds
@@ -101,7 +102,7 @@ func _unhandled_input(e: InputEvent) -> void:
 				and int(Storage.get_setting("key_" + a2[0], DEFAULTS[a2[0]])) == e.keycode:
 			clash = a2[1]
 			break
-	_status.text = "Asignado: %s%s" % [OS.get_keycode_string(e.keycode),
-		"  ⚠ también asignada a «%s»" % clash if clash != "" else ""]
+	Widgets.status(_status, "Asignado: %s%s" % [OS.get_keycode_string(e.keycode),
+		"  ⚠ también asignada a «%s»" % clash if clash != "" else ""])
 	_capturing = ""
 	_refresh()

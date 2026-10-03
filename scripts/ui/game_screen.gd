@@ -344,7 +344,7 @@ func _update_status() -> void:
 		lines.append("[reproduciendo solución]")
 	if state.lost:
 		lines.append("☠ %s — deshaz (Z) o reinicia (R)" % state.lost_reason)
-	hud_status.text = "\n".join(lines)
+	Widgets.status(hud_status, "\n".join(lines))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -357,7 +357,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		replay_mode = false
 		autoplay = PackedStringArray()
 		autoplay_i = 0
-		hud_status.text = "Repetición pausada — sigue jugando desde aquí."
+		Widgets.status(hud_status, "Repetición pausada — sigue jugando desde aquí.")
 		return
 	var kc: int = e.keycode
 	# During solver autoplay only Esc exits and a move key pauses it —
@@ -368,7 +368,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _is_move_key(kc):
 			autoplay_i = autoplay.size()
 			autoplay_t = 0.0
-			hud_status.text = "Solución pausada — sigue jugando desde aquí."
+			Widgets.status(hud_status, "Solución pausada — sigue jugando desde aquí.")
 		elif kc == keys.get("restart", KEY_R):
 			_restart()  # reiniciar también detiene el autoplay
 		return
@@ -439,7 +439,7 @@ func _toggle_trail() -> void:
 		return
 	var rep := Storage.get_replay_moves(level)
 	if rep.is_empty():
-		hud_status.text = "Sin repetición guardada para este nivel."
+		Widgets.status(hud_status, "Sin repetición guardada para este nivel.")
 		return
 	var c := GameState.from_level_data(level)
 	for ch in rep:
@@ -449,7 +449,7 @@ func _toggle_trail() -> void:
 			c.tick(0.3)
 			board.trail_cells[c.player] = true
 	if board.trail_cells.is_empty():
-		hud_status.text = "La repetición guardada ya no aplica."
+		Widgets.status(hud_status, "La repetición guardada ya no aplica.")
 	else:
 		board.queue_redraw()
 
@@ -475,7 +475,7 @@ func _move(d: Vector2i) -> void:
 			var bdest := state.box_step_dest(state.boxes[bi], d)
 			if board.is_dead_cell(bdest) and not state.goals.has(bdest):
 				_sfx("deny")
-				hud_status.text = "Empuje bloqueado: esa casilla es un callejón sin salida."
+				Widgets.status(hud_status, "Empuje bloqueado: esa casilla es un callejón sin salida.")
 				return
 	if state.try_move(d):
 		board.hint_dir = Vector2i.ZERO
@@ -527,7 +527,7 @@ func _restart() -> void:
 			and not state.move_log.is_empty() and not state.solved:
 		_restart_armed = true
 		_restart_armed_t = 1.5
-		hud_status.text = "Reiniciar de nuevo para confirmar."
+		Widgets.status(hud_status, "Reiniciar de nuevo para confirmar.")
 		return
 	_restart_armed = false
 	state.restart()
@@ -553,12 +553,12 @@ var _input_gen := 0  # sube con cada acción que cambia el estado
 
 func _solve() -> void:
 	if _is_playtest():
-		hud_status.text = "Solucionador desactivado en modo prueba."
+		Widgets.status(hud_status, "Solucionador desactivado en modo prueba.")
 		return
 	if state.solved or _solving or _ap_active() or replay_mode:
 		return
 	_solving = true
-	hud_status.text = "Buscando solución…"
+	Widgets.status(hud_status, "Buscando solución…")
 	var gen := _input_gen  # si el jugador mueve/deshace/reinicia, el
 	# escalate: un "límite de estados" reintenta con más presupuesto
 	# antes de rendirse — los niveles mutantes densos lo necesitan
@@ -572,20 +572,20 @@ func _solve() -> void:
 			replay_mode = false
 			_solver_used = true
 		else:
-			hud_status.text = "El solucionador no encuentra solución (%s)." % res.get("reason", "")
+			Widgets.status(hud_status, "El solucionador no encuentra solución (%s)." % res.get("reason", ""))
 		, SokobanSolver.MAX_STATES, true)
 
 
 func _hint() -> void:
 	if _is_playtest():
-		hud_status.text = "Solucionador desactivado en modo prueba."
+		Widgets.status(hud_status, "Solucionador desactivado en modo prueba.")
 		return
 	if state.solved or _solving or _ap_active() or replay_mode:
 		return
 	_solving = true
 	hints_used += 1
 	Storage.bump_total("hints")
-	hud_status.text = "Buscando pista…"
+	Widgets.status(hud_status, "Buscando pista…")
 	var gen := _input_gen
 	SokobanSolver.solve_state_async(state, func(res: Dictionary):
 		_solving = false
@@ -594,13 +594,13 @@ func _hint() -> void:
 		if res.get("ok", false) and not res["moves"].is_empty():
 			_solver_used = true
 			if res["moves"][0].to_lower() == "s":
-				hud_status.text = "Pista: cambia de empujador (Espacio)."
+				Widgets.status(hud_status, "Pista: cambia de empujador (Espacio).")
 			else:
 				board.hint_dir = GameState.DIRS[res["moves"][0].to_lower()]
 				board.queue_redraw()
-				hud_status.text = "Pista: prueba esa dirección."
+				Widgets.status(hud_status, "Pista: prueba esa dirección.")
 		else:
-			hud_status.text = "Sin pista (%s)." % res.get("reason", "")
+			Widgets.status(hud_status, "Sin pista (%s)." % res.get("reason", ""))
 		, SokobanSolver.MAX_STATES, true)
 
 
@@ -609,7 +609,7 @@ func _replay_saved() -> void:
 		return  # una replay en vuelo o un solve pendiente se pisarían
 	var moves := Storage.get_replay_moves(level)
 	if moves.is_empty():
-		hud_status.text = "Sin repetición guardada para este nivel."
+		Widgets.status(hud_status, "Sin repetición guardada para este nivel.")
 		return
 	state.restart()
 	autoplay = moves

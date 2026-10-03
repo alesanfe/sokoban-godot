@@ -94,7 +94,7 @@ func _go() -> void:
 	elif seed_txt.is_valid_int():
 		seed = int(seed_txt)
 	else:
-		status.text = "⚠ La semilla debe ser un número entero."
+		Widgets.status(status, "⚠ La semilla debe ser un número entero.")
 		return
 	var rid := ""
 	if rule_pick.selected > 0:
@@ -108,7 +108,7 @@ func _go() -> void:
 	# una partida desde el menú.
 	_b_go.disabled = true
 	_b_back.disabled = true
-	status.text = "Generando…"
+	Widgets.status(status, "Generando…")
 	var wr: WeakRef = weakref(self)
 	WorkerThreadPool.add_task(func():
 		var lvl := LevelGenerator.generate(seed, w, h, nb, rid)
@@ -119,7 +119,7 @@ func _go() -> void:
 			scr._b_go.disabled = false
 			scr._b_back.disabled = false
 			if lvl == null:
-				scr.status.text = "No se pudo generar — prueba con más espacio o menos cajas."
+				Widgets.status(scr.status, "No se pudo generar — prueba con más espacio o menos cajas.")
 				return
 			lvl.title = "Generado · %dx%d · %s" % [
 				w, h, rid if rid != "" else "clásico"]

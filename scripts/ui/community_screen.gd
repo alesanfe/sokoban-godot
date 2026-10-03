@@ -113,11 +113,14 @@ func _init(p_host: Control) -> void:
 	_auth_row = HBoxContainer.new()
 	var auth := _auth_row
 	auth.add_theme_constant_override("separation", 6)
+	# etiquetas visibles: un placeholder no sustituye al label — al
+	# escribir, el único nombre del campo desaparece
+	auth.add_child(Widgets.label("Usuario:", 13, Color(0.6, 0.6, 0.65)))
 	var user_edit := LineEdit.new()
-	user_edit.placeholder_text = "usuario"
 	user_edit.custom_minimum_size = Vector2(130, 34)
+	auth.add_child(user_edit)
+	auth.add_child(Widgets.label("Contraseña:", 13, Color(0.6, 0.6, 0.65)))
 	var pass_edit := LineEdit.new()
-	pass_edit.placeholder_text = "contraseña"
 	pass_edit.secret = true
 	pass_edit.custom_minimum_size = Vector2(130, 34)
 	var b_login := Widgets.button("Entrar")
@@ -140,7 +143,6 @@ func _init(p_host: Control) -> void:
 							"sin conexión"))))
 	b_login.pressed.connect(func(): do_auth.call("login"))
 	b_reg.pressed.connect(func(): do_auth.call("register"))
-	auth.add_child(user_edit)
 	auth.add_child(pass_edit)
 	auth.add_child(b_login)
 	auth.add_child(b_reg)

@@ -8,6 +8,7 @@ const AP_SPEEDS := [0.5, 1.0, 2.0, 4.0]
 const REPEAT_RATES := [0.18, 0.11, 0.06]
 const REPEAT_NAMES := ["Lenta", "Normal", "Rápida"]
 const ASSIST_NAMES := ["OFF", "Aviso", "Marcas", "Bloquear"]
+const UI_SCALES := [0.85, 1.0, 1.15, 1.3]
 
 var host: Control
 
@@ -54,6 +55,20 @@ func _init(p_host: Control) -> void:
 	v.add_child(Widgets.label(
 		"Sprites: Kenney · Plano: look procedural · Retro: sprites con tinte",
 		11, Color(0.6, 0.6, 0.65)))
+	# texto ampliable (accesibilidad): escala toda la UI sin perder
+	# contenido — content_scale_factor reajusta el layout en vivo
+	var us_idx := _nearest_idx(UI_SCALES,
+		float(Storage.get_setting("ui_scale")))
+	v.add_child(_cycle("Tamaño de la interfaz",
+		str(int(UI_SCALES[us_idx] * 100)) + "%",
+		func(b: Button):
+			var n := (_nearest_idx(UI_SCALES,
+				float(Storage.get_setting("ui_scale"))) + 1) \
+				% UI_SCALES.size()
+			Storage.set_setting("ui_scale", UI_SCALES[n])
+			host.get_window().content_scale_factor = UI_SCALES[n]
+			b.text = "Tamaño de la interfaz: " \
+				+ str(int(UI_SCALES[n] * 100)) + "%"))
 
 	# ------------------------------------------------------------ Audio
 	v.add_child(_section("Audio"))
