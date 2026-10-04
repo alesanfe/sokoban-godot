@@ -202,6 +202,9 @@ func _slider(label_text: String, val: int, on_change: Callable) -> Control:
 	sl.step = 5
 	sl.value = val
 	sl.custom_minimum_size.x = 200
+	# pista a ancho disponible — en la captura quedaba un tramo
+	# minúsculo junto a la etiqueta (ley de Fitts: pista corta = peor)
+	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sl.value_changed.connect(func(v2: float): on_change.call(int(v2)))
 	row.add_child(sl)
 	return row

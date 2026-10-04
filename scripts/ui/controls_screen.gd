@@ -42,7 +42,7 @@ func _init(p_host: Control) -> void:
 		lbl.custom_minimum_size.x = 200
 		row.add_child(lbl)
 		var b := Widgets.button(_key_name(a[0]))
-		b.custom_minimum_size = Vector2(140, 30)
+		b.custom_minimum_size = Vector2(140, 44)
 		b.pressed.connect(func():
 			_capturing = a[0]
 			# without this Space/Enter would re-trigger the focused

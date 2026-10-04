@@ -83,6 +83,30 @@ static func warn() -> Color:
 	return VARIANTS.get(current_mode(), VARIANTS.dark)["warn"]
 
 
+static func text() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["text"]
+
+
+static func panel() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["panel"]
+
+
+static func edge() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["edge"]
+
+
+static func accent_hi() -> Color:
+	return VARIANTS.get(current_mode(), VARIANTS.dark)["accent_hi"]
+
+
+## Texto sobre fondo acento: blanco si el acento es oscuro (tema Claro),
+## casi-negro si es claro (Oscuro/Contraste/Daltonismo) — siempre AA.
+static func on_accent() -> Color:
+	var a := accent()
+	var lum := 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b
+	return Color(0.07, 0.07, 0.08) if lum > 0.45 else Color(0.98, 0.98, 1.0)
+
+
 static func make(mode: String) -> Theme:
 	var v: Dictionary = VARIANTS.get(mode, VARIANTS.dark)
 	var t := Theme.new()

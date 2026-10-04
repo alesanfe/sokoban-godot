@@ -84,6 +84,7 @@ var _redo_stack: Array = []
 var _solution := PackedStringArray()
 var b_play_sol: Button
 var _dirty := false          # ediciones sin guardar (aviso al salir)
+var _auto_zoom := true       # tablero encajado al área; +/− lo apaga
 var _loading := false        # true durante _load_level: sus asignaciones a los campos disparan text_changed
 
 ## Borrador persistente: los cambios sin guardar sobreviven a salir
@@ -107,6 +108,8 @@ var hidden_check: CheckBox
 class EditorGrid extends Control:
 	var editor: EditorScreen
 	var tile := 40.0
+	var _et := 40.0            # tile efectivo tras el autoencaje
+	var _off := Vector2.ZERO   # offset de centrado dentro del control
 	var hover := Vector2i(-1, -1)
 	var painting := false
 	var erasing := false
@@ -114,8 +117,24 @@ class EditorGrid extends Control:
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
 
+	## Autoencaje: con _auto_zoom el tablero escala y se centra para
+	## llenar el área (antes quedaba fijo en la esquina con medio panel
+	## vacío). El zoom manual (+/−) apaga el encaje hasta cargar otro
+	## nivel.
+	func _fit() -> Vector2:
+		if editor._auto_zoom and size.x > 8 and size.y > 8:
+			_et = clampf(minf(size.x / editor.grid_w,
+				size.y / editor.grid_h), 14.0, 72.0)
+		else:
+			_et = tile
+		_off = (size - Vector2(editor.grid_w, editor.grid_h) * _et) / 2.0
+		_off.x = maxf(_off.x, 0.0)
+		_off.y = maxf(_off.y, 0.0)
+		return _off
+
 	func cell_at(p: Vector2) -> Vector2i:
-		return Vector2i(int(p.x / tile), int(p.y / tile))
+		_fit()
+		return Vector2i(int((p.x - _off.x) / _et), int((p.y - _off.y) / _et))
 
 	func _gui_input(e: InputEvent) -> void:
 		if e is InputEventMouseButton:
@@ -158,6 +177,9 @@ class EditorGrid extends Control:
 
 	func _draw() -> void:
 		var font := ThemeDB.fallback_font
+		# todo el dibujo sigue en unidades `tile`; el transform aplica
+		# centrado + escala del encaje de golpe
+		draw_set_transform(_fit(), 0.0, Vector2.ONE * (_et / tile))
 		# colorblind theme → Okabe–Ito palettes (same as BoardView)
 		var cb := UiTheme.current_mode() == "cb"
 		var bpal: Array = BoardView.BOX_COLORS_CB if cb else BoardView.BOX_COLORS
@@ -333,10 +355,22 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	hbox.add_child(left)
 	grid = EditorGrid.new()
 	grid.editor = self
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# el encaje depende del área real: al redimensionar, recolocar
+	grid.resized.connect(grid.queue_redraw)
+	# con zoom manual el dibujo puede exceder el área — recortar
+	# en vez de pintar encima de la paleta
+	grid.clip_contents = true
 	left.add_child(grid)
+	# gestos no descubribles (borrar con clic der., cuentagotas con
+	# Alt/clic medio): una línea bajo la parrilla los hace explícitos
+	var gestures := Widgets.label(
+		"Clic pinta · clic der. borra · Alt / clic medio: cuentagotas · Ctrl+Z deshacer",
+		12, UiTheme.dim())
+	gestures.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left.add_child(gestures)
 
 	# palette — ButtonGroup makes tool selection exclusive across rows
 	var tool_group := ButtonGroup.new()
@@ -408,7 +442,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	for s in ["point", "line", "rect", "fill"]:
 		var b := Button.new()
 		b.text = {"point": "·", "line": "╱", "rect": "▭", "fill": "▩"}[s]
-		b.custom_minimum_size = Vector2(32, 30)
+		b.custom_minimum_size = Vector2(36, 44)
 		b.toggle_mode = true
 		b.button_pressed = s == shape
 		b.tooltip_text = {"point": "Punto", "line": "Línea (arrastra)",
@@ -432,7 +466,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 			["−", "Alejar", _zoom_out], ["+", "Acercar", _zoom_in]]:
 		var b := Button.new()
 		b.text = tf[0]
-		b.custom_minimum_size = Vector2(32, 30)
+		b.custom_minimum_size = Vector2(36, 44)
 		b.tooltip_text = tf[1]
 		b.pressed.connect(tf[2])
 		row2.add_child(b)
@@ -652,6 +686,7 @@ func _load_level(l: LevelData) -> void:
 		rules_panel.add_rule(r.get("id", ""), r.get("params", {}))
 	_invalidate_solution()
 	_loading = false
+	_auto_zoom = true     # cada nivel vuelve a encajar solo
 
 
 func _cell_ok(p: Vector2i) -> bool:
@@ -691,7 +726,7 @@ func _apply_board_state(e: Dictionary) -> void:
 	grid_h = int(e["h"])
 	w_spin.value = grid_w
 	h_spin.value = grid_h
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.queue_redraw()
 	_refresh_dead()
 	_invalidate_solution()
@@ -878,14 +913,16 @@ func _flip_v() -> void:
 
 
 func _zoom_in() -> void:
-	grid.tile = minf(grid.tile + 8.0, 64.0)
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	_auto_zoom = false    # el zoom manual tiene prioridad al encaje
+	grid.tile = minf(grid._et + 8.0, 96.0)
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.queue_redraw()
 
 
 func _zoom_out() -> void:
-	grid.tile = maxf(grid.tile - 8.0, 16.0)
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	_auto_zoom = false
+	grid.tile = maxf(grid._et - 8.0, 8.0)
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.queue_redraw()
 
 
@@ -904,7 +941,7 @@ func _rot90() -> void:
 	grid_h = tmp
 	w_spin.value = grid_w
 	h_spin.value = grid_h
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.queue_redraw()
 	_refresh_dead()
 
@@ -944,7 +981,7 @@ func _paste_board() -> void:
 				cells[Vector2i(x, y)] = ch
 	w_spin.value = mini(grid_w, int(w_spin.max_value))
 	h_spin.value = mini(grid_h, int(h_spin.max_value))
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.queue_redraw()
 	_refresh_dead()
 	Widgets.status(status, ("✓ Tablero pegado (%dx%d)." % [grid_w, grid_h])
@@ -977,7 +1014,7 @@ func _resize_grid() -> void:
 	for k in over.keys():
 		if not _cell_ok(k):
 			over.erase(k)
-	grid.custom_minimum_size = Vector2(grid_w, grid_h) * grid.tile
+	grid.custom_minimum_size = Vector2(grid_w, grid_h) * 14.0
 	grid.queue_redraw()
 	_refresh_dead()
 

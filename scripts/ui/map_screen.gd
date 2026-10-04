@@ -15,6 +15,7 @@ var node_at: Dictionary = {}   # Vector2i -> index into nodes
 var avatar := Vector2i(4, 5)
 var _custom_overflow := 0      # niveles propios que no caben en la isla
 var _keys := {}                # user-rebound keys (same as the game)
+var _sr := Widgets.label("")   # anuncio a11y del nodo bajo el avatar
 
 
 func _init(p_host: Control) -> void:
@@ -39,6 +40,10 @@ func _init(p_host: Control) -> void:
 	back.custom_minimum_size.x = 120
 	back.pressed.connect(host.show_menu)
 	add_child(back)
+	# canal oculto para lector de pantalla: el mapa se dibuja con
+	# draw_string (mudo para TTS); este label lleva el nodo actual
+	_sr.position = Vector2(-9999, -9999)
+	add_child(_sr)
 
 
 func _carve(r: Rect2i) -> void:
@@ -104,6 +109,15 @@ func _step(d: Vector2i) -> void:
 	if land.has(n):
 		avatar = n
 		queue_redraw()
+		_announce()
+
+
+func _announce() -> void:
+	if node_at.has(avatar):
+		var level: LevelData = nodes[node_at[avatar]]["level"]
+		Widgets.status(_sr, level.title)
+	else:
+		Widgets.status(_sr, "")
 
 
 func _enter_node() -> void:
@@ -134,17 +148,18 @@ func _gui_input(e: InputEvent) -> void:
 		var cell := Vector2i((e.position + _cam()) / T)
 		if node_at.has(cell):
 			avatar = cell
+			_announce()
 			_enter_node()
 
 
 func _draw() -> void:
 	var cam := _cam()
 	var font := ThemeDB.fallback_font
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.08, 0.14))
+	draw_rect(Rect2(Vector2.ZERO, size), UiTheme.bg_color())
 	for c in land.keys():
 		var r := Rect2(Vector2(c) * T - cam, Vector2(T, T))
-		draw_rect(r, Color(0.13, 0.16, 0.13))
-		draw_rect(r, Color(1, 1, 1, 0.04), false, 1.0)
+		draw_rect(r, UiTheme.panel())
+		draw_rect(r, Color(UiTheme.text(), 0.06), false, 1.0)
 	_text(font, "CAMPAÑA MUTANTE", Vector2(4.0, 4.2) * T - cam, 18, Color(UiTheme.accent(), 0.85))
 	_text(font, "CLÁSICOS", Vector2(45.0, 3.2) * T - cam, 18, Color(UiTheme.info(), 0.85))
 	_text(font, "MIS NIVELES" + ("  (+%d más)" % _custom_overflow
@@ -161,18 +176,31 @@ func _draw() -> void:
 			col = UiTheme.accent() if level.par > 0 and best <= level.par else UiTheme.ok()
 		draw_circle(ctr, T * 0.3, col)
 		draw_circle(ctr, T * 0.3, col.darkened(0.5), false, 1.5)
+		# el estado del nodo también es glifo, no solo color (✓ resuelto,
+		# ★ bajo par) — el tema Daltonismo ya distingue, pero el resto
+		# de temas solo cambiaban el tinte
+		if best > 0:
+			var glyph := "★" if level.par > 0 and best <= level.par else "✓"
+			var gsz := 16
+			var gdim := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT,
+				-1, gsz)
+			draw_string(font, ctr - gdim / 2 + Vector2(0, gdim.y / 2), glyph,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, gsz, UiTheme.bg_color())
 		if c == avatar:
-			draw_arc(ctr, T * 0.44, 0, TAU, 24, Color.WHITE, 2.5)
+			draw_arc(ctr, T * 0.44, 0, TAU, 24, UiTheme.text(), 2.5)
 	var ac := Vector2(avatar) * T - cam + Vector2(T / 2, T / 2)
 	draw_circle(ac, T * 0.24, UiTheme.accent())
-	draw_circle(ac, T * 0.24, Color.BLACK, false, 2.0)
+	draw_circle(ac, T * 0.24, UiTheme.bg_color(), false, 2.0)
 	# bottom bar
-	draw_rect(Rect2(0, size.y - 38, size.x, 38), Color(0.05, 0.05, 0.08, 0.88))
-	var text := "Mapa del mundo — Flechas/WASD mover · Enter jugar · Esc menú"
+	draw_rect(Rect2(0, size.y - 38, size.x, 38), Color(UiTheme.panel(), 0.92))
+	var text := "Mapa — Flechas/WASD · Enter jugar · Esc menú" + \
+		"   ·   ✓ resuelto   ★ bajo par"
 	if node_at.has(avatar):
 		var level: LevelData = nodes[node_at[avatar]]["level"]
 		text = "%s%s — Enter para jugar" % [level.title, Widgets.stars(level.difficulty)]
-	draw_string(font, Vector2(16, size.y - 11), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+	elif _custom_overflow > 0:
+		text = "+%d niveles más: búscalos en el selector de nivel" % _custom_overflow
+	draw_string(font, Vector2(16, size.y - 11), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UiTheme.text())
 
 
 func _text(font: Font, s: String, pos: Vector2, size_px: int, col: Color) -> void:

@@ -3,10 +3,12 @@ extends Node2D
 ## Draws a GameState as colored tiles + glyphs. No assets needed.
 ## Animates entity movement via the state's `moved` signal.
 
-const COL_FLOOR := Color(0.13, 0.14, 0.17)
-const COL_VOID := Color(0.05, 0.05, 0.07)
-const COL_WALL := Color(0.36, 0.38, 0.45)
-const COL_WALL_TOP := Color(0.48, 0.5, 0.58)
+# var, no const: _apply_theme_palette los reasigna en Claro/Contraste
+# (el tablero se quedaba oscuro aunque el resto de la UI cambiara)
+var COL_FLOOR := Color(0.13, 0.14, 0.17)
+var COL_VOID := Color(0.05, 0.05, 0.07)
+var COL_WALL := Color(0.36, 0.38, 0.45)
+var COL_WALL_TOP := Color(0.48, 0.5, 0.58)
 const COL_PEEK_SOLID := Color(0.55, 0.4, 0.6)
 const COL_PEEK_GHOST := Color(0.55, 0.4, 0.6, 0.25)
 const COL_GOAL := Color(0.25, 0.7, 0.35)
@@ -16,7 +18,7 @@ const COL_MIMIC := Color(0.7, 0.35, 0.85)
 const COL_PLAYER := Color(0.95, 0.8, 0.2)
 const COL_PLAYER2 := Color(0.95, 0.5, 0.15)
 const COL_GHOST := Color(0.4, 0.8, 0.9, 0.35)
-const COL_GRID := Color(1, 1, 1, 0.05)
+var COL_GRID := Color(1, 1, 1, 0.05)
 const COL_SWITCH_ON := Color(0.3, 0.85, 0.5)
 const COL_SWITCH_OFF := Color(0.85, 0.35, 0.35)
 const COL_HINT := Color(0.3, 0.9, 0.9, 0.8)
@@ -102,8 +104,37 @@ var _shake := 0.0
 
 
 func _init(p_state: GameState = null) -> void:
+	_apply_theme_palette()   # también sin estado (thumbnails, previews)
 	if p_state:
 		set_state(p_state)
+
+
+## Suelo/paredes según el tema de UI. En Claro el tablero oscuro era
+## el único elemento negro de la pantalla (brillo brutal al saltar
+## del menú); en Contraste se pide blanco/negro puro.
+func _apply_theme_palette() -> void:
+	var mode := UiTheme.current_mode()
+	_cb = mode == "cb"
+	match mode:
+		"light":
+			COL_FLOOR = Color(0.88, 0.86, 0.8)
+			COL_VOID = Color(0.78, 0.76, 0.7)
+			COL_WALL = Color(0.52, 0.49, 0.44)
+			COL_WALL_TOP = Color(0.62, 0.59, 0.53)
+			COL_GRID = Color(0, 0, 0, 0.07)
+		"contrast":
+			COL_FLOOR = Color(0, 0, 0)
+			COL_VOID = Color(0, 0, 0)
+			COL_WALL = Color(0.8, 0.8, 0.8)
+			COL_WALL_TOP = Color(0.95, 0.95, 0.95)
+			COL_GRID = Color(1, 1, 1, 0.12)
+		_:
+			COL_FLOOR = Color(0.13, 0.14, 0.17)
+			COL_VOID = Color(0.05, 0.05, 0.07)
+			COL_WALL = Color(0.36, 0.38, 0.45)
+			COL_WALL_TOP = Color(0.48, 0.5, 0.58)
+			COL_GRID = Color(1, 1, 1, 0.05)
+	queue_redraw()
 
 
 func set_state(s: GameState) -> void:
@@ -122,7 +153,7 @@ func set_state(s: GameState) -> void:
 		state.fx_teleport.connect(_on_fx_teleport)
 		state.changed.connect(queue_redraw)
 	reduce_motion = bool(Storage.get_setting("reduce_motion"))
-	_cb = UiTheme.current_mode() == "cb"
+	_apply_theme_palette()
 	_anim_t = 1.0
 	_squash_i = -1
 	_squash_t = 1.0

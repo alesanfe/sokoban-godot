@@ -29,16 +29,18 @@ static func button(text: String) -> Button:
 static func primary(text: String) -> Button:
 	var b := button(text)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.85, 0.62, 0.08)
+	sb.bg_color = UiTheme.accent()
 	sb.set_corner_radius_all(6)
 	sb.content_margin_left = 16
 	sb.content_margin_right = 16
 	b.add_theme_stylebox_override("normal", sb)
 	var sb_h := sb.duplicate()
-	sb_h.bg_color = Color(0.95, 0.72, 0.18)
+	sb_h.bg_color = UiTheme.accent_hi()
 	b.add_theme_stylebox_override("hover", sb_h)
-	b.add_theme_color_override("font_color", Color(0.1, 0.1, 0.1))
-	b.add_theme_color_override("font_hover_color", Color(0.1, 0.1, 0.1))
+	var fg := UiTheme.on_accent()
+	b.add_theme_color_override("font_color", fg)
+	b.add_theme_color_override("font_hover_color", fg)
+	b.add_theme_color_override("font_pressed_color", fg)
 	return b
 
 
@@ -76,6 +78,9 @@ static func marked(text: String, size: int, q: String,
 	rt.fit_content = true
 	rt.scroll_active = false
 	rt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# sin expand en un contenedor colapsa a ~0px de ancho y el texto
+	# se envuelve carácter a carácter (visto en la captura de comunidad)
+	rt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rt.add_theme_font_size_override("normal_font_size", size)
 	rt.add_theme_font_size_override("bold_font_size", size)
 	if col.a == 0.0:

@@ -6,10 +6,19 @@ extends Control
 class LevelThumb extends Control:
 	var board: PackedStringArray
 	var over := {}  # overlays de ocupante (LevelData.over), opcional
+	var cb := false  # paleta Okabe–Ito cuando el tema es Daltonismo
 
 	func _init(p_board: PackedStringArray, p_over: Dictionary = {}) -> void:
 		board = p_board
 		over = p_over
+		cb = UiTheme.current_mode() == "cb"
+
+	# paletas de cajas/metas respetando el tema Daltonismo
+	func bx_col() -> Array:
+		return BoardView.BOX_COLORS_CB if cb else BoardView.BOX_COLORS
+
+	func gl_col() -> Array:
+		return BoardView.GOAL_COLORS_CB if cb else BoardView.GOAL_COLORS
 		custom_minimum_size = Vector2(76, 42)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -21,7 +30,9 @@ class LevelThumb extends Control:
 		var t := minf(size.x / w, size.y / h)
 		var ox := (size.x - w * t) / 2.0
 		var oy := (size.y - h * t) / 2.0
-		draw_rect(Rect2(Vector2.ZERO, size), Color(0.06, 0.07, 0.09))
+		# fondo del thumbnail con el panel del tema (en Claro quedaba
+		# un parche negro dentro de una lista clara)
+		draw_rect(Rect2(Vector2.ZERO, size), UiTheme.bg_color())
 		for y in h:
 			for x in w:
 				var ch: String = board[y][x] if x < board[y].length() else " "
@@ -46,11 +57,11 @@ class LevelThumb extends Control:
 						draw_rect(r.grow(-0.5), Color(0.7, 0.35, 0.85))
 					"b", "c", "d":
 						draw_rect(r.grow(-0.5),
-							BoardView.BOX_COLORS["bcd".find(ch) + 1])
+							bx_col()["bcd".find(ch) + 1])
 					"a", "e", "i", "j", "l", "m":
 						# compuestos: caja de color (sobre meta)
 						draw_rect(r.grow(-0.5),
-							BoardView.BOX_COLORS["aeijlm".find(ch) % 3 + 1])
+							bx_col()["aeijlm".find(ch) % 3 + 1])
 					"q":
 						draw_circle(r.get_center(), maxf(t * 0.35, 1.0),
 							Color(0.72, 0.5, 0.24))
@@ -60,9 +71,9 @@ class LevelThumb extends Control:
 						draw_circle(r.get_center(), maxf(t * 0.3, 1.0), UiTheme.ok())
 					"B", "C", "D":
 						draw_circle(r.get_center(), maxf(t * 0.28, 1.0),
-							BoardView.GOAL_COLORS["BCD".find(ch) + 1])
+							gl_col()["BCD".find(ch) + 1])
 					"E", "G", "H":
-						draw_rect(r, BoardView.GOAL_COLORS[
+						draw_rect(r, gl_col()[
 							"EGH".find(ch) + 1], false, 2.0)
 					"@", "+":
 						draw_circle(r.get_center(), maxf(t * 0.35, 1.0), UiTheme.accent())
@@ -112,7 +123,7 @@ class LevelThumb extends Control:
 			var orr := Rect2(ox + op.x * t, oy + op.y * t, t, t)
 			var oc := int(os.get("c", 0))
 			draw_rect(orr.grow(-0.5),
-				BoardView.BOX_COLORS[oc] if oc > 0 else Color(0.72, 0.5, 0.24))
+				bx_col()[oc] if oc > 0 else Color(0.72, 0.5, 0.24))
 
 
 var _list: VBoxContainer
@@ -311,6 +322,7 @@ func _level_button(host: Control, level: LevelData, deletable: bool = false) -> 
 			if not armed:
 				armed = true
 				b_del.text = "¿?"
+				Widgets.toast(self, "⚠ Pulsa de nuevo para borrar")
 				get_tree().create_timer(2.0).timeout.connect(func():
 					armed = false
 					if is_instance_valid(b_del):

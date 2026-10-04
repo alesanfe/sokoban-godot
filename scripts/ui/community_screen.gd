@@ -137,9 +137,9 @@ func _init(p_host: Control) -> void:
 			user_edit.text.strip_edges(), pass_edit.text, func(r):
 				_refresh_auth()
 				if is_instance_valid(_auth_label):
-					_auth_label.text = ("conectado como " +
+					_auth_label.text = ("✓ conectado como " +
 						CommunityRemote.username() if r.get("ok", false)
-						else str(r.get("body", {}).get("error",
+						else "✗ " + str(r.get("body", {}).get("error",
 							"sin conexión"))))
 	b_login.pressed.connect(func(): do_auth.call("login"))
 	b_reg.pressed.connect(func(): do_auth.call("register"))
@@ -196,8 +196,8 @@ func _sync_remote() -> void:
 		_sync_label.text = "sincronizando…"
 	CommunityService.sync_remote(func(r):
 		if is_instance_valid(_sync_label):
-			_sync_label.text = ("conectado" if r.get("ok", false)
-				else "sin conexión al servidor")
+			_sync_label.text = ("✓ conectado" if r.get("ok", false)
+				else "⚠ sin conexión al servidor")
 		_refresh_auth()   # un 401 en otra llamada pudo cerrar la sesión
 		if r.get("ok", false) and is_inside_tree():
 			_populate())
@@ -252,13 +252,18 @@ func _row(e: Dictionary) -> Control:
 
 	var holder := Control.new()
 	var mini := BoardView.new(GameState.from_level_data(l))
-	mini.tile = 10.0
+	mini.tile = 12.0
 	holder.custom_minimum_size = mini.board_pixel_size()
+	# centrado vertical — la fila queda más alta que el thumbnail
+	holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	holder.add_child(mini)
 	h.add_child(holder)
 
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# el texto flota a media altura si la miniatura es más alta —
+	# centrar el bloque
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# resaltado de coincidencias (rúbrica 5.4): la query puede casar
 	# con título O autor — se ilumina donde casó
 	var q := _search.text.strip_edges()
@@ -270,18 +275,21 @@ func _row(e: Dictionary) -> Control:
 	info.add_child(Widgets.marked("por %s · %s" % [e["author"], d],
 		12, q, UiTheme.dim()))
 	info.add_child(Widgets.label("♥ %d   ▶ %d   ✓ %d" % [
-		e["likes"], e["plays"], e["clears"]], 13, Color(0.9, 0.6, 0.6)))
+		e["likes"], e["plays"], e["clears"]], 13, UiTheme.dim()))
 	if e["own"]:
-		info.add_child(Widgets.label("(tu publicación)", 11, Color(0.95, 0.8, 0.3)))
+		info.add_child(Widgets.label("(tu publicación)", 11, UiTheme.accent()))
 	h.add_child(info)
 
-	# botones compactos: el mínimo 260×44 de Widgets.button desbordaría la fila
+	# botones compactos: el mínimo 260×44 de Widgets.button desbordaría
+	# la fila — y sin SHRINK_CENTER se estiran a toda su altura
 	var b_play := Widgets.primary("Jugar")
 	b_play.custom_minimum_size = Vector2(96, 44)
+	b_play.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b_play.pressed.connect(func(): host.show_game(l, {"community": e["id"]}))
 	h.add_child(b_play)
 	var b_like := Widgets.button("♥" if e["liked"] else "♡")
 	b_like.custom_minimum_size = Vector2(48, 44)
+	b_like.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# único icono de la fila sin tooltip — la rúbrica pide que el
 	# significado de iconos sin etiqueta sea recuperable
 	b_like.tooltip_text = "Quitar me gusta" if e["liked"] else "Me gusta"
@@ -291,29 +299,37 @@ func _row(e: Dictionary) -> Control:
 	h.add_child(b_like)
 	var b_dl := Widgets.button("Guardar")
 	b_dl.custom_minimum_size = Vector2(110, 44)
+	b_dl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b_dl.tooltip_text = "Copia el nivel a «Mis niveles»"
 	b_dl.pressed.connect(func():
 		Storage.save_custom_level(l)
-		b_dl.text = "✓")
+		b_dl.text = "✓"
+		# el glifo solo lo ve quien mira; el toast también dicta
+		Widgets.toast(self, "✓ Guardado en Mis niveles"))
 	h.add_child(b_dl)
 	# compartir offline: el código SKM1 viaja pegado (chat/mensaje) —
 	# sin backend, es el canal real de distribución de la comunidad
 	var b_share := Widgets.button("⤴")
 	b_share.custom_minimum_size = Vector2(48, 44)
+	b_share.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b_share.tooltip_text = "Copiar el código del nivel (SKM1…)"
 	b_share.pressed.connect(func():
 		DisplayServer.clipboard_set(l.to_code())
-		b_share.text = "✓")
+		b_share.text = "✓"
+		Widgets.toast(self, "✓ Código copiado al portapapeles"))
 	h.add_child(b_share)
 	if e["own"]:
 		var b_del := Widgets.button("✕")
 		b_del.custom_minimum_size = Vector2(48, 44)
+		b_del.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		b_del.tooltip_text = "Retirar la publicación (clic dos veces)"
 		var armed := false
 		b_del.pressed.connect(func():
 			if not armed:
 				armed = true
 				b_del.text = "¿?"
+				# la ventana de armado era invisible para lectores
+				Widgets.toast(self, "⚠ Pulsa de nuevo para borrar")
 				get_tree().create_timer(2.0).timeout.connect(func():
 					armed = false
 					if is_instance_valid(b_del):
