@@ -53,6 +53,13 @@ func _initialize() -> void:
 		[func(): _hint_shot(main), "hint"],
 		[func(): _trail_shot(main), "trail"],
 		[func(): _win_shot(main), "win"],
+		# estados, no solo vistas: vacío/error/foco/toast/denso — el
+		# camino feliz de las capturas anteriores nunca los mostraba
+		[func(): _state_empty(main), "state_empty"],
+		[func(): _state_import_err(main), "state_import_err"],
+		[func(): _state_focus(main), "state_focus"],
+		[func(): _state_toast(main), "state_toast"],
+		[func(): _state_editor_big(main), "state_editor_big"],
 	]
 	# barrido de ventana: las pantallas clave a varios tamaños para
 	# auditar el responsive — salen a _sizes/, no al README
@@ -277,6 +284,66 @@ func _win_shot(main: Control) -> void:
 		"#@ $ .#",
 		"#######",
 	]), []), {"autoplay": PackedStringArray(["r", "r", "r"])})
+
+
+## Estado vacío de la búsqueda de comunidad: filtro sin resultados
+## — el shot normal solo mostraba filas pobladas.
+func _state_empty(main: Control) -> void:
+	_wait = 15
+	main.show_community()
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr != null:
+			scr._search.text = "xyzqq sin resultados"
+			scr._populate()).call_deferred()
+
+
+## Error de importación: código malformado → el mensaje de error
+## debe verse (y leerse) en el label de estado.
+func _state_import_err(main: Control) -> void:
+	main.show_import()
+	(func():
+		await root.get_tree().process_frame
+		for n in root.find_children("*", "TextEdit", true, false):
+			(n as TextEdit).text = "SKM1:basura-no-valida"
+		for n in root.find_children("*", "Button", true, false):
+			if (n as Button).text == "Comprobar":
+				(n as Button).pressed.emit()).call_deferred()
+
+
+## Anillo de foco: el foco de teclado es invisible en un shot normal
+## — forzado sobre un botón intermedio queda en la imagen.
+func _state_focus(main: Control) -> void:
+	main.show_menu()
+	(func():
+		await root.get_tree().process_frame
+		var found := root.find_children("*", "Button", true, false)
+		for n in found:
+			if (n as Button).text == "Editor de niveles":
+				(n as Button).grab_focus()
+				return).call_deferred()
+
+
+## Toast: flota ~2s y es efímero por diseño — hay que capturarlo en
+## el acto para auditar su contraste y posición.
+func _state_toast(main: Control) -> void:
+	main.show_community()
+	(func():
+		await root.get_tree().process_frame
+		Widgets.toast(main, "✓ Guardado en Mis niveles")).call_deferred()
+
+
+## Editor con un nivel grande (30×18): la paleta ocupa media
+## pantalla — a ver qué pasa cuando el tablero también es ancho.
+func _state_editor_big(main: Control) -> void:
+	root.size.y = 860
+	var rows := PackedStringArray()
+	for _i in 9:
+		rows.append("#" + " ".repeat(28) + "#")
+		rows.append("####" + " ".repeat(25) + "#")
+	var lvl := LevelData.create("El hangar", rows, [])
+	main.show_editor(lvl)
 
 
 static func _wipe(dir: String) -> void:
