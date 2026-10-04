@@ -184,21 +184,27 @@ class EditorGrid extends Control:
 		var cb := UiTheme.current_mode() == "cb"
 		var bpal: Array = BoardView.BOX_COLORS_CB if cb else BoardView.BOX_COLORS
 		var gpal: Array = BoardView.GOAL_COLORS_CB if cb else BoardView.GOAL_COLORS
+		# mismas celdas que el tablero de juego: antes siempre dark
+		# — en tema claro el editor era un bloque negro dentro de
+		# una UI clara (captura theme_editor_light)
+		var pal := BoardView.theme_palette()
 		for y in editor.grid_h:
 			for x in editor.grid_w:
 				var pos := Vector2i(x, y)
 				var r := Rect2(x * tile, y * tile, tile, tile)
-				draw_rect(r, Color(0.13, 0.14, 0.17))
-				draw_rect(r, Color(1, 1, 1, 0.08), false, 1.0)
+				draw_rect(r, pal[0])
+				draw_rect(r, pal[4], false, 1.0)
 				var ch: String = editor.cells.get(pos, "")
 				match ch:
 					"#":
-						draw_rect(r, Color(0.36, 0.38, 0.45))
+						draw_rect(r, pal[2])
+						draw_rect(Rect2(r.position,
+							Vector2(tile, tile * 0.18)), pal[3])
 					"?":
 						draw_rect(r, Color(0.55, 0.4, 0.6, 0.5))
 						_text(font, "?", r, Color.WHITE)
 					"!":
-						draw_rect(r, Color(0.13, 0.14, 0.17))
+						draw_rect(r, pal[0])
 						draw_circle(r.get_center(), tile * 0.28, Color(0.85, 0.35, 0.35))
 						_text(font, "!", r, Color.WHITE)
 					"$", "*":

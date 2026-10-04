@@ -3,7 +3,12 @@ extends RefCounted
 ## Small UI construction helpers so screens stay readable.
 
 
-static func label(text: String, size: int = 18, color: Color = Color.WHITE) -> Label:
+static func label(text: String, size: int = 18, color: Color = Color.TRANSPARENT) -> Label:
+	# el default era Color.WHITE literal: en el tema Claro toda
+	# etiqueta sin color explícito quedaba blanca sobre beige —
+	# TRANSPARENT es un sentinel que resuelve al text() del tema
+	if color.a == 0.0:
+		color = UiTheme.VARIANTS[UiTheme.current_mode()]["text"]
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)

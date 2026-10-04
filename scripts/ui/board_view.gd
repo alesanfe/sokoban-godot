@@ -112,28 +112,29 @@ func _init(p_state: GameState = null) -> void:
 ## Suelo/paredes según el tema de UI. En Claro el tablero oscuro era
 ## el único elemento negro de la pantalla (brillo brutal al saltar
 ## del menú); en Contraste se pide blanco/negro puro.
-func _apply_theme_palette() -> void:
-	var mode := UiTheme.current_mode()
-	_cb = mode == "cb"
-	match mode:
+## [floor, void, wall, wall_top, grid] del modo actual — también
+## para consumidores sin instancia (EditorGrid, thumbnails).
+static func theme_palette() -> Array:
+	match UiTheme.current_mode():
 		"light":
-			COL_FLOOR = Color(0.88, 0.86, 0.8)
-			COL_VOID = Color(0.78, 0.76, 0.7)
-			COL_WALL = Color(0.52, 0.49, 0.44)
-			COL_WALL_TOP = Color(0.62, 0.59, 0.53)
-			COL_GRID = Color(0, 0, 0, 0.07)
+			return [Color(0.88, 0.86, 0.8), Color(0.78, 0.76, 0.7),
+				Color(0.52, 0.49, 0.44), Color(0.62, 0.59, 0.53),
+				Color(0, 0, 0, 0.07)]
 		"contrast":
-			COL_FLOOR = Color(0, 0, 0)
-			COL_VOID = Color(0, 0, 0)
-			COL_WALL = Color(0.8, 0.8, 0.8)
-			COL_WALL_TOP = Color(0.95, 0.95, 0.95)
-			COL_GRID = Color(1, 1, 1, 0.12)
+			return [Color(0, 0, 0), Color(0, 0, 0),
+				Color(0.8, 0.8, 0.8), Color(0.95, 0.95, 0.95),
+				Color(1, 1, 1, 0.12)]
 		_:
-			COL_FLOOR = Color(0.13, 0.14, 0.17)
-			COL_VOID = Color(0.05, 0.05, 0.07)
-			COL_WALL = Color(0.36, 0.38, 0.45)
-			COL_WALL_TOP = Color(0.48, 0.5, 0.58)
-			COL_GRID = Color(1, 1, 1, 0.05)
+			return [Color(0.13, 0.14, 0.17), Color(0.05, 0.05, 0.07),
+				Color(0.36, 0.38, 0.45), Color(0.48, 0.5, 0.58),
+				Color(1, 1, 1, 0.05)]
+
+
+func _apply_theme_palette() -> void:
+	_cb = UiTheme.current_mode() == "cb"
+	var p := theme_palette()
+	COL_FLOOR = p[0]; COL_VOID = p[1]
+	COL_WALL = p[2]; COL_WALL_TOP = p[3]; COL_GRID = p[4]
 	queue_redraw()
 
 
