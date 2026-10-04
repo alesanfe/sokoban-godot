@@ -60,6 +60,12 @@ func _initialize() -> void:
 		[func(): _state_focus(main), "state_focus"],
 		[func(): _state_toast(main), "state_toast"],
 		[func(): _state_editor_big(main), "state_editor_big"],
+		# estados de servicio: solver en marcha, repetición, veredicto
+		# de «Verificar» y la puerta de publicación sin playtest
+		[func(): _state_solve(main), "state_solve"],
+		[func(): _state_replay(main), "state_replay"],
+		[func(): _state_verify(main), "state_verify"],
+		[func(): _state_publish(main), "state_publish_gate"],
 		# orden de tabulación: ¿el anillo aterriza en un control
 		# visible y sensato tras N Tab, o se pierde en algo oculto?
 		[func(): _state_tab(func(): main.show_level_select(), 5),
@@ -354,6 +360,83 @@ func _state_editor_big(main: Control) -> void:
 		rows.append("####" + " ".repeat(25) + "#")
 	var lvl := LevelData.create("El hangar", rows, [])
 	main.show_editor(lvl)
+
+
+## Solver en marcha: captura justo tras pulsar «Resolver» — el
+## "Buscando solución…" es el único momento en que el juego está
+## ocupado sin respuesta todavía.
+func _state_solve(main: Control) -> void:
+	root.size = Vector2i(1280, 720)
+	_wait = 4
+	# nivel mutante denso: el worker tarda lo suficiente para que
+	# la captura caiga con la búsqueda en vuelo
+	main.show_game(Campaign.levels()[30])
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr != null and scr.has_method("_solve"):
+			scr._solve()).call_deferred()
+
+
+## Repetición en vuelo: una win grabada + _replay_saved() — el
+## tablero se captura a mitad de la reproducción, no en reposo.
+func _state_replay(main: Control) -> void:
+	root.size = Vector2i(1280, 720)
+	_wait = 14   # ~1-2 movimientos de la repetición (0.16s cada uno)
+	var lvl := LevelData.create("Vuelta atrás", PackedStringArray([
+		"#########",
+		"#       #",
+		"# @ $  .#",
+		"#       #",
+		"#########",
+	]), [])
+	Storage.record_win(lvl,
+		PackedStringArray(["r", "r", "r", "r"]), 9.0)
+	main.show_game(lvl, {})
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr != null and scr.has_method("_replay_saved"):
+			scr._replay_saved()).call_deferred()
+
+
+## Resultado de «Verificar» en el editor: el solver responde
+## "✓ Soluble en N movimientos. Dificultad:…" — el estado que
+## convierte un diseño en un nivel publicable.
+func _state_verify(main: Control) -> void:
+	root.size.y = 860
+	_wait = 200  # solver async en worker: margen de sobra
+	main.show_editor(LevelData.create("Verificable", PackedStringArray([
+		"#######",
+		"#@ $ .#",
+		"#######",
+	]), []))
+	(func():
+		await root.get_tree().process_frame
+		for n in root.find_children("*", "Button", true, false):
+			if (n as Button).text == "Verificar":
+				(n as Button).pressed.emit()
+				return).call_deferred()
+
+
+## Puerta de publicación estilo Mario Maker: «Publicar» sin haber
+## superado el nivel en «Probar» → el aviso con la explicación
+## debe leerse en el status del editor.
+func _state_publish(main: Control) -> void:
+	root.size.y = 860
+	# nivel válido (el demo tiene portales sin pareja y abortaría
+	# antes en validación — no llegaría a la puerta de playtest)
+	main.show_editor(LevelData.create("Publicable", PackedStringArray([
+		"#######",
+		"#@ $ .#",
+		"#######",
+	]), []))
+	(func():
+		await root.get_tree().process_frame
+		for n in root.find_children("*", "Button", true, false):
+			if (n as Button).text == "Publicar en Comunidad":
+				(n as Button).pressed.emit()
+				return).call_deferred()
 
 
 ## Recorrido de foco: monta la vista, envía N Tab reales por el
