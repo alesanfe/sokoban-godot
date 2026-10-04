@@ -60,6 +60,16 @@ func _initialize() -> void:
 		[func(): _state_focus(main), "state_focus"],
 		[func(): _state_toast(main), "state_toast"],
 		[func(): _state_editor_big(main), "state_editor_big"],
+		# orden de tabulación: ¿el anillo aterriza en un control
+		# visible y sensato tras N Tab, o se pierde en algo oculto?
+		[func(): _state_tab(func(): main.show_level_select(), 5),
+			"state_tab_select"],
+		[func(): _state_tab(
+			func(): main.show_game(_demo_level()), 3),
+			"state_tab_game"],
+		[func(): _state_tab(
+			func(): main.show_editor(_demo_level()), 4),
+			"state_tab_editor"],
 	]
 	# barrido de ventana: las pantallas clave a varios tamaños para
 	# auditar el responsive — salen a _sizes/, no al README
@@ -344,6 +354,23 @@ func _state_editor_big(main: Control) -> void:
 		rows.append("####" + " ".repeat(25) + "#")
 	var lvl := LevelData.create("El hangar", rows, [])
 	main.show_editor(lvl)
+
+
+## Recorrido de foco: monta la vista, envía N Tab reales por el
+## pipeline de input (foco GUI completo, no grab_focus directo)
+## y captura dónde quedó el anillo.
+func _state_tab(mount: Callable, tabs: int) -> void:
+	mount.call()
+	(func():
+		for _i in tabs:
+			await root.get_tree().process_frame
+			var ev := InputEventKey.new()
+			ev.keycode = KEY_TAB
+			ev.pressed = true
+			Input.parse_input_event(ev)
+			var ev2 := InputEventKey.new()
+			ev2.keycode = KEY_TAB
+			Input.parse_input_event(ev2)).call_deferred()
 
 
 static func _wipe(dir: String) -> void:
