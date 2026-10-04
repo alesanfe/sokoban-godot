@@ -6,7 +6,7 @@ extends Control
 func _init(host: Control) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var v := Widgets.center_vbox(self)
-	v.add_child(Widgets.label("Importar nivel", 32, UiTheme.accent()))
+	v.add_child(Widgets.label("Importar nivel", 30, UiTheme.accent()))
 	v.add_child(Widgets.label("Pega un código SKM1.…/SKM2.… o un"
 		+ " tablero XSB (también RLE: 4#|# @$.#)", 14,
 		UiTheme.dim()))

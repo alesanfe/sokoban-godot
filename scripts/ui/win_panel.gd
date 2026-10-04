@@ -55,7 +55,7 @@ func _init() -> void:
 		share_pressed.emit()
 		b_share.text = "✓ Nivel+solución copiados")
 	brow2.add_child(b_share)
-	var b_menu := Widgets.button("Menú")
+	var b_menu := Widgets.button("← Menú")
 	b_menu.pressed.connect(func(): menu_pressed.emit())
 	brow2.add_child(b_menu)
 

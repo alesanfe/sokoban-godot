@@ -30,7 +30,7 @@ func _init(p_host: Control) -> void:
 	# a 720p el conjunto (~770px) cortaba título y botón inferior —
 	# separación y filas más compactas para que quepa sin scroll
 	v.add_theme_constant_override("separation", 8)
-	v.add_child(Widgets.label("Controles", 28, UiTheme.accent()))
+	v.add_child(Widgets.label("Controles", 30, UiTheme.accent()))
 	v.add_child(Widgets.label("Clic en una acción y pulsa la nueva"
 		+ " tecla. Las flechas siempre funcionan.", 13,
 		UiTheme.dim()))

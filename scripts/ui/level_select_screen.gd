@@ -155,7 +155,7 @@ func _init(host: Control) -> void:
 	back.custom_minimum_size.x = 140
 	back.pressed.connect(host.show_menu)
 	top.add_child(back)
-	top.add_child(Widgets.label("  Elige un nivel", 26))
+	top.add_child(Widgets.label("  Elige un nivel", 26, UiTheme.accent()))
 	_stats = Widgets.label("", 15, UiTheme.ok())
 	_stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
