@@ -10,3 +10,5 @@ server/community_db.json*
 # metadatos .import que Godot genera al abrir docs/assets/
 docs/assets/*.import
 docs/assets/_sizes/
+
+docs/assets/_diffs/
