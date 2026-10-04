@@ -10,10 +10,13 @@ func _init(host: Control) -> void:
 	v.add_child(Widgets.label("Estadísticas", 30, UiTheme.accent()))
 	v.add_child(Widgets.hsep())
 
+	# colores de marca por pack — los mismos que el mapa del mundo y
+	# los encabezados del selector (stats usaba warn para Mis niveles
+	# mientras mapa/selector lo identificaban con accent)
 	var packs := [
 		["Campaña Mutante", Campaign.levels(), UiTheme.accent()],
 		["Clásicos Microban", LevelPack.load_microban(), UiTheme.info()],
-		["Mis niveles", Storage.custom_levels(), UiTheme.warn()],
+		["Mis niveles", Storage.custom_levels(), UiTheme.accent()],
 	]
 	var tot_moves := 0
 	var tot_time := 0.0

@@ -615,7 +615,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	side.add_child(code_edit)
 
 	var b_back := Widgets.button("← Menú")
-	b_back.pressed.connect(_back_or_warn)
+	b_back.pressed.connect(_back_or_warn.bind(b_back))
 	side.add_child(b_back)
 
 	# init: either load a level, restore the last unsaved draft or
@@ -1133,11 +1133,17 @@ func _save() -> void:
 ## Salir sin guardar: doble-confirmación (mismo patrón que
 ## «Restaurar por defecto» en Controles y «✕» en Comunidad) —
 ## antes el botón destruía el trabajo sin avisar.
-func _back_or_warn() -> void:
+func _back_or_warn(b_back: Button) -> void:
 	if not _dirty:
 		host.show_menu()
 		return
 	_dirty = false          # el segundo clic sale de verdad
+	# el status solo se leía con la vista periférica — el botón arma
+	# el mismo estado visual que los borrados/reset de doble-clic
+	Widgets.set_danger(b_back, true)
+	get_tree().create_timer(2.0).timeout.connect(func():
+		if is_instance_valid(b_back):
+			Widgets.set_danger(b_back, false))
 	Widgets.status(status, "⚠ Tienes cambios sin guardar — pulsa «← Menú» de nuevo para salir.")
 
 

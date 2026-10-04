@@ -245,7 +245,7 @@ func _populate(host: Control) -> void:
 	add_section.call(Campaign.levels(), "Campaña Mutante", UiTheme.accent())
 	_list.add_child(Widgets.hsep())
 	add_section.call(classics, "Clásicos · Microban (David W. Skinner)",
-		Color(0.4, 0.8, 0.9), "  %d niveles — %d completados" % [classics.size(), done])
+		UiTheme.info(), "  %d niveles — %d completados" % [classics.size(), done])
 	_list.add_child(Widgets.hsep())
 	var customs := Storage.custom_levels()
 	add_section.call(customs, "Mis niveles", UiTheme.accent())

@@ -89,7 +89,7 @@ func _init(host: Control) -> void:
 	var ver := Widgets.label(
 		"v" + str(ProjectSettings.get_setting(
 			"application/config/version", "?")),
-		12, Color(0.45, 0.45, 0.5))
+		12, UiTheme.dim())
 	v.add_child(ver)
 
 	# a 720p el menú rebosaba (~750px de contenido) y "Salir"/versión

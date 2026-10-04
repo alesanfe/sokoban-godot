@@ -32,7 +32,7 @@ func _init() -> void:
 	wv.add_theme_constant_override("separation", 10)
 	wv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(wv)
-	label = Widgets.label("¡Nivel completado!", 22, Color(0.4, 0.9, 0.5))
+	label = Widgets.label("¡Nivel completado!", 22, UiTheme.ok())
 	wv.add_child(label)
 	# two rows of paired buttons: compact enough to fit small windows
 	var brow := HBoxContainer.new()
