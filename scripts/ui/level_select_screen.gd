@@ -174,7 +174,8 @@ func _init(host: Control) -> void:
 		_populate(host))
 	bar.add_child(_filter_edit)
 	# foco inicial en el buscador: primer gesto natural al elegir nivel
-	_filter_edit.grab_focus.call_deferred()
+	Widgets.deferred(_filter_edit,
+		func(): _filter_edit.grab_focus())
 	var b_next := Widgets.primary("▶ Siguiente sin resolver")
 	b_next.pressed.connect(func():
 		if _next_unsolved:
@@ -193,7 +194,8 @@ func _init(host: Control) -> void:
 	_scroll.get_v_scroll_bar().value_changed.connect(func(v2: float):
 		_saved_scroll = int(v2))
 	_populate(host)
-	(func(): _scroll.scroll_vertical = _saved_scroll).call_deferred()
+	Widgets.deferred(self,
+		func(): _scroll.scroll_vertical = _saved_scroll)
 
 
 var _stats: Label
@@ -322,11 +324,13 @@ func _level_button(host: Control, level: LevelData, deletable: bool = false) -> 
 			if not armed:
 				armed = true
 				b_del.text = "¿?"
+				Widgets.set_danger(b_del, true)
 				Widgets.toast(self, "⚠ Pulsa de nuevo para borrar")
 				get_tree().create_timer(2.0).timeout.connect(func():
 					armed = false
 					if is_instance_valid(b_del):
-						b_del.text = "✕")
+						b_del.text = "✕"
+						Widgets.set_danger(b_del, false))
 				return
 			Storage.delete_custom_level(level)
 			_populate(host))

@@ -34,7 +34,7 @@ func _init(host: Control) -> void:
 	v.add_child(b_campaign)
 	# foco inicial para teclado/lector: la acción primaria (deferred —
 	# el control aún no está en el árbol)
-	b_campaign.grab_focus.call_deferred()
+	Widgets.deferred(b_campaign, func(): b_campaign.grab_focus())
 
 	var b_map := Widgets.button("Mapa del mundo")
 	b_map.pressed.connect(host.show_map)

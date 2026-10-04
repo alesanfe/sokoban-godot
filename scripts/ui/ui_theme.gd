@@ -102,8 +102,13 @@ static func accent_hi() -> Color:
 ## Texto sobre fondo acento: blanco si el acento es oscuro (tema Claro),
 ## casi-negro si es claro (Oscuro/Contraste/Daltonismo) — siempre AA.
 static func on_accent() -> Color:
-	var a := accent()
-	var lum := 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b
+	return on(accent())
+
+
+## Texto legible sobre cualquier fondo: luminancia relativa W3C —
+## oscuro sobre claro, claro sobre oscuro.
+static func on(bg: Color) -> Color:
+	var lum := 0.2126 * bg.r + 0.7152 * bg.g + 0.0722 * bg.b
 	return Color(0.07, 0.07, 0.08) if lum > 0.45 else Color(0.98, 0.98, 1.0)
 
 

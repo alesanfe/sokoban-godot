@@ -47,7 +47,7 @@ func _init(p_host: Control) -> void:
 
 	v.add_child(Widgets.hsep())
 	_b_go = Widgets.primary("Generar y jugar")
-	_b_go.grab_focus.call_deferred()
+	Widgets.deferred(_b_go, func(): _b_go.grab_focus())
 	_b_go.pressed.connect(_go)
 	v.add_child(_b_go)
 	status = Widgets.label("", 13, UiTheme.warn())
@@ -112,10 +112,12 @@ func _go() -> void:
 	var wr: WeakRef = weakref(self)
 	WorkerThreadPool.add_task(func():
 		var lvl := LevelGenerator.generate(seed, w, h, nb, rid)
-		(func():
+		# deferred seguro: si la pantalla se cerró durante la
+		# generación el cuerpo no dispara sobre nodos liberados
+		Widgets.deferred(self, func():
 			var scr = wr.get_ref()
 			if scr == null:
-				return  # la pantalla se cerró durante la generación
+				return
 			scr._b_go.disabled = false
 			scr._b_back.disabled = false
 			if lvl == null:
@@ -124,4 +126,4 @@ func _go() -> void:
 			lvl.title = "Generado · %dx%d · %s" % [
 				w, h, rid if rid != "" else "clásico"]
 			scr.host.show_game(lvl, {"generated": true})
-		).call_deferred(), true)
+		), true)

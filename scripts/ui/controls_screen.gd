@@ -62,10 +62,12 @@ func _init(p_host: Control) -> void:
 		if not _armed:
 			_armed = true
 			b_reset.text = "Pulsa de nuevo para confirmar"
+			Widgets.set_danger(b_reset, true)
 			get_tree().create_timer(2.0).timeout.connect(func():
 				_armed = false
 				if is_instance_valid(b_reset):
-					b_reset.text = "Restaurar por defecto")
+					b_reset.text = "Restaurar por defecto"
+					Widgets.set_danger(b_reset, false))
 			return
 		for a in DEFAULTS.keys():
 			Storage.set_setting("key_" + a, DEFAULTS[a])

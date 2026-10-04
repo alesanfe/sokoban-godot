@@ -49,6 +49,28 @@ static func primary(text: String) -> Button:
 	return b
 
 
+## Marca/desmarca un botón como destructivo armado (doble-clic de
+## confirmación): el texto solo no diferenciaba el estado — fondo
+## warn + texto legible; al desarmar se retiran los overrides.
+static func set_danger(b: Button, on: bool) -> void:
+	if not on:
+		b.remove_theme_stylebox_override("normal")
+		b.remove_theme_color_override("font_color")
+		b.remove_theme_color_override("font_hover_color")
+		b.remove_theme_color_override("font_pressed_color")
+		return
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.warn()
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 16
+	sb.content_margin_right = 16
+	b.add_theme_stylebox_override("normal", sb)
+	var fg := UiTheme.on(UiTheme.warn())
+	b.add_theme_color_override("font_color", fg)
+	b.add_theme_color_override("font_hover_color", fg)
+	b.add_theme_color_override("font_pressed_color", fg)
+
+
 static func juice(b: Button) -> void:
 	b.pivot_offset = b.custom_minimum_size / 2.0
 	b.button_down.connect(func():
@@ -161,10 +183,22 @@ static func toast(root: Control, text: String, dur := 1.8) -> void:
 ## Foco inicial para teclado/lector: primer control enfocable en
 ## orden de árbol (el primer elemento visible de la pantalla).
 ## Deferred — los screens se construyen en _init, fuera del árbol.
+## Deferred seguro para pantallas efímeras: una lambda ligada a una
+## pantalla que se liberó antes del idle logueaba 'invalid instance'
+## al dispararse. La envoltura corre en contexto estático (sin self)
+## y solo ejecuta el cuerpo si el guard sigue vivo.
+static func deferred(guard: Object, body: Callable) -> void:
+	(func():
+		if is_instance_valid(guard) and body.is_valid():
+			body.call()).call_deferred()
+
+
 static func focus_first(root: Control) -> void:
 	(func():
+		if not is_instance_valid(root):
+			return
 		var f := _first_focusable(root)
-		if f != null:
+		if f != null and is_instance_valid(f):
 			f.grab_focus()).call_deferred()
 
 

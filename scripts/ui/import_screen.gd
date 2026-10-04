@@ -18,7 +18,7 @@ func _init(host: Control) -> void:
 	edit.scroll_fit_content_height = true
 	v.add_child(edit)
 	# foco en el campo de código (Jugar nace deshabilitado)
-	edit.grab_focus.call_deferred()
+	Widgets.deferred(edit, func(): edit.grab_focus())
 
 	# instrucción antes de la entrada: explica por qué Jugar/Guardar
 	# nacen deshabilitados (los tooltips no se muestran en disabled)

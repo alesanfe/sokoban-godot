@@ -20,9 +20,12 @@ var _wait := 8                # frames a esperar antes de capturar
 var _recentered := false
 var _retries := 0             # recolocaciones pendientes de layout
 var _cur_size := Vector2i(1280, 720)   # tamaño pedido en el barrido
+var _subset: Array = []       # filtro por nombre: -- menu state_toast
+                             # (vacío = barrido completo)
 
 
 func _initialize() -> void:
+	_subset = OS.get_cmdline_user_args()
 	# user:// aislado: no tocar el progreso real del jugador.
 	# Se borra para que el seeding sea idempotente entre corridas
 	# (bump_total acumula).
@@ -66,6 +69,12 @@ func _initialize() -> void:
 		[func(): _state_replay(main), "state_replay"],
 		[func(): _state_verify(main), "state_verify"],
 		[func(): _state_publish(main), "state_publish_gate"],
+		# confirmaciones destructivas armadas + stress de contenido:
+		# textos que no caben y aspecto retrato
+		[func(): _state_confirm(main), "state_confirm"],
+		[func(): _state_unsaved(main), "state_unsaved"],
+		[func(): _state_longtext(main), "state_longtext"],
+		[func(): _state_portrait(main), "size_menu_700x900"],
 		# orden de tabulación: ¿el anillo aterriza en un control
 		# visible y sensato tras N Tab, o se pierde en algo oculto?
 		[func(): _state_tab(func(): main.show_level_select(), 5),
@@ -162,10 +171,15 @@ func _process(_dt: float) -> bool:
 		print("shot: ", _pending)
 		if _pending == "editor":
 			root.size.y = 720              # restaurar para el resto
+		if _pending == "size_menu_700x900":
+			root.size = Vector2i(1280, 720)
 		_pending = ""
 		return false
 	if _i < _shots.size():
 		_purge_transient()
+		if not _subset.is_empty() and not _subset.has(_shots[_i][1]):
+			_i += 1
+			return false
 		_shots[_i][0].call()
 		_pending = _shots[_i][1]
 		_i += 1
@@ -173,19 +187,26 @@ func _process(_dt: float) -> bool:
 	# barrido de resoluciones tras las capturas del README
 	if _si < _size_jobs.size():
 		var job: Array = _size_jobs[_si]
+		var sz_name := "size_%s_%dx%d" % [job[2], job[0].x, job[0].y]
+		_si += 1
+		if not _subset.is_empty() and not _subset.has(sz_name):
+			return false
 		_purge_transient()
 		root.size = job[0]
 		_cur_size = job[0]
 		job[1].call()
-		_pending = "size_%s_%dx%d" % [job[2], job[0].x, job[0].y]
-		_si += 1
+		_pending = sz_name
 		return false
 	# tercer barrido: temas y escala — re-montar la vista tras aplicar
 	# para que los tokens resueltos al construir se refresquen
 	if _ti < _theme_jobs.size():
 		var job: Array = _theme_jobs[_ti]
-		_purge_transient()
 		var mode: String = job[0]
+		var th_name := "theme_%s_%s" % [job[2], mode]
+		_ti += 1
+		if not _subset.is_empty() and not _subset.has(th_name):
+			return false
+		_purge_transient()
 		if mode == "scale130":
 			root.content_scale_factor = 1.3
 		else:
@@ -194,8 +215,7 @@ func _process(_dt: float) -> bool:
 			_main.apply_theme()
 		root.size = Vector2i(1280, 720)
 		job[1].call()
-		_pending = "theme_%s_%s" % [job[2], mode]
-		_ti += 1
+		_pending = th_name
 		return false
 	# limpiar para la próxima corrida
 	root.content_scale_factor = 1.0
@@ -443,6 +463,81 @@ func _state_publish(main: Control) -> void:
 			if (n as Button).text == "Publicar en Comunidad":
 				(n as Button).pressed.emit()
 				return).call_deferred()
+
+
+## Confirmación armada: «Restaurar por defecto» cambia su texto a
+## "Pulsa de nuevo para confirmar" — el patrón doble-clic tiene
+## que leerse claramente (¿parece un estado o un error?).
+func _state_confirm(main: Control) -> void:
+	root.size = Vector2i(1280, 720)
+	main.show_controls()
+	(func():
+		await root.get_tree().process_frame
+		await root.get_tree().process_frame
+		for n in root.find_children("*", "Button", true, false):
+			if (n as Button).text == "Restaurar por defecto":
+				var b := n as Button
+				b.pressed.emit()
+				# el botón está bajo el fold — el shot tiene que
+				# mostrar el estado armado, no la lista de teclas.
+				# ensure_control_visible tras un frame: fijar
+				# scroll_vertical antes del layout se clampeaba a 0
+				await root.get_tree().process_frame
+				for s in root.find_children(
+						"*", "ScrollContainer", true, false):
+					(s as ScrollContainer).ensure_control_visible(b)
+				return).call_deferred()
+
+
+## Aviso de trabajo sin guardar: «← Menú» con _dirty dispara la
+## doble-confirmación en vez de salir — el aviso se audita.
+func _state_unsaved(main: Control) -> void:
+	root.size.y = 860
+	main.show_editor(_demo_level())
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr == null:
+			return
+		scr._dirty = true   # simula una edición
+		for n in root.find_children("*", "Button", true, false):
+			if (n as Button).text == "← Menú":
+				(n as Button).pressed.emit()
+				return).call_deferred()
+
+
+## Stress de texto: un título de 90 caracteres + autor largo —
+## los botones de Godot no recortan por defecto; si el título se
+## sale de la fila o tapa al vecino, aquí se ve.
+func _state_longtext(main: Control) -> void:
+	root.size = Vector2i(1280, 720)
+	var lvl := LevelData.create(
+		"El laberinto definitivo del guardián que no sabía "
+		+ "cuándo dejar de empujar cajas",
+		PackedStringArray([
+			"#######",
+			"#@ $ .#",
+			"#######",
+		]), [{"id": "conveyor", "params": {}},
+			{"id": "portal", "params": {}}])
+	lvl.author = "Equipo de diseño de niveles extremadamente verboso"
+	Storage.save_custom_level(lvl)
+	main.show_level_select()
+	(func():
+		await root.get_tree().process_frame
+		var scr: Variant = root.get_child(0).get("current")
+		if scr != null and scr.get("_scroll") != null:
+			scr._scroll.scroll_vertical = 99999).call_deferred()
+
+
+## Aspecto retrato (700×900): todo el barrido era apaisado — los
+## layouts centrados pueden comportarse distinto en estrecho/alto.
+func _state_portrait(main: Control) -> void:
+	# el tamaño se restaura tras la captura en _process (como
+	# "editor" con su altura extra) — restaurarlo aquí llegaba
+	# antes del shot
+	root.size = Vector2i(700, 900)
+	main.show_menu()
 
 
 ## Recorrido de foco: monta la vista, envía N Tab reales por el

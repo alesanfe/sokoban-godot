@@ -89,7 +89,7 @@ func _init(p_host: Control) -> void:
 	search.add_child(_search)
 	v.add_child(search)
 	# foco inicial: el buscador es el primer gesto natural del feed
-	_search.grab_focus.call_deferred()
+	Widgets.deferred(_search, func(): _search.grab_focus())
 
 	# backend opcional: URL del servidor de comunidad autoalojado
 	# (server/community_server.py). Vacío = modo local puro.
@@ -160,7 +160,8 @@ func _init(p_host: Control) -> void:
 	# guarda el scroll al salir (el swap destruye el screen)
 	_scroll.get_v_scroll_bar().value_changed.connect(func(v2: float):
 		_saved_scroll = int(v2))
-	(func(): _scroll.scroll_vertical = _saved_scroll).call_deferred()
+	Widgets.deferred(self,
+		func(): _scroll.scroll_vertical = _saved_scroll)
 
 	CommunityService.seed_officials()
 	_populate()
@@ -328,12 +329,14 @@ func _row(e: Dictionary) -> Control:
 			if not armed:
 				armed = true
 				b_del.text = "¿?"
+				Widgets.set_danger(b_del, true)
 				# la ventana de armado era invisible para lectores
 				Widgets.toast(self, "⚠ Pulsa de nuevo para borrar")
 				get_tree().create_timer(2.0).timeout.connect(func():
 					armed = false
 					if is_instance_valid(b_del):
-						b_del.text = "✕")
+						b_del.text = "✕"
+						Widgets.set_danger(b_del, false))
 				return
 			CommunityService.remove(e["id"])
 			_populate())
