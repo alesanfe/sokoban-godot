@@ -161,8 +161,20 @@ static func toast(root: Control, text: String, dur := 1.8) -> void:
 			and DisplayServer.has_feature(
 				DisplayServer.FEATURE_TEXT_TO_SPEECH):
 		DisplayServer.tts_speak(text, "")
-	var l := label(text, 15, Color(1, 1, 1))
+	# panel+bordes del tema: texto blanco a pelo era ilegible en el
+	# tema Claro (blanco sobre beige) — el fondo lo fija siempre
+	var l := label(text, 15)
 	l.name = "Toast"  # localizable: tests y el driver de capturas lo purgan
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.panel()
+	sb.border_color = UiTheme.edge()
+	sb.set_border_width_all(1)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	l.add_theme_stylebox_override("normal", sb)
 	l.anchor_left = 0.5
 	l.anchor_right = 0.5
 	l.anchor_top = 1.0

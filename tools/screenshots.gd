@@ -22,6 +22,10 @@ var _retries := 0             # recolocaciones pendientes de layout
 var _cur_size := Vector2i(1280, 720)   # tamaño pedido en el barrido
 var _subset: Array = []       # filtro por nombre: -- menu state_toast
                              # (vacío = barrido completo)
+var _total_frames := 0        # calentamiento: sin él, un subset que
+                             # empieza tarde capturaba la ventana aún
+                             # en blanco (visto: PNGs de 4 KB vacíos)
+const WARMUP_FRAMES := 40
 
 
 func _initialize() -> void:
@@ -132,6 +136,17 @@ func _demo_level() -> LevelData:
 
 func _process(_dt: float) -> bool:
 	_frame += 1
+	_total_frames += 1
+	# los saltos del subset se resuelven sin esperar — solo la vista
+	# montada espera sus frames de layout
+	while _advance_queue():
+		pass
+	if _pending == "":
+		return _queue_done()
+	# la primera captura espera al warmup del renderer; una ventana
+	# recién creada devuelve textura en blanco los primeros frames
+	if _total_frames < WARMUP_FRAMES:
+		return false
 	# por defecto 8 frames por paso: _ready, layout, resized y tweens
 	# pintan todo; el shot de victoria espera a que el autoplay acabe
 	if _frame < _wait:
@@ -175,14 +190,23 @@ func _process(_dt: float) -> bool:
 			root.size = Vector2i(1280, 720)
 		_pending = ""
 		return false
+	return false
+
+
+## Monta la siguiente captura pendiente en _pending y devuelve true.
+## Las entradas fuera del subset se saltan sin coste de frames, así
+## el bucle while de _process avanza hasta la siguiente captura real.
+func _advance_queue() -> bool:
+	if _pending != "":
+		return false
 	if _i < _shots.size():
-		_purge_transient()
-		if not _subset.is_empty() and not _subset.has(_shots[_i][1]):
-			_i += 1
-			return false
-		_shots[_i][0].call()
-		_pending = _shots[_i][1]
+		var entry: Array = _shots[_i]
 		_i += 1
+		if not _subset.is_empty() and not _subset.has(entry[1]):
+			return true              # salto gratis — sigue el bucle
+		_purge_transient()
+		entry[0].call()
+		_pending = entry[1]
 		return false
 	# barrido de resoluciones tras las capturas del README
 	if _si < _size_jobs.size():
@@ -190,7 +214,7 @@ func _process(_dt: float) -> bool:
 		var sz_name := "size_%s_%dx%d" % [job[2], job[0].x, job[0].y]
 		_si += 1
 		if not _subset.is_empty() and not _subset.has(sz_name):
-			return false
+			return true
 		_purge_transient()
 		root.size = job[0]
 		_cur_size = job[0]
@@ -205,7 +229,7 @@ func _process(_dt: float) -> bool:
 		var th_name := "theme_%s_%s" % [job[2], mode]
 		_ti += 1
 		if not _subset.is_empty() and not _subset.has(th_name):
-			return false
+			return true
 		_purge_transient()
 		if mode == "scale130":
 			root.content_scale_factor = 1.3
@@ -216,6 +240,13 @@ func _process(_dt: float) -> bool:
 		root.size = Vector2i(1280, 720)
 		job[1].call()
 		_pending = th_name
+		return false
+	return false
+
+
+func _queue_done() -> bool:
+	if _i < _shots.size() or _si < _size_jobs.size() \
+			or _ti < _theme_jobs.size():
 		return false
 	# limpiar para la próxima corrida
 	root.content_scale_factor = 1.0

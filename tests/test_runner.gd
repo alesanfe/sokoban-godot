@@ -817,12 +817,12 @@ func test_replay_determinism_fuzz() -> void:
 				s2.try_move(GameState.DIRS[str(ch).to_lower()])
 		if s2.canonical_key() != s.canonical_key():
 			fails += 1
-			print("    FUZZ t%d: replay diverge (rules=%s)" % [trial, rules])
+			print("    FUZZ t%d: replay diverge (rules=%s)" % [trial, str(rules)])
 		# serialize → deserialize conserva el estado
 		var s3 = GameState.deserialize_state(lvl, s.serialize())
 		if s3 == null or s3.canonical_key() != s.canonical_key():
 			fails += 1
-			print("    FUZZ t%d: serialize diverge (rules=%s)" % [trial, rules])
+			print("    FUZZ t%d: serialize diverge (rules=%s)" % [trial, str(rules)])
 	ok(fails == 0, "fuzz: replay+serialize deterministas (%d trials)" % trials)
 
 
