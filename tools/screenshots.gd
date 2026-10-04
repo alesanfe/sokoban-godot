@@ -15,6 +15,8 @@ var _si := 0
 var _pending := ""            # vista montada, pendiente de capturar
 var _wait := 8                # frames a esperar antes de capturar
 var _recentered := false
+var _retries := 0             # recolocaciones pendientes de layout
+var _cur_size := Vector2i(1280, 720)   # tamaño pedido en el barrido
 
 
 func _initialize() -> void:
@@ -93,6 +95,14 @@ func _process(_dt: float) -> bool:
 				and root.get_child_count() > 0:
 			var scr: Variant = root.get_child(0).get("current")
 			if scr != null and scr.has_method("_center_board"):
+				# el holder puede seguir con el tamaño anterior al
+				# resize — centrar ya dejaría el tablero recortado en
+				# la captura (visto: holder 924px a ventana 1024)
+				if scr.board_holder.size.x > float(_cur_size.x) - 240.0 \
+						and _retries < 40:
+					_retries += 1
+					_frame = _wait - 2      # reintenta en 2 frames
+					return false
 				scr._center_board()
 				print("dbg tile=%s pos=%s holder=%s px=%s" % [
 					scr.board.tile, scr.board.position,
@@ -100,6 +110,7 @@ func _process(_dt: float) -> bool:
 			_recentered = true
 			return false            # un frame más y se captura
 		_recentered = false
+		_retries = 0
 		var img := root.get_texture().get_image()
 		var dir := SIZE_OUT if _pending.begins_with("size_") else OUT
 		DirAccess.make_dir_recursive_absolute(
@@ -119,6 +130,7 @@ func _process(_dt: float) -> bool:
 	if _si < _size_jobs.size():
 		var job: Array = _size_jobs[_si]
 		root.size = job[0]
+		_cur_size = job[0]
 		job[1].call()
 		_pending = "size_%s_%dx%d" % [job[2], job[0].x, job[0].y]
 		_si += 1
