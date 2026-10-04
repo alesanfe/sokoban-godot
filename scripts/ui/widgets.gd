@@ -140,6 +140,7 @@ static func toast(root: Control, text: String, dur := 1.8) -> void:
 				DisplayServer.FEATURE_TEXT_TO_SPEECH):
 		DisplayServer.tts_speak(text, "")
 	var l := label(text, 15, Color(1, 1, 1))
+	l.name = "Toast"  # localizable: tests y el driver de capturas lo purgan
 	l.anchor_left = 0.5
 	l.anchor_right = 0.5
 	l.anchor_top = 1.0

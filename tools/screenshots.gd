@@ -128,7 +128,9 @@ func _process(_dt: float) -> bool:
 	if _frame < _wait:
 		return false
 	_frame = 0
-	_wait = 8
+	# 14 frames ≈ 230ms > fade-in de pantalla (0.15s): con 8 la
+	# captura caía a veces a medio fundido y era no-determinista
+	_wait = 14
 	if _pending != "":
 		# fuerza un re-centrado por si resized disparó con state==null
 		if not _recentered and (_pending in ["gameplay", "mutant"]
@@ -163,6 +165,7 @@ func _process(_dt: float) -> bool:
 		_pending = ""
 		return false
 	if _i < _shots.size():
+		_purge_transient()
 		_shots[_i][0].call()
 		_pending = _shots[_i][1]
 		_i += 1
@@ -170,6 +173,7 @@ func _process(_dt: float) -> bool:
 	# barrido de resoluciones tras las capturas del README
 	if _si < _size_jobs.size():
 		var job: Array = _size_jobs[_si]
+		_purge_transient()
 		root.size = job[0]
 		_cur_size = job[0]
 		job[1].call()
@@ -180,6 +184,7 @@ func _process(_dt: float) -> bool:
 	# para que los tokens resueltos al construir se refresquen
 	if _ti < _theme_jobs.size():
 		var job: Array = _theme_jobs[_ti]
+		_purge_transient()
 		var mode: String = job[0]
 		if mode == "scale130":
 			root.content_scale_factor = 1.3
@@ -362,20 +367,21 @@ func _state_editor_big(main: Control) -> void:
 	main.show_editor(lvl)
 
 
-## Solver en marcha: captura justo tras pulsar «Resolver» — el
-## "Buscando solución…" es el único momento en que el juego está
-## ocupado sin respuesta todavía.
+## Solver en marcha: el estado "Buscando solución…" — el único
+## momento en que el juego está ocupado sin respuesta todavía.
+## Se fija el estado directamente (no se lanza el solver real):
+## el worker es no-determinista y la captura sería flaky — lo que
+## se audita aquí es el render del estado, no la búsqueda.
 func _state_solve(main: Control) -> void:
 	root.size = Vector2i(1280, 720)
-	_wait = 4
-	# nivel mutante denso: el worker tarda lo suficiente para que
-	# la captura caiga con la búsqueda en vuelo
 	main.show_game(Campaign.levels()[30])
 	(func():
 		await root.get_tree().process_frame
 		var scr: Variant = root.get_child(0).get("current")
 		if scr != null and scr.has_method("_solve"):
-			scr._solve()).call_deferred()
+			scr._solving = true
+			Widgets.status(scr.hud_status, "Buscando solución…")
+		).call_deferred()
 
 
 ## Repetición en vuelo: una win grabada + _replay_saved() — el
@@ -454,6 +460,14 @@ func _state_tab(mount: Callable, tabs: int) -> void:
 			var ev2 := InputEventKey.new()
 			ev2.keycode = KEY_TAB
 			Input.parse_input_event(ev2)).call_deferred()
+
+
+## Los toasts viven ~2.1s (~10 shots) y cruzan la frontera entre
+## capturas — se eliminan antes de montar cada vista para que cada
+## shot solo muestre lo que su propia vista produce.
+func _purge_transient() -> void:
+	for n in _main.find_children("Toast", "", true, false):
+		n.free()
 
 
 static func _wipe(dir: String) -> void:
