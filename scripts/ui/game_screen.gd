@@ -11,6 +11,7 @@ var state: GameState
 var board: BoardView
 var board_holder: Control
 
+var hud_title: Label
 var hud_rules: Label
 var hud_status: Label
 var hud_keys: Label
@@ -63,7 +64,12 @@ func _init(p_host: Control) -> void:
 	side.add_theme_constant_override("separation", 10)
 	hbox.add_child(side)
 
-	hud_rules = Widgets.label("", 15, Color(0.8, 0.8, 0.85))
+	# el título va aparte: era la primera línea de hud_rules y heredaba
+	# el dim — en Claro el nombre del nivel quedaba lavado
+	hud_title = Widgets.label("", 16)
+	hud_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	side.add_child(hud_title)
+	hud_rules = Widgets.label("", 15, UiTheme.dim())
 	hud_rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	side.add_child(hud_rules)
 	side.add_child(Widgets.hsep())
@@ -168,8 +174,7 @@ func start(p_level: LevelData, p_context: Dictionary = {}) -> void:
 
 func _refresh_rules_hud() -> void:
 	var lines := PackedStringArray()
-	lines.append(level.title + Widgets.stars(level.difficulty))
-	lines.append("")
+	hud_title.text = level.title + Widgets.stars(level.difficulty)
 	if level.hidden_rules and not state.solved:
 		lines.append("• ??? — Regla desconocida. Descúbrela jugando.")
 	else:

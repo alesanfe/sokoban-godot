@@ -154,7 +154,7 @@ func _init(p_host: Control) -> void:
 
 
 func _section(title: String) -> Control:
-	var l := Widgets.label(title, 16, Color(0.85, 0.7, 0.3))
+	var l := Widgets.label(title, 16, UiTheme.accent())
 	return l
 
 

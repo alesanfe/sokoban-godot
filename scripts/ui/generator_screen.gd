@@ -50,7 +50,7 @@ func _init(p_host: Control) -> void:
 	_b_go.grab_focus.call_deferred()
 	_b_go.pressed.connect(_go)
 	v.add_child(_b_go)
-	status = Widgets.label("", 13, Color(0.9, 0.6, 0.5))
+	status = Widgets.label("", 13, UiTheme.warn())
 	v.add_child(status)
 	_b_back = Widgets.button("← Menú")
 	_b_back.pressed.connect(host.show_menu)

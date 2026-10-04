@@ -54,9 +54,17 @@ static func juice(b: Button) -> void:
 
 
 static func center_vbox(parent: Control) -> VBoxContainer:
+	# Scroll bajo el Center: el contenido alto (menú a escala 130%,
+	# stats largas) cortaba los extremos — el CenterContainer no
+	# scrollea, solo centra y recorta
+	var s := ScrollContainer.new()
+	s.set_anchors_preset(Control.PRESET_FULL_RECT)
+	s.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	parent.add_child(s)
 	var c := CenterContainer.new()
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
-	parent.add_child(c)
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	c.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	s.add_child(c)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 12)
 	c.add_child(v)

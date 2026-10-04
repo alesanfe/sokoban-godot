@@ -12,8 +12,8 @@ func _init(host: Control) -> void:
 
 	var packs := [
 		["Campaña Mutante", Campaign.levels(), UiTheme.accent()],
-		["Clásicos Microban", LevelPack.load_microban(), Color(0.4, 0.8, 0.9)],
-		["Mis niveles", Storage.custom_levels(), Color(0.9, 0.7, 0.3)],
+		["Clásicos Microban", LevelPack.load_microban(), UiTheme.info()],
+		["Mis niveles", Storage.custom_levels(), UiTheme.warn()],
 	]
 	var tot_moves := 0
 	var tot_time := 0.0
@@ -35,11 +35,11 @@ func _init(host: Control) -> void:
 
 	v.add_child(Widgets.hsep())
 	v.add_child(Widgets.label("Tiempo total de tus mejores soluciones: %02d:%02d" % [
-		int(tot_time) / 3600, (int(tot_time) % 3600) / 60], 15, Color(0.7, 0.8, 0.9)))
+		int(tot_time) / 3600, (int(tot_time) % 3600) / 60], 15, UiTheme.info()))
 	var streak := Storage.daily_streak()
 	v.add_child(Widgets.label("Desafíos diarios: %d completados · racha de %d día%s" % [
 		Storage.daily_total(), streak, "" if streak == 1 else "s"],
-		15, Color(0.9, 0.6, 0.9)))
+		15, UiTheme.accent()))
 	var t := Storage.totals()
 	v.add_child(Widgets.label("Toda tu actividad: %d victorias · %d movimientos · %d empujes" % [
 		int(t.get("wins", 0)), int(t.get("moves", 0)), int(t.get("pushes", 0))],

@@ -541,7 +541,7 @@ func _init(p_host: Control, p_level: LevelData = null) -> void:
 	side.add_child(size_row)
 
 	side.add_child(Widgets.hsep())
-	side.add_child(Widgets.label("Reglas absurdas", 18, Color(0.7, 0.5, 0.9)))
+	side.add_child(Widgets.label("Reglas absurdas", 18, UiTheme.accent()))
 	hidden_check = CheckBox.new()
 	hidden_check.text = "Regla secreta (el jugador la descubre)"
 	side.add_child(hidden_check)

@@ -10,8 +10,11 @@ const SIZE_OUT := "res://docs/assets/_sizes/"   # barrido de ventana
 var _frame := 0
 var _shots: Array = []        # [Callable monta la vista, nombre]
 var _size_jobs: Array = []    # [Vector2i, Callable, nombre]
+var _theme_jobs: Array = []   # [modo, Callable, nombre]
+var _main: Control
 var _i := 0
 var _si := 0
+var _ti := 0
 var _pending := ""            # vista montada, pendiente de capturar
 var _wait := 8                # frames a esperar antes de capturar
 var _recentered := false
@@ -29,6 +32,7 @@ func _initialize() -> void:
 		ProjectSettings.globalize_path(OUT))
 	_seed_progress()
 	var main: Control = load("res://scripts/main.gd").new()
+	_main = main
 	# main.tscn le da FULL_RECT; instanciado por script nace con size 0
 	main.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child.call_deferred(main)
@@ -63,6 +67,20 @@ func _initialize() -> void:
 			"select"])
 		_size_jobs.append([sz, func(): main.show_options(),
 			"options"])
+	# barrido de temas: los literales que escaparon a tokens solo se
+	# ven contra fondo claro / contraste / daltonismo — el dark es el
+	# tema para el que fue diseñada toda la UI, ahí todo "luce bien"
+	for mode in ["light", "contrast", "cb"]:
+		for v in [["menu", func(): main.show_menu()],
+				["gameplay", func(): main.show_game(_demo_level())],
+				["select", func(): main.show_level_select()],
+				["community", func(): main.show_community()],
+				["editor", func(): main.show_editor(_demo_level())]]:
+			_theme_jobs.append([mode, v[1], v[0]])
+	# escala 130%: los layouts que no reajustan revientan aquí
+	for v in [["menu", func(): main.show_menu()],
+			["options", func(): main.show_options()]]:
+		_theme_jobs.append(["scale130", v[1], v[0]])
 
 
 ## Nivel de muestra: varios tiles especiales que saltan a la vista
@@ -135,6 +153,26 @@ func _process(_dt: float) -> bool:
 		_pending = "size_%s_%dx%d" % [job[2], job[0].x, job[0].y]
 		_si += 1
 		return false
+	# tercer barrido: temas y escala — re-montar la vista tras aplicar
+	# para que los tokens resueltos al construir se refresquen
+	if _ti < _theme_jobs.size():
+		var job: Array = _theme_jobs[_ti]
+		var mode: String = job[0]
+		if mode == "scale130":
+			root.content_scale_factor = 1.3
+		else:
+			root.content_scale_factor = 1.0
+			Storage.set_setting("ui_theme", mode)
+			_main.apply_theme()
+		root.size = Vector2i(1280, 720)
+		job[1].call()
+		_pending = "theme_%s_%s" % [job[2], mode]
+		_ti += 1
+		return false
+	# limpiar para la próxima corrida
+	root.content_scale_factor = 1.0
+	Storage.set_setting("ui_theme", "dark")
+	_main.apply_theme()
 	return true
 
 
