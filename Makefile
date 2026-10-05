@@ -9,10 +9,11 @@ PY    ?= python
 
 .DEFAULT_GOAL := help
 .PHONY: help \
-        run \
-        test test-runner test-ui test-e2e test-rules test-playthrough test-server test-load verify \
+        run import \
+        test test-runner test-ui test-e2e test-rules test-playthrough test-server test-load \
+        test-audit verify test-all lint \
         server \
-        shots gif \
+        shots shots-diff gif make-gif \
         export-web export-windows export-linux \
         clean
 
@@ -30,6 +31,9 @@ help: ## Muestra esta ayuda
 
 run: ## Abre el juego (igual que F5 en el editor)
 	$(GODOT) --path .
+
+import: ## Importa los recursos del proyecto (necesario tras clonar, como el CI)
+	$(GODOT) --headless --path . --import
 
 # ============================================================
 #  TESTS (headless)
@@ -58,9 +62,20 @@ test-server: ## Tests del backend de comunidad (sin socket)
 test-load: ## Test de concurrencia del servidor
 	$(PY) server/test_load.py
 
+test-audit: ## Auditoría de niveles de campaña (audit_levels.gd)
+	$(GODOT) --headless --path . -s res://tools/audit_levels.gd
+
 verify: ## Verificadores de niveles (clásicos + difíciles)
 	$(GODOT) --headless --path . -s res://tests/verify_classics.gd && \
 	$(GODOT) --headless --path . -s res://tests/verify_hard.gd
+
+test-all: ## Batería canónica completa (tools/test_all.sh — incluye lint)
+	bash tools/test_all.sh
+
+lint: ## ruff + bandit sobre server/ + gdlint sobre GDScript
+	$(PY) -m ruff check server/ && \
+	$(PY) -m bandit -r server/ -q --severity-level medium && \
+	gdlint scripts/ tests/ tools/
 
 # ============================================================
 #  SERVIDOR
@@ -76,8 +91,14 @@ server: ## Levanta el servidor de comunidad
 shots: ## Capturas de UI — uso: make shots SHOTS="nombre1 nombre2"
 	$(GODOT) --path . -s res://tools/screenshots.gd -- $(SHOTS)
 
-gif: ## Genera el GIF de demo
+shots-diff: ## Regresión visual de capturas vs baseline bendecido
+	$(GODOT) --headless --path . -s res://tools/shots_diff.gd
+
+gif: ## Genera los frames del GIF de demo (user://gif_frames/)
 	$(GODOT) --path . -s res://tools/gif_demo.gd
+
+make-gif: ## Ensambla user://gif_frames/ en docs/assets/demo.gif
+	$(PY) tools/make_gif.py
 
 export-web: ## Exporta el preset "Web" a export/web/
 	$(GODOT) --headless --path . --export-release "Web" export/web/index.html
