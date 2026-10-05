@@ -11,7 +11,7 @@ PY    ?= python
 .PHONY: help \
         run import \
         test test-runner test-ui test-e2e test-rules test-playthrough test-server test-load \
-        test-audit verify test-all lint \
+        test-audit verify test-all lint pars \
         server \
         shots shots-diff gif make-gif \
         export-web export-windows export-linux \
@@ -64,6 +64,9 @@ test-load: ## Test de concurrencia del servidor
 
 test-audit: ## Auditoría de niveles de campaña (audit_levels.gd)
 	$(GODOT) --headless --path . -s res://tools/audit_levels.gd
+
+pars: ## Imprime el par de movimientos por nivel (solver)
+	$(GODOT) --headless --path . -s res://tests/print_pars.gd
 
 verify: ## Verificadores de niveles (clásicos + difíciles)
 	$(GODOT) --headless --path . -s res://tests/verify_classics.gd && \
