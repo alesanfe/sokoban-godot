@@ -103,6 +103,24 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 
 </details>
 
+<details>
+<summary>Resoluciones — las pantallas clave a 800×600, 1024×600, 1600×900 y retrato</summary>
+
+| Menú | Partida |
+|---|---|
+| ![Menú a 800×600: los 12 botones caben enteros](docs/assets/screenshots/sizes/size_menu_800x600.png) | ![Partida a 800×600: tablero completo y sidebar con todos los controles](docs/assets/screenshots/sizes/size_gameplay_800x600.png) |
+| ![Menú a 1024×600: columna centrada sin estirar](docs/assets/screenshots/sizes/size_menu_1024x600.png) | ![Partida a 1024×600](docs/assets/screenshots/sizes/size_gameplay_1024x600.png) |
+| ![Menú a 1600×900](docs/assets/screenshots/sizes/size_menu_1600x900.png) | ![Partida a 1600×900](docs/assets/screenshots/sizes/size_gameplay_1600x900.png) |
+| ![Menú en retrato 700×900: columna centrada, todo accesible](docs/assets/screenshots/sizes/size_menu_700x900.png) | |
+
+| Selector | Opciones |
+|---|---|
+| ![Selector a 800×600: barra superior, buscador y lista con scroll](docs/assets/screenshots/sizes/size_select_800x600.png) | ![Opciones a 800×600: secciones con scroll](docs/assets/screenshots/sizes/size_options_800x600.png) |
+| ![Selector a 1024×600](docs/assets/screenshots/sizes/size_select_1024x600.png) | ![Opciones a 1024×600](docs/assets/screenshots/sizes/size_options_1024x600.png) |
+| ![Selector a 1600×900](docs/assets/screenshots/sizes/size_select_1600x900.png) | ![Opciones a 1600×900](docs/assets/screenshots/sizes/size_options_1600x900.png) |
+
+</details>
+
 *Las capturas se regeneran con `godot --path . -s res://tools/screenshots.gd`
 y el GIF con `godot --path . -s res://tools/gif_demo.gd` +
 `python tools/make_gif.py`.*

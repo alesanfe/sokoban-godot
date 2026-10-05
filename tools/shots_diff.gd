@@ -8,7 +8,7 @@ extends SceneTree
 ##   godot --path . -s res://tools/shots_diff.gd --update   → bendice
 ##
 ## Exit 0 = sin diferencias > umbral. Exit 2 = regresión.
-## Subdirectorios (_sizes, _baseline, _diffs) se ignoran.
+## Subdirectorios (sizes/, _baseline, _diffs) se ignoran.
 
 const BASE := "res://docs/assets/_baseline/"
 const CUR := "res://docs/assets/screenshots/"

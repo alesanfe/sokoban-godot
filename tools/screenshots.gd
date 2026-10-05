@@ -5,7 +5,7 @@ extends SceneTree
 ## (la ventana aparece unos segundos y se cierra sola)
 
 const OUT := "res://docs/assets/screenshots/"
-const SIZE_OUT := "res://docs/assets/_sizes/"   # barrido de ventana
+const SIZE_OUT := "res://docs/assets/screenshots/sizes/"   # barrido de ventana
 
 var _frame := 0
 var _shots: Array = []        # [Callable monta la vista, nombre]
@@ -90,8 +90,8 @@ func _initialize() -> void:
 			func(): main.show_editor(_demo_level()), 4),
 			"state_tab_editor"],
 	]
-	# barrido de ventana: las pantallas clave a varios tamaños para
-	# auditar el responsive — salen a _sizes/, no al README
+	# barrido de ventana: las pantallas clave a varios tamaños —
+	# publicado en screenshots/sizes/ (README: sección Resoluciones)
 	var sizes := [Vector2i(800, 600), Vector2i(1024, 600),
 		Vector2i(1600, 900)]
 	for sz in sizes:
