@@ -95,7 +95,7 @@ func _init(p_host: Control) -> void:
 	# (server/community_server.py). Vacío = modo local puro.
 	var srv := HBoxContainer.new()
 	srv.add_theme_constant_override("separation", 6)
-	srv.add_child(Widgets.label("Servidor:", 13, UiTheme.dim()))
+	srv.add_child(Widgets.label("Servidor:", 14))
 	var url_edit := LineEdit.new()
 	url_edit.placeholder_text = "vacío = offline · p. ej. http://192.168.1.10:8765"
 	url_edit.text = CommunityRemote.url()
@@ -115,11 +115,11 @@ func _init(p_host: Control) -> void:
 	auth.add_theme_constant_override("separation", 6)
 	# etiquetas visibles: un placeholder no sustituye al label — al
 	# escribir, el único nombre del campo desaparece
-	auth.add_child(Widgets.label("Usuario:", 13, UiTheme.dim()))
+	auth.add_child(Widgets.label("Usuario:", 14))
 	var user_edit := LineEdit.new()
 	user_edit.custom_minimum_size = Vector2(130, 34)
 	auth.add_child(user_edit)
-	auth.add_child(Widgets.label("Contraseña:", 13, UiTheme.dim()))
+	auth.add_child(Widgets.label("Contraseña:", 14))
 	var pass_edit := LineEdit.new()
 	pass_edit.secret = true
 	pass_edit.custom_minimum_size = Vector2(130, 34)

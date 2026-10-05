@@ -8,7 +8,7 @@ func _init(host: Control) -> void:
 	var v := Widgets.center_vbox(self)
 	v.add_child(Widgets.label("Importar nivel", 30, UiTheme.accent()))
 	v.add_child(Widgets.label("Pega un código SKM1.…/SKM2.… o un"
-		+ " tablero XSB (también RLE: 4#|# @$.#)", 14,
+		+ " tablero XSB (también RLE: 4#|# @$.#)", 13,
 		UiTheme.dim()))
 
 	# TextEdit (not LineEdit) so multi-line XSB boards paste correctly.
