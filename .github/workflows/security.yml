@@ -1,0 +1,22 @@
+name: CI - Seguridad (secretos)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '31 4 * * 1'
+
+jobs:
+  secrets:
+    name: 'Escaneo de secretos (gitleaks)'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+
+  # Sin job de dependencias: el servidor de comunidad es stdlib-only
+  # (http.server + sqlite3) y el juego no tiene dependencias externas.

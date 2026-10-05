@@ -1,10 +1,10 @@
 extends SceneTree
-## Genera las capturas de docs/assets/ con las pantallas reales.
+## Genera las capturas de docs/assets/screenshots/ con las pantallas reales.
 ## Hay que correrlo CON ventana (sin --headless): el render dummy no
 ## produce píxeles. godot --path . -s res://tools/screenshots.gd
 ## (la ventana aparece unos segundos y se cierra sola)
 
-const OUT := "res://docs/assets/"
+const OUT := "res://docs/assets/screenshots/"
 const SIZE_OUT := "res://docs/assets/_sizes/"   # barrido de ventana
 
 var _frame := 0

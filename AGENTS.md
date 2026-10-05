@@ -47,7 +47,7 @@ export/        # builds exportadas (gitignored)
   del patrón doble-clic destructivo.
 - **Confirmaciones destructivas**: patrón "pulsa de nuevo para confirmar"
   (texto + `set_danger` 2 s) — igual en editor, comunidad y opciones.
-- Los PNGs de `tools/_shots/` son salida de trabajo; los de `docs/assets/`
+- Los PNGs de `tools/_shots/` son salida de trabajo; los de `docs/assets/screenshots/`
   son los publicados en README.
 
 ## Verificación

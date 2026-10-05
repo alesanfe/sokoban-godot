@@ -1,5 +1,5 @@
 extends SceneTree
-## Regresión visual: compara docs/assets/*.png contra el baseline
+## Regresión visual: compara docs/assets/screenshots/*.png contra el baseline
 ## bendecido en docs/assets/_baseline/. Reporta el % de píxeles
 ## cambiados por archivo y genera diffs resaltados en _diffs/.
 ##
@@ -11,7 +11,7 @@ extends SceneTree
 ## Subdirectorios (_sizes, _baseline, _diffs) se ignoran.
 
 const BASE := "res://docs/assets/_baseline/"
-const CUR := "res://docs/assets/"
+const CUR := "res://docs/assets/screenshots/"
 const DIFF_OUT := "res://docs/assets/_diffs/"
 
 const TOLERANCE := 14        # por canal (0-255): ignora ruido AA

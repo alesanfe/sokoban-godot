@@ -14,7 +14,7 @@ el proyecto usa [Semantic Versioning](https://semver.org/lang/es/).
   opcional vía butler (`ITCH_DEPLOY=1` + `BUTLER_API_KEY`).
 - Versión del build visible en el menú principal
   (`config/version` de `project.godot`).
-- `docs/operations/RELEASE_CHECKLIST.md` — puerta de QA por tag:
+- `docs/operations/release-checklist.md` — puerta de QA por tag:
   FTUE, guardado, build exportado real, COOP/COEP, regresiones.
 - `.godot-version` pinnado para CI.
 - `tools/screenshots.gd` — regenera las capturas de `docs/assets/`
@@ -56,7 +56,7 @@ versión 1.0 documentaba como aceptados.
 - CI: gitleaks + load test; `release.yml`: export web + SHA256 +
   SBOM CycloneDX + attestation SLSA; `dependabot.yml` +
   `scorecard.yml` (OpenSSF).
-- Docs: `docs/operations/SLO.md`, `docs/operations/INCIDENTS.md`,
+- Docs: `docs/operations/slo.md`, `docs/operations/incidents.md`,
   `docs/DATA_MODEL.md`, `docs/PRIVACY.md`, `DEPENDENCIES.md`,
   `.editorconfig`, `.gitattributes`, `tools/test_all.{ps1,sh}`.
 

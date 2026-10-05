@@ -25,12 +25,12 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 
 <table>
   <tr>
-    <td><img src="docs/assets/gameplay.png" alt="Nivel con cintas, portales y cajas de color en juego"></td>
-    <td><img src="docs/assets/mutant.png" alt="Nivel de campaña con regla fantasma"></td>
+    <td><img src="docs/assets/screenshots/gameplay.png" alt="Nivel con cintas, portales y cajas de color en juego"></td>
+    <td><img src="docs/assets/screenshots/mutant.png" alt="Nivel de campaña con regla fantasma"></td>
   </tr>
   <tr>
-    <td><img src="docs/assets/editor.png" alt="Editor de niveles con paleta de 46 tiles"></td>
-    <td><img src="docs/assets/community.png" alt="Modo Comunidad con feed, likes y miniaturas"></td>
+    <td><img src="docs/assets/screenshots/editor.png" alt="Editor de niveles con paleta de 46 tiles"></td>
+    <td><img src="docs/assets/screenshots/community.png" alt="Modo Comunidad con feed, likes y miniaturas"></td>
   </tr>
 </table>
 
@@ -39,23 +39,67 @@ Modo Comunidad estilo Mario Maker con backend autoalojable.
 
 | Selector de niveles | Asistencia anti-deadlock |
 |---|---|
-| ![Selector de niveles con progreso por pack](docs/assets/select.png) | ![Casillas sin retorno sombreadas y ✕ sobre la caja bloqueada](docs/assets/deadlock.png) |
+| ![Selector de niveles con progreso por pack](docs/assets/screenshots/select.png) | ![Casillas sin retorno sombreadas y ✕ sobre la caja bloqueada](docs/assets/screenshots/deadlock.png) |
 
 | Panel de victoria | Importador |
 |---|---|
-| ![Panel de victoria: medalla, movimientos, empujes y par](docs/assets/win.png) | ![Importar código SKM o tablero XSB](docs/assets/import.png) |
+| ![Panel de victoria: medalla, movimientos, empujes y par](docs/assets/screenshots/win.png) | ![Importar código SKM o tablero XSB](docs/assets/screenshots/import.png) |
 
 | Mapa de mundo | Generador |
 |---|---|
-| ![Mapa de mundo: camino por la campaña](docs/assets/map.png) | ![Generador de niveles con semilla y regla](docs/assets/generator.png) |
+| ![Mapa de mundo: camino por la campaña](docs/assets/screenshots/map.png) | ![Generador de niveles con semilla y regla](docs/assets/screenshots/generator.png) |
 
 | Pista del solucionador | Mejor ruta |
 |---|---|
-| ![Flecha de pista del solver sobre el jugador](docs/assets/hint.png) | ![Ruta en L de puntos de la mejor repetición guardada](docs/assets/trail.png) |
+| ![Flecha de pista del solver sobre el jugador](docs/assets/screenshots/hint.png) | ![Ruta en L de puntos de la mejor repetición guardada](docs/assets/screenshots/trail.png) |
 
 | Estadísticas | Opciones | Controles |
 |---|---|---|
-| ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/stats.png) | ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/options.png) | ![Controles reasignables](docs/assets/controls.png) |
+| ![Estadísticas: campaña, clásicos, diarios, actividad](docs/assets/screenshots/stats.png) | ![Opciones: tema, skin, audio, HUD, asistencias](docs/assets/screenshots/options.png) | ![Controles reasignables](docs/assets/screenshots/controls.png) |
+
+|| Menú principal ||
+||---|---|
+|| ![Menú principal: campaña, mapa del mundo, desafío diario, editor, comunidad](docs/assets/screenshots/menu.png) | |
+
+</details>
+
+<details>
+<summary>Estados de la interfaz — la suite de capturas cubre también los casos límite</summary>
+
+| Estado | Captura |
+|---|---|
+| Confirmación destructiva (doble clic, botón armado) | ![Controles con 'Pulsa de nuevo para confirmar' armado](docs/assets/screenshots/state_confirm.png) |
+| Foco de teclado visible | ![Menú con foco en 'Editor de niveles'](docs/assets/screenshots/state_focus.png) |
+| Búsqueda sin resultados | ![Comunidad: 'Sin resultados para «xyzqq»'](docs/assets/screenshots/state_empty.png) |
+| Error de validación | ![Importador: 'Código o tablero inválido'](docs/assets/screenshots/state_import_err.png) |
+| Texto largo | ![Selector: título de nivel muy largo en 'Mis niveles'](docs/assets/screenshots/state_longtext.png) |
+| Cambios sin guardar | ![Editor: 'Tienes cambios sin guardar' antes de salir](docs/assets/screenshots/state_unsaved.png) |
+| Gate de publicación | ![Editor: 'Para publicar debes superar tu propio nivel'](docs/assets/screenshots/state_publish_gate.png) |
+| Verificación con solver | ![Editor: 'Soluble en 3 movimientos. Dificultad: ★'](docs/assets/screenshots/state_verify.png) |
+| Solver buscando | ![Partida: 'Buscando solución…'](docs/assets/screenshots/state_solve.png) |
+| Repetición | ![Modo repetición de la mejor solución](docs/assets/screenshots/state_replay.png) |
+| Toast de confirmación | ![Comunidad: toast '✓ Guardado en Mis niveles'](docs/assets/screenshots/state_toast.png) |
+| Tablero grande en editor | ![Editor con nivel de 30×18 casillas](docs/assets/screenshots/state_editor_big.png) |
+| Juego (estado de tabulación) | ![Partida con cajas coloreadas B/C y cintas](docs/assets/screenshots/state_tab_game.png) |
+| Selector (estado de tabulación) | ![Selector de niveles con scroll](docs/assets/screenshots/state_tab_select.png) |
+| Editor (estado de tabulación) | ![Editor con reglas Cintas y Portales configuradas](docs/assets/screenshots/state_tab_editor.png) |
+
+</details>
+
+<details>
+<summary>Temas y accesibilidad — dark (defecto), light, contraste, daltonismo y escala 130%</summary>
+
+| Pantalla | Light | Contraste | Daltonismo |
+|---|---|---|---|
+| Menú | ![Menú en tema claro](docs/assets/screenshots/theme_menu_light.png) | ![Menú en alto contraste](docs/assets/screenshots/theme_menu_contrast.png) | ![Menú en paleta para daltonismo](docs/assets/screenshots/theme_menu_cb.png) |
+| Partida | ![Partida en tema claro](docs/assets/screenshots/theme_gameplay_light.png) | ![Partida en alto contraste](docs/assets/screenshots/theme_gameplay_contrast.png) | ![Partida en paleta para daltonismo](docs/assets/screenshots/theme_gameplay_cb.png) |
+| Editor | ![Editor en tema claro](docs/assets/screenshots/theme_editor_light.png) | ![Editor en alto contraste](docs/assets/screenshots/theme_editor_contrast.png) | ![Editor en paleta para daltonismo](docs/assets/screenshots/theme_editor_cb.png) |
+| Selector | ![Selector en tema claro](docs/assets/screenshots/theme_select_light.png) | ![Selector en alto contraste](docs/assets/screenshots/theme_select_contrast.png) | ![Selector en paleta para daltonismo](docs/assets/screenshots/theme_select_cb.png) |
+| Comunidad | ![Comunidad en tema claro](docs/assets/screenshots/theme_community_light.png) | ![Comunidad en alto contraste](docs/assets/screenshots/theme_community_contrast.png) | ![Comunidad en paleta para daltonismo](docs/assets/screenshots/theme_community_cb.png) |
+
+| Escala de texto 130% | |
+|---|---|
+| ![Menú con escala de UI al 130%](docs/assets/screenshots/theme_menu_scale130.png) | ![Opciones con escala de UI al 130%](docs/assets/screenshots/theme_options_scale130.png) |
 
 </details>
 
@@ -243,7 +287,7 @@ corre y que la URL en Ajustes → Comunidad incluye el puerto.
 | Arquitectura + decisiones | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/decisions/](docs/decisions/) |
 | API del backend | [docs/API.md](docs/API.md) |
 | Autoalojar el backend | [docs/OPERATIONS.md](docs/OPERATIONS.md) |
-| Gate de release | [docs/operations/RELEASE_CHECKLIST.md](docs/operations/RELEASE_CHECKLIST.md) |
+| Gate de release | [docs/operations/release-checklist.md](docs/operations/release-checklist.md) |
 | Modelo de datos | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) |
 | Amenazas / privacidad | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) · [docs/PRIVACY.md](docs/PRIVACY.md) |
 
