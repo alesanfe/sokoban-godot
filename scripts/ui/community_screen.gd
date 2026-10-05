@@ -99,7 +99,7 @@ func _init(p_host: Control) -> void:
 	var url_edit := LineEdit.new()
 	url_edit.placeholder_text = "vacío = offline · p. ej. http://192.168.1.10:8765"
 	url_edit.text = CommunityRemote.url()
-	url_edit.custom_minimum_size = Vector2(280, 34)
+	url_edit.custom_minimum_size.x = 280
 	url_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	url_edit.text_submitted.connect(func(t):
 		Storage.set_setting("community_remote_url", t.strip_edges())
@@ -117,16 +117,16 @@ func _init(p_host: Control) -> void:
 	# escribir, el único nombre del campo desaparece
 	auth.add_child(Widgets.label("Usuario:", 14))
 	var user_edit := LineEdit.new()
-	user_edit.custom_minimum_size = Vector2(130, 34)
+	user_edit.custom_minimum_size.x = 130
 	auth.add_child(user_edit)
 	auth.add_child(Widgets.label("Contraseña:", 14))
 	var pass_edit := LineEdit.new()
 	pass_edit.secret = true
-	pass_edit.custom_minimum_size = Vector2(130, 34)
+	pass_edit.custom_minimum_size.x = 130
 	var b_login := Widgets.button("Entrar")
-	b_login.custom_minimum_size = Vector2(90, 34)
+	b_login.custom_minimum_size.x = 90
 	var b_reg := Widgets.button("Registro")
-	b_reg.custom_minimum_size = Vector2(100, 34)
+	b_reg.custom_minimum_size.x = 100
 	_auth_label = Widgets.label("", 12, UiTheme.dim())
 	var do_auth := func(action: String):
 		if CommunityRemote.username() != "":
