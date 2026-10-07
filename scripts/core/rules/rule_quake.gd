@@ -8,8 +8,8 @@ extends SokobanRule
 func _init(p_params: Dictionary = {}) -> void:
 	super("quake", p_params)
 	title = "Terremoto"
-	description = ("Cada %d turnos tiembla: todas las cajas resbalan"
-		+ " un paso (la dirección rota)." % int(p_params.get("every", 5)))
+	description = (("Cada %d turnos tiembla: todas las cajas resbalan"
+		+ " un paso (la dirección rota).") % int(p_params.get("every", 5)))
 
 
 func after_turn(state) -> void:

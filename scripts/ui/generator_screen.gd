@@ -110,13 +110,17 @@ func _go() -> void:
 	_b_back.disabled = true
 	Widgets.status(status, "Generando…")
 	var wr: WeakRef = weakref(self)
-	WorkerThreadPool.add_task(func():
+	SokobanSolver.track_task(WorkerThreadPool.add_task(func():
 		var lvl := LevelGenerator.generate(seed, w, h, nb, rid)
 		# deferred seguro: si la pantalla se cerró durante la
 		# generación el cuerpo no dispara sobre nodos liberados
 		Widgets.deferred(self, func():
 			var scr = wr.get_ref()
-			if scr == null:
+			# race: si el worker acaba en el mismo frame que show_*()
+			# el nodo sigue vivo pero ya está marcado para borrarse —
+			# sin esta guardia el callback saltaría a la partida
+			if scr == null or scr.is_queued_for_deletion() \
+					or not scr.is_inside_tree():
 				return
 			scr._b_go.disabled = false
 			scr._b_back.disabled = false
@@ -126,4 +130,4 @@ func _go() -> void:
 			lvl.title = "Generado · %dx%d · %s" % [
 				w, h, rid if rid != "" else "clásico"]
 			scr.host.show_game(lvl, {"generated": true})
-		), true)
+		), true))

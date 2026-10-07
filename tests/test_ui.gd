@@ -206,6 +206,8 @@ func _run() -> void:
 	ok(main.current is MenuScreen, "back to menu")
 
 	print("== UI smoke: %d failures ==" % failures)
+	# el solver corre en WorkerThreadPool — drenarlo o el teardown aborta
+	SokobanSolver.wait_pending()
 	quit(1 if failures > 0 else 0)
 
 
@@ -227,7 +229,18 @@ func _community_remote_e2e() -> void:
 	var test_db := ProjectSettings.globalize_path(
 		"user://devin_test/e2e_community.db")
 	DirAccess.remove_absolute(test_db)
-	var pid := OS.create_process("python",
+	# en runners Linux suele existir python3 pero no python — si el
+	# binario falta create_process devuelve un pid que muere al instante
+	# y el poll de health agota los reintentos con un falso FAIL
+	var py := ""
+	for cand in ["python", "python3"]:
+		if OS.execute(cand, PackedStringArray(["--version"])) == 0:
+			py = cand
+			break
+	if py == "":
+		print("  skip: community e2e (python no disponible)")
+		return
+	var pid := OS.create_process(py,
 		PackedStringArray([srv, "--port", str(port), "--db", test_db]))
 	if pid <= 0:
 		print("  skip: community e2e (python no disponible)")
@@ -236,7 +249,7 @@ func _community_remote_e2e() -> void:
 	# poll /health hasta que el servidor escuche (espera real: los
 	# frames headless corren mucho más rápido que el arranque de python)
 	var up := false
-	for i in 40:
+	for i in 240:
 		var r := HTTPRequest.new()
 		r.timeout = 1.5
 		root.add_child(r)
@@ -328,7 +341,7 @@ func _community_remote_e2e() -> void:
 		"e2e: solución inválida → 422 unsolved")
 	# sesión caducada en el servidor → 401 token_expired y el cliente
 	# cierra sesión local automáticamente
-	OS.execute("python", PackedStringArray(["-c",
+	OS.execute(py, PackedStringArray(["-c",
 		("import sqlite3; c=sqlite3.connect(r'%s');" % test_db) +
 		"c.execute('UPDATE sessions SET expires=1'); c.commit()"]))
 	var ex := {}

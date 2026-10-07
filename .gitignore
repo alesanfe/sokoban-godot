@@ -11,3 +11,4 @@ server/community_db.json*
 docs/assets/*.import
 docs/assets/**/*.import
 docs/assets/_diffs/
+godot\ngodot.zip

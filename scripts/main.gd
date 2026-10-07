@@ -30,6 +30,14 @@ func _ready() -> void:
 	show_menu()
 
 
+func _notification(what: int) -> void:
+	# El solver corre en WorkerThreadPool; cerrar la ventana con una
+	# tarea viva aborta el engine en teardown (su callback deferred
+	# sigue encolado). Drenar antes de dejar morir el árbol.
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		SokobanSolver.wait_pending()
+
+
 func apply_theme() -> void:
 	UiTheme.apply(self)
 	_bg.color = UiTheme.bg_color()

@@ -31,17 +31,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: chickensoft-games/setup-godot@v2
-        with:
-          version: 4.7.2
-          include-prereleases: true
+      # Descarga directa (mismo patrón que beliber): sin actions de
+      # terceros — reproducible también bajo `act` local.
+      - name: Descargar Godot 4.7.2 headless
+        run: |
+          curl -L -o godot.zip \
+            https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+          chmod +x godot
       # refrescar el class cache antes de compilar scripts sueltos
-      - run: godot --headless --path . --import
-      - run: godot --headless --path . -s res://tests/test_runner.gd
-      - run: godot --headless --path . -s res://tests/test_rules.gd
-      - run: godot --headless --path . -s res://tests/test_playthrough.gd
-      - run: godot --headless --path . -s res://tests/test_e2e.gd
-      - run: godot --headless --path . -s res://tests/test_ui.gd
+      - run: ./godot --headless --path . --import
+      - run: ./godot --headless --path . -s res://tests/test_runner.gd
+      - run: ./godot --headless --path . -s res://tests/test_rules.gd
+      - run: ./godot --headless --path . -s res://tests/test_playthrough.gd
+      - run: ./godot --headless --path . -s res://tests/test_e2e.gd
+      - run: ./godot --headless --path . -s res://tests/test_ui.gd
 
   server-checks:
     runs-on: ubuntu-latest
@@ -54,11 +59,14 @@ jobs:
       # smoke: arranca, health, register, publish, feed
       - run: |
           python server/community_server.py --port 18765 --db /tmp/skm_ci.db &
-          sleep 1.5
+          for i in $(seq 1 40); do
+            curl -sf http://127.0.0.1:18765/api/health >/dev/null && break
+            sleep 0.5
+          done
           curl -sf http://127.0.0.1:18765/api/health | grep -q '"ok": *true'
           TOKEN=$(curl -sf -X POST http://127.0.0.1:18765/api/register \
             -H 'Content-Type: application/json' \
-            -d '{"username":"ci","password":"pw1234"}' | python -c 'import json,sys;print(json.load(sys.stdin)["token"])')
+            -d '{"username":"ci-bot","password":"pw1234"}' | python -c 'import json,sys;print(json.load(sys.stdin)["token"])')
           curl -sf -X POST http://127.0.0.1:18765/api/publish \
             -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
             -d '{"title":"ci","data":{"board":"#####\n#@$.#\n#####"},"moves":"r"}' | grep -q '"verified": *1'
@@ -66,6 +74,10 @@ jobs:
       - name: Unit tests de rutas (sin socket)
         run: python server/test_routes.py
       - name: Load test (concurrencia + consistencia de likes)
+        # runners compartidos: margen extra sobre el presupuesto local
+        env:
+          SKM_P95_FEED_MS: "2000"
+          SKM_P95_POST_MS: "5000"
         run: python server/test_load.py
 
   docs:

@@ -5,7 +5,7 @@ compatibles una versión mayor antes de eliminarse.
 
 ## Activas
 
-*(ninguna actualmente)*
+Ninguna actualmente.
 
 ## Aplicadas
 

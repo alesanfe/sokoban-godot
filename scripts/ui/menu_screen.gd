@@ -112,7 +112,7 @@ static func _generate_async(host: Control, btn: Button, gen: Callable, ctx_key: 
 	# no debe tocar nodos liberados ni saltar a una partida
 	var wbtn: WeakRef = weakref(btn)
 	var whost: WeakRef = weakref(host)
-	WorkerThreadPool.add_task(func():
+	SokobanSolver.track_task(WorkerThreadPool.add_task(func():
 		var lvl: LevelData = gen.call()
 		(func():
 			var b = wbtn.get_ref()
@@ -125,4 +125,4 @@ static func _generate_async(host: Control, btn: Button, gen: Callable, ctx_key: 
 				h.show_game(lvl, {ctx_key: true})
 			elif h.has_method("toast"):
 				h.toast("No se pudo generar — inténtalo de nuevo")
-		).call_deferred(), true)
+		).call_deferred(), true))

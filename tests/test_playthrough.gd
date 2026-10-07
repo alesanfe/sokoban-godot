@@ -49,6 +49,8 @@ func _run() -> void:
 	await _ui_undo_after_win()
 	await _ui_next_level()
 	print("== %d checks, %d failures ==" % [checks, failures])
+	# el solver corre en WorkerThreadPool — drenarlo o el teardown aborta
+	SokobanSolver.wait_pending()
 	quit(1 if failures > 0 else 0)
 
 
@@ -332,6 +334,10 @@ func _ui_playthrough() -> void:
 	await process_frame
 	var gs: GameScreen = main.current
 	ok(gs.state != null, "UI: game state built")
+
+	# confirm_restart (default on) convierte el primer _restart en
+	# "arma + confirma" — el test quiere reinicio determinista de 1 toque
+	Storage.set_setting("confirm_restart", false)
 
 	# manual moves through the input path
 	var res: Dictionary = SokobanSolver.solve(l)

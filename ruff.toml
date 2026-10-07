@@ -1,0 +1,8 @@
+# Config de ruff para el servidor de comunidad (stdlib-only).
+[lint]
+ignore = [
+  # EXE001: shebang en scripts ejecutables — el bit +x no existe en
+  # el working tree de Windows (aunque git lo preserve); los scripts
+  # se ejecutan igualmente vía `python server/x.py`.
+  "EXE001",
+]

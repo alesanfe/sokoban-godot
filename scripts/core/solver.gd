@@ -18,6 +18,26 @@ const ESCALATE_MULTS := [4, 15]
 const INF := 1e9
 const DIRS4 := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
+## Tareas WorkerThreadPool vivas. Si el árbol se cierra con una tarea
+## en marcha, el callback deferred dispara durante el teardown y el
+## engine aborta (SIGSEGV en cowdata) — drenar con wait_pending()
+## antes de salir.
+static var _pending: Array[int] = []
+
+
+## Registra una tarea del pool lanzada fuera del solver (generación
+## de niveles en menú/generador) para que wait_pending() la drene.
+static func track_task(task_id: int) -> void:
+	_pending.append(task_id)
+
+
+## Bloquea hasta que todas las solves en background hayan terminado.
+## Llamar antes de quit() (teardown seguro del SceneTree).
+static func wait_pending() -> void:
+	for t in _pending:
+		WorkerThreadPool.wait_for_task_completion(t)
+	_pending.clear()
+
 
 static func solve(level: LevelData, max_states: int = MAX_STATES) -> Dictionary:
 	var s0 := GameState.from_level_data(level)
@@ -29,7 +49,7 @@ static func solve(level: LevelData, max_states: int = MAX_STATES) -> Dictionary:
 static func solve_async(level: LevelData, cb: Callable, max_states: int = MAX_STATES,
 		escalate := false) -> void:
 	var lvl := LevelData.from_dict(level.to_dict())  # detached copy
-	WorkerThreadPool.add_task(func():
+	_pending.append(WorkerThreadPool.add_task(func():
 		var res := solve(lvl, max_states)
 		# "límite de estados" no es veredicto: con `escalate` se
 		# reintenta con más presupuesto antes de rendirse (editor verify)
@@ -41,7 +61,7 @@ static func solve_async(level: LevelData, cb: Callable, max_states: int = MAX_ST
 				res = solve(lvl, max_states * mult)
 		# the screen that requested the solve may be gone by now
 		if cb.is_valid():
-			cb.call_deferred(res), true)
+			cb.call_deferred(res), true))
 
 
 ## Same but mid-game: serializes the live state, solves it on a worker
@@ -51,7 +71,7 @@ static func solve_state_async(state: GameState, cb: Callable, max_states: int = 
 	var data: Dictionary = state.serialize()
 	# detach: the live level object must not cross the thread boundary
 	var lvl := LevelData.from_dict(state.level_data.to_dict())
-	WorkerThreadPool.add_task(func():
+	_pending.append(WorkerThreadPool.add_task(func():
 		# cada reintento necesita un estado fresco: solve_state lo muta
 		var fresh := func(): return GameState.deserialize_state(lvl, data)
 		var res := {"ok": false, "moves": PackedStringArray(), "states": 0,
@@ -66,7 +86,7 @@ static func solve_state_async(state: GameState, cb: Callable, max_states: int = 
 						break
 					res = solve_state(fresh.call(), max_states * mult)
 		if cb.is_valid():
-			cb.call_deferred(res), true)
+			cb.call_deferred(res), true))
 
 
 static func solve_state(s0: GameState, max_states: int = MAX_STATES) -> Dictionary:

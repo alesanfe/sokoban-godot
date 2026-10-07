@@ -69,7 +69,9 @@ func _run() -> void:
 	await _key(KEY_Z)
 	ok(gs.state.turn == 1, "keybind Z undoes")
 
-	# R restarts the level
+	# R restarts the level — confirm_restart (default on) arma el
+	# reinicio en el primer toque; el e2e quiere 1 toque determinista
+	Storage.set_setting("confirm_restart", false)
 	await _key(KEY_R)
 	await _settle()
 	ok(gs.state.turn == 0, "keybind R restarts")
@@ -95,6 +97,8 @@ func _run() -> void:
 	ok(main.current is MenuScreen, "exited to menu via win panel")
 
 	print("== E2E: %d checks, %d failures ==" % [checks, failures])
+	# el solver corre en WorkerThreadPool — drenarlo o el teardown aborta
+	SokobanSolver.wait_pending()
 	quit(1 if failures > 0 else 0)
 
 

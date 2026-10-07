@@ -24,9 +24,11 @@ import urllib.request
 READERS = 20
 WRITERS = 10
 REQS_PER_READER = 10         # 200 GETs
-P95_FEED_MS = 1000           # presupuesto generoso para CI/WSL
-P95_POST_MS = 3000           # writes serializadas (BEGIN IMMEDIATE);
-                             # en disco lento local p95≈2s es normal
+# Presupuestos de latencia — sobreescribibles por entorno: runners
+# CI/virtualizados (Docker sobre Windows, GitHub compartido) son
+# bastante más lentos que una máquina local.
+P95_FEED_MS = int(os.environ.get("SKM_P95_FEED_MS", "1000"))
+P95_POST_MS = int(os.environ.get("SKM_P95_POST_MS", "3000"))
 
 
 def req(url, method="GET", body=None, token=None):

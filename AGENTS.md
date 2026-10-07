@@ -23,7 +23,7 @@ godot --path . -s res://tools/gif_demo.gd                     # GIF de demo
 
 ## Estructura
 
-```
+```text
 project.godot  # proyecto Godot (raíz)
 scenes/        # escenas .tscn
 scripts/       # GDScript (scripts/ui/ = pantallas, scripts/game/ = motor)
