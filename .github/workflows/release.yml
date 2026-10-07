@@ -13,7 +13,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.7.2
@@ -35,7 +35,7 @@ jobs:
           - { preset: "Windows Desktop", out: "sokoban-mutante.exe",  slug: windows }
           - { preset: "Linux/X11",       out: "sokoban-mutante.x86_64", slug: linux }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.7.2
