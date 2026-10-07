@@ -9,7 +9,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -30,7 +30,7 @@ jobs:
   godot-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Descarga directa (mismo patrón que beliber): sin actions de
       # terceros — reproducible también bajo `act` local.
       - name: Descargar Godot 4.7.2 headless
@@ -51,7 +51,7 @@ jobs:
   server-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -84,7 +84,7 @@ jobs:
     # el README y docs/ son código — lint + enlaces rotos por PR
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: markdownlint
         run: npx -y markdownlint-cli2 "**/*.md" "!docs/assets/**"
       - name: enlaces rotos (lychee)
@@ -99,7 +99,7 @@ jobs:
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Binario OSS fijado — la imagen zricethezav/gitleaks:8.18.4 ya no
       # existe (manifest unknown) y gitleaks-action@v2 exige licencia.
       - name: gitleaks
