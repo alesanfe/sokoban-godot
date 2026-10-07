@@ -59,7 +59,7 @@ jobs:
       # smoke: arranca, health, register, publish, feed
       - run: |
           python server/community_server.py --port 18765 --db /tmp/skm_ci.db &
-          for i in $(seq 1 40); do
+          for _ in $(seq 1 40); do
             curl -sf http://127.0.0.1:18765/api/health >/dev/null && break
             sleep 0.5
           done
