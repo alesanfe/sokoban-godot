@@ -56,7 +56,7 @@ jobs:
           sha256sum sokoban-mutante-${{ matrix.slug }}.zip \
             > sokoban-mutante-${{ matrix.slug }}.zip.sha256
       - name: Attestación de procedencia (SLSA)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: sokoban-mutante-${{ matrix.slug }}.zip
       - name: Subir artefacto
