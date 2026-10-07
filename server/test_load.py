@@ -31,7 +31,7 @@ P95_FEED_MS = int(os.environ.get("SKM_P95_FEED_MS", "1000"))
 P95_POST_MS = int(os.environ.get("SKM_P95_POST_MS", "3000"))
 
 
-def req(url, method="GET", body=None, token=None):
+def req(url, method="GET", body=None, token=None, _retry=3):
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = "Bearer " + token
@@ -49,6 +49,15 @@ def req(url, method="GET", body=None, token=None):
         except (json.JSONDecodeError, UnicodeDecodeError):
             payload = {}
         return e.code, payload, (time.monotonic() - t0) * 1000
+    except (ConnectionResetError, ConnectionRefusedError,
+            urllib.error.URLError):
+        # backlog del kernel saturado en runners compartidos — un reset
+        # de transporte no es un fallo del servidor; reintenta con
+        # backoff corto antes de contar el error
+        if _retry:
+            time.sleep(0.05 * (4 - _retry))
+            return req(url, method, body, token, _retry - 1)
+        raise
 
 
 def p95(xs):

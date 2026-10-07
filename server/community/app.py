@@ -19,10 +19,17 @@ from .http_api import Handler
 log = logging.getLogger("skm.community")
 
 
+class _HTTPServer(ThreadingHTTPServer):
+    daemon_threads = True  # un cliente colgado no retiene shutdown
+    # socketserver deja el listen backlog en 5 — con lectores/escritores
+    # concurrentes el kernel rechaza (ConnectionResetError) antes de que
+    # accept() llegue. Va como atributo de clase: el listen() ya ocurre
+    # en __init__ via server_activate.
+    request_queue_size = 128
+
+
 def make_server(host: str, port: int) -> ThreadingHTTPServer:
-    srv = ThreadingHTTPServer((host, port), Handler)
-    srv.daemon_threads = True  # un cliente colgado no retiene shutdown
-    return srv
+    return _HTTPServer((host, port), Handler)
 
 
 def main() -> None:
