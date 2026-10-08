@@ -60,7 +60,7 @@ jobs:
         with:
           subject-path: sokoban-mutante-${{ matrix.slug }}.zip
       - name: Subir artefacto
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sokoban-mutante-${{ matrix.slug }}
           path: |
