@@ -101,7 +101,7 @@ jobs:
           pattern: sokoban-mutante-*
           merge-multiple: true
       - name: Push a itch.io (butler)
-        uses: Ayowel/butler-to-itch@v1
+        uses: Ayowel/butler-to-itch@v2
         with:
           butler_key: ${{ secrets.BUTLER_API_KEY }}
           itch_user: ${{ vars.ITCH_USER }}
